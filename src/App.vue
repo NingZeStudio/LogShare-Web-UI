@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
-import { Sun, Moon, X } from 'lucide-vue-next'
+import { X, Palette } from 'lucide-vue-next'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import ThemeSettings from '@/components/ThemeSettings.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 
-const isDark = ref(false)
 const toggleCount = ref(0)
 const showEasterEgg = ref(false)
 const showCookieConsent = ref(false)
+const isThemeSettingsOpen = ref(false)
 
 const easterEggImages = [
   'https://cdn.zeinklab.com/myfile/images/974d9feef5429ded.jpeg',
@@ -16,35 +17,8 @@ const easterEggImages = [
   'https://cdn.zeinklab.com/myfile/images/8295488fa57aef04.jpeg'
 ]
 
-const toggleTheme = () => {
-  isDark.value = !isDark.value
-  updateTheme()
-
-  toggleCount.value++
-  if (toggleCount.value >= 10) {
-    showEasterEgg.value = true
-    toggleCount.value = 0
-  }
-}
-
-/**
- * 更新主題顏色
- * 處理深色/淺色模式切換及過渡動畫
- */
-const updateTheme = () => {
-  document.documentElement.classList.add('transition-colors', 'duration-500')
-
-  if (isDark.value) {
-    document.documentElement.classList.add('dark')
-    localStorage.setItem('theme', 'dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-    localStorage.setItem('theme', 'light')
-  }
-
-  setTimeout(() => {
-    document.documentElement.classList.remove('transition-colors', 'duration-500')
-  }, 500)
+const openThemeSettings = () => {
+  isThemeSettingsOpen.value = true
 }
 
 const closeEasterEgg = () => {
@@ -57,12 +31,6 @@ const acceptCookies = () => {
 }
 
 onMounted(() => {
-  const savedTheme = localStorage.getItem('theme')
-  if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    isDark.value = true
-  }
-  updateTheme()
-
   if (!localStorage.getItem('cookie_consent')) {
     showCookieConsent.value = true
   }
@@ -73,6 +41,28 @@ onMounted(() => {
 })
 </script>
 
+<style scoped>
+.theme-settings-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-settings-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark .theme-settings-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+</style>
+
 <template>
   <div class="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased transition-colors duration-500">
     <header class="border-b bg-card/80 sticky top-0 z-40 w-full backdrop-blur-xl shadow-sm">
@@ -80,12 +70,11 @@ onMounted(() => {
         <RouterLink to="/" class="flex items-center gap-2 font-bold text-xl">
           <span class="text-primary">LogShare.CN</span><sup class="text-xs text-muted-foreground">ᴺᵉˣᵀ</sup>
         </RouterLink>
-        <nav class="flex items-center gap-4">
+        <nav class="flex items-center gap-2">
           <RouterLink to="/api-docs" class="text-sm font-bold bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">API 文档</RouterLink>
           <LanguageSwitcher />
-          <button @click="toggleTheme" class="p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" aria-label="Toggle theme">
-            <Sun v-if="!isDark" class="h-5 w-5" />
-            <Moon v-else class="h-5 w-5" />
+          <button @click="openThemeSettings" class="theme-settings-button" aria-label="主题设置">
+            <Palette class="h-5 w-5" />
           </button>
         </nav>
       </div>
@@ -145,6 +134,9 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- Theme Settings Panel -->
+    <ThemeSettings v-model:open="isThemeSettingsOpen" />
   </div>
 </template>
 

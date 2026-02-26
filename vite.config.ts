@@ -2,7 +2,6 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
@@ -12,23 +11,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
-  server: {
-    proxy: {
-      '/api': {
-        target: 'https://api.mclogs.lemwood.icu',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-        headers: {
-            'Host': 'api.mclogs.lemwood.icu'
-        }
-      }
-    }
-  },
   build: {
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // 分离大型库以确保每个chunk不超过200KB
           if (id.includes('node_modules')) {
             if (id.includes('markdown-it')) {
               return 'markdown';
@@ -45,11 +31,9 @@ export default defineConfig({
             if (id.includes('class-variance-authority') || id.includes('clsx') || id.includes('tailwind-merge')) {
               return 'utils';
             }
-            // 其他node_modules统一打包到vendor
             return 'vendor';
           }
 
-          // 页面级别的代码分割
           if (id.includes('src/views/HomeView')) {
             return 'home';
           }
@@ -68,7 +52,6 @@ export default defineConfig({
         },
       }
     },
-    // 控制chunk大小警告阈值（单位KB）
     chunkSizeWarningLimit: 500,
   }
 })

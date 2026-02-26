@@ -260,21 +260,21 @@ const copyAllLinks = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background relative">
+  <div class="bg-background relative">
     <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.1),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(0,0,0,0))]"></div>
     
-    <div class="container mx-auto px-4 py-16">
+    <div class="container mx-auto px-4 py-8">
       <div class="flex flex-col items-center text-center space-y-4 mb-8">
         <h1 class="text-4xl md:text-5xl font-bold tracking-tight">
-          分享与分析 <span class="text-primary">Minecraft</span> 服务器日志
+           LogShare.CN <small>v1.1.0</small>
         </h1>
 
         <p class="text-muted-foreground max-w-xl">
-          轻松上传、分享和诊断服务器日志问题
+                    分享与分析 <span class="text-primary">Minecraft & Hytale</span> 服务器和客户端日志
         </p>
       </div>
 
-      <div class="max-w-4xl mx-auto">
+      <div class="max-w-4xl mx-auto pb-4">
         <div
           class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden"
           @dragover="handleDragOver"
@@ -306,14 +306,6 @@ const copyAllLinks = async () => {
               >
                 <Archive class="h-4 w-4" />
                 {{ t('select_file') }}
-              </button>
-              <button
-                v-if="extractedFiles.length > 0"
-                @click="reset"
-                class="inline-flex items-center gap-1.5 text-sm font-medium hover:text-destructive transition-colors"
-              >
-                <X class="h-4 w-4" />
-                重置
               </button>
               <button
                 v-if="!extractedFiles.length"
@@ -430,7 +422,7 @@ const copyAllLinks = async () => {
           <div v-else class="relative">
             <textarea
               v-model="content"
-              class="w-full h-[50vh] sm:h-[450px] md:h-[550px] p-4 bg-transparent text-foreground font-mono text-sm resize-none focus:outline-none"
+              class="w-full h-[50vh] sm:h-[400px] md:h-[500px] p-4 bg-background dark:bg-[#0f0f0f] text-foreground dark:text-gray-100 font-mono text-sm resize-none focus:outline-none"
               :placeholder="t('paste_here')"
             ></textarea>
 
@@ -438,14 +430,14 @@ const copyAllLinks = async () => {
               v-if="!content"
               class="absolute inset-0 flex items-center justify-center pointer-events-none"
             >
-              <div class="text-center text-muted-foreground">
+              <div class="text-center text-muted-foreground dark:text-gray-400">
                 <div class="flex items-center justify-center gap-4 mb-4">
-                  <Archive class="h-12 w-12 opacity-40" />
-                  <FileText class="h-12 w-12 opacity-40" />
-                  <BookText class="h-12 w-12 opacity-40" />
+                  <Archive class="h-12 w-12 opacity-50" />
+                  <FileText class="h-12 w-12 opacity-50" />
+                  <BookText class="h-12 w-12 opacity-50" />
                 </div>
                 <p class="text-sm">拖拽文件到此处上传，或直接粘贴日志内容</p>
-                <p class="text-xs mt-1 text-muted-foreground/70">支持 .zip 压缩包和 .txt/.log 等文本文件</p>
+                <p class="text-xs mt-1 text-muted-foreground dark:text-gray-500">支持 .zip 压缩包和 .txt/.log 等文本文件</p>
               </div>
             </div>
 
@@ -469,7 +461,7 @@ const copyAllLinks = async () => {
           <CheckCircle v-if="notification.type === 'success'" class="h-5 w-5 text-green-500 flex-shrink-0" />
           <AlertCircle v-else class="h-5 w-5 text-destructive flex-shrink-0" />
           <span class="text-sm flex-1">{{ notification.message }}</span>
-          <button @click="removeNotification(notification.id)" class="text-muted-foreground hover:text-foreground">
+          <button @click="removeNotification(notification.id)" class="text-gray-400 hover:text-white">
             <X class="h-4 w-4" />
           </button>
         </div>
