@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LogView from '../views/LogView.vue'
 import ApiDocsView from '../views/ApiDocsView.vue'
@@ -7,7 +7,7 @@ import PrivacyPolicyView from '../views/PrivacyPolicyView.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 
 const router = createRouter({
-  history: createWebHashHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',

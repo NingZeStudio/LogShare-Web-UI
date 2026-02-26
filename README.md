@@ -28,14 +28,14 @@ McLogs Next UI 是一个现代化的前端应用程序，专为 Minecraft 服务
 
 ## 🛠️ 技术栈
 
-层级	技术	描述	
-前端框架	Vue 3, TypeScript	现代化 SPA 架构	
-UI 框架	Tailwind CSS, Radix-Vue	极简且高度可定制的 UI 组件	
-图标库	Lucide Vue	一致且可访问的图标集	
-构建工具	Vite	快速的构建和开发体验	
-路由	Vue Router	基于 Hash 的路由系统	
-HTTP 客户端	Axios	API 请求处理	
-Markdown 渲染	Markdown-it	AI 分析结果渲染	
+层级	技术	描述
+前端框架	Vue 3, TypeScript	现代化 SPA 架构
+UI 框架	Tailwind CSS, Radix-Vue	极简且高度可定制的 UI 组件
+图标库	Lucide Vue	一致且可访问的图标集
+构建工具	Vite	快速的构建和开发体验
+路由	Vue Router	基于 History 的路由系统
+HTTP 客户端	Axios	API 请求处理
+Markdown 渲染	Markdown-it	AI 分析结果渲染
 
 ## 📦 依赖组件
 
@@ -59,40 +59,46 @@ Markdown 渲染	Markdown-it	AI 分析结果渲染
 
 环境要求
 - Node.js (20+)
-- npm 或 yarn
+- yarn
 
 ### 开发环境设置
 
 1. 克隆项目
-   
+
 ```bash
    git clone https://github.com/NingZeStudio/McLogs-Next-UI.git
    cd McLogs-Next-UI
    ```
 
 2. 安装依赖
-   
+
 ```bash
-   npm install
+   yarn install
    ```
 
 3. 启动开发服务器
-   
+
 ```bash
-   npm run dev
+   yarn dev
    ```
 
-   
+
    应用将在 `http://localhost:5173` 上运行。
 
 4. 构建生产版本
-   
+
 ```bash
-   npm run build
+   yarn build
    ```
 
-   
+
    构建输出将在 `dist/` 目录中。
+
+5. 预览生产构建
+
+```bash
+   yarn preview
+   ```
 
 ## 🔧 配置说明
 
@@ -122,6 +128,62 @@ server: {
 - UI 组件单独打包
 - Markdown 渲染库单独打包
 - 各页面组件独立打包
+
+## 🌐 部署配置
+
+本项目使用 Vue Router 的 **History 模式**，部署时需要配置服务器将所有非文件请求重定向到 `index.html`。
+
+### Nginx 配置
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    root /path/to/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # API 代理（可选）
+    location /api {
+        proxy_pass https://api.logshare.cn;
+        proxy_set_header Host api.logshare.cn;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+### Apache 配置
+
+在项目根目录或 `dist/` 目录下创建 `.htaccess` 文件：
+
+```apache
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+```
+
+### Caddy 配置
+
+```caddyfile
+your-domain.com {
+    root * /path/to/dist
+    file_server
+    try_files {uri} {uri}/ /index.html
+}
+```
+
+### 重要提示
+
+> ⚠️ **必须配置伪静态规则**：所有非静态文件（CSS、JS、图片等）的请求都必须重定向到 `index.html`，否则直接刷新页面会导致 404 错误。
 
 ## 📊 项目结构
 

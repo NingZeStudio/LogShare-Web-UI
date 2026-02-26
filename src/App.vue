@@ -71,12 +71,11 @@ onMounted(() => {
   const template = getCurrentPageTemplate(route.name?.toString());
   setPageTitle(template);
 })
-
 </script>
 
 <template>
   <div class="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased transition-colors duration-500">
-    <header class="border-b bg-card sticky top-0 z-40 w-full backdrop-blur">
+    <header class="border-b bg-card/80 sticky top-0 z-40 w-full backdrop-blur-xl shadow-sm">
       <div class="container mx-auto px-4 h-16 flex items-center justify-between">
         <RouterLink to="/" class="flex items-center gap-2 font-bold text-xl">
           <span class="text-primary">LogShare.CN</span><sup class="text-xs text-muted-foreground">ᴺᵉˣᵀ</sup>
@@ -93,18 +92,23 @@ onMounted(() => {
     </header>
 
     <main class="flex-1">
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <Transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </Transition>
+      </RouterView>
     </main>
 
     <footer class="border-t py-6 bg-muted/20">
-      <div class="container mx-auto px-4 text-center text-sm text-muted-foreground">
-        &copy; 2026 LogShare.CN - 柠泽工作室旗舰级项目<br/>
-        <div class="mt-2 space-x-4">
-          <RouterLink to="/imprint" class="hover:underline">法律声明</RouterLink>
-          <RouterLink to="/privacy" class="hover:underline">隐私政策</RouterLink>
+      <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+        <div class="text-center md:text-left">
+          &copy; 2026 LogShare.CN - 柠泽工作室旗舰级项目
         </div>
-        <div class="mt-2">
-          - Powered by Github/NingZeStudio -
+        <div class="flex items-center gap-6">
+          <RouterLink to="/imprint" class="hover:underline transition-colors">法律声明</RouterLink>
+          <RouterLink to="/privacy" class="hover:underline transition-colors">隐私政策</RouterLink>
+          <span class="hidden md:inline">-</span>
+          <span class="hidden md:inline">Powered by Github/NingZeStudio</span>
         </div>
       </div>
     </footer>
@@ -145,3 +149,21 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* 页面切换动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>

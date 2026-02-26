@@ -398,12 +398,12 @@ const scrollToFooter = () => {
 
       <!-- Sidebar / Info (Hidden in fullscreen mode) -->
       <div v-if="!isFullscreen" class="w-full lg:w-1/3 space-y-6">
-        <div class="bg-card dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-5 shadow-sm text-card-foreground dark:text-gray-100 transition-colors duration-300">
+        <div class="bg-card dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-5 shadow-sm text-card-foreground dark:text-gray-100 transition-colors duration-300">
            <h1 class="text-xl font-bold break-all transition-colors duration-300">{{ log.title }}</h1>
            <div class="text-xs text-muted-foreground dark:text-gray-400 mt-1 transition-colors duration-300">{{ t('log') }}: {{ log.id }}</div>
 
            <!-- Hint for users who don't understand the page -->
-           <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 rounded-md transition-colors duration-300">
+           <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 rounded-xl transition-colors duration-300">
                <p class="text-sm text-blue-800 dark:text-blue-200 transition-colors duration-300">
                    <strong>{{ t('info') }}：</strong>{{ t('tips') }}
                </p>
@@ -489,7 +489,7 @@ const scrollToFooter = () => {
 
         </div>
 
-        <div v-if="log.analysis && log.analysis.problems && log.analysis.problems.length > 0" class="bg-destructive/10 dark:bg-red-900/20 border border-destructive/20 dark:border-red-800/30 rounded-lg p-5 transition-colors duration-300">
+        <div v-if="log.analysis && log.analysis.problems && log.analysis.problems.length > 0" class="bg-destructive/10 dark:bg-red-900/20 border border-destructive/20 dark:border-red-800/30 rounded-xl p-5 transition-colors duration-300">
             <h3 class="font-bold text-destructive dark:text-red-400 mb-3 flex items-center gap-2 transition-colors duration-300">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -499,7 +499,7 @@ const scrollToFooter = () => {
               {{ t('problems_detected') }}
             </h3>
             <div class="space-y-4">
-                <div v-for="(prob, idx) in log.analysis.problems" :key="idx" class="text-sm p-3 bg-destructive/5 dark:bg-red-900/10 rounded border border-destructive/10 dark:border-red-800/20 transition-colors duration-300">
+                <div v-for="(prob, idx) in log.analysis.problems" :key="idx" class="text-sm p-3 bg-destructive/5 dark:bg-red-900/10 rounded-xl border border-destructive/10 dark:border-red-800/20 transition-colors duration-300">
                     <div class="font-medium flex items-start gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-destructive dark:text-red-400 flex-shrink-0 mt-0.5 transition-colors duration-300">
                         <polygon points="7.86 2 16.14 2 21.48 10.66 16.14 19.32 7.86 19.32 2.52 10.66 7.86 2"></polygon>
@@ -541,7 +541,7 @@ const scrollToFooter = () => {
             </h3>
 
             <!-- 历史记录面板 -->
-            <div v-if="showHistory" class="mb-4 bg-secondary/30 dark:bg-gray-700/30 p-3 rounded-lg border border-secondary/50 dark:border-gray-600 relative z-10">
+            <div v-if="showHistory" class="mb-4 bg-secondary/30 dark:bg-gray-700/30 p-3 rounded-xl border border-secondary/50 dark:border-gray-600 relative z-10">
               <div class="flex justify-between items-center mb-2">
                 <h4 class="font-medium text-sm">历史分析记录</h4>
                 <button
@@ -571,7 +571,7 @@ const scrollToFooter = () => {
             </div>
 
             <div v-if="!aiResult && !analyzing" class="relative z-10">
-                <button @click="analyzeLog" class="w-full bg-black text-white hover:bg-gray-800 px-4 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                <button @click="analyzeLog" class="w-full bg-black text-white hover:bg-gray-800 px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
                     <Sparkles class="h-5 w-5" />
                     {{ t('start_analysis') }}
                 </button>
@@ -581,12 +581,12 @@ const scrollToFooter = () => {
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3b82f6] mx-auto"></div>
                 <p class="text-sm text-muted-foreground mt-3 transition-colors duration-300">{{ t('analysis_loading') }}</p>
             </div>
-            <div v-else class="text-sm bg-secondary/50 dark:bg-gray-800 p-4 rounded-lg border dark:border-gray-700 overflow-x-auto max-h-64 overflow-y-auto relative z-10 transition-colors duration-300">
+            <div v-else class="text-sm bg-secondary/50 dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700 overflow-x-auto max-h-64 overflow-y-auto relative z-10 transition-colors duration-300">
                 <div class="prose prose-sm dark:prose-invert max-w-none break-words transition-colors duration-300" v-html="formattedAiResult"></div>
             </div>
         </div>
 
-        <div v-if="log.analysis && log.analysis.information && log.analysis.information.length > 0" class="bg-card dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-5 shadow-sm text-card-foreground dark:text-gray-100 transition-colors duration-300">
+        <div v-if="log.analysis && log.analysis.information && log.analysis.information.length > 0" class="bg-card dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-5 shadow-sm text-card-foreground dark:text-gray-100 transition-colors duration-300">
             <h3 class="font-bold mb-3 flex items-center gap-2 transition-colors duration-300">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect width="20" height="14" x="2" y="3" rx="2"></rect>
@@ -651,7 +651,7 @@ const scrollToFooter = () => {
             <button
               v-if="isFullscreen"
               @click="toggleFullscreen"
-              class="bg-black/70 text-white hover:bg-black/90 text-sm flex items-center gap-1 transition-colors duration-300 px-3 py-1.5 rounded-lg shadow-md hover:shadow-lg"
+              class="bg-black/70 text-white hover:bg-black/90 text-sm flex items-center gap-1 transition-colors duration-300 px-3 py-1.5 rounded-xl shadow-md hover:shadow-lg"
             >
               <X class="h-4 w-4" />
               {{ t('exit_fullscreen') }}
@@ -660,11 +660,11 @@ const scrollToFooter = () => {
         </div>
 
         <!-- Log Content Area -->
-        <div class="bg-[#1a1a1a] dark:bg-gray-900 border border-gray-700 dark:border-gray-600 rounded-b-lg shadow-lg overflow-hidden text-white transition-colors duration-300" :class="{ 'h-full flex flex-col': isFullscreen, 'log-no-wrap': !wrapLines }">
+        <div class="bg-[#1a1a1a] dark:bg-gray-900 border border-gray-700 dark:border-gray-600 rounded-b-xl shadow-lg overflow-hidden text-white transition-colors duration-300" :class="{ 'h-full flex flex-col': isFullscreen, 'log-no-wrap': !wrapLines }">
           <div :class="isFullscreen ? 'flex-1 overflow-auto' : 'overflow-x-auto'">
             <div class="log-content font-mono text-xs p-4" :class="{ 'show-errors-only': showErrorsOnly, 'log-wrap': wrapLines }" v-html="logContent"></div>
           </div>
-          
+
           <!-- Scroll to Top Button at Bottom -->
           <div class="flex justify-end p-3 border-t border-gray-700 dark:border-gray-600">
             <button @click="scrollToTop" class="text-sm bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-2 rounded flex items-center justify-center gap-1 transition-colors duration-300">
