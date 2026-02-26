@@ -143,8 +143,8 @@ const applyTheme = (themeId: string) => {
   }
 
   const colors = themeColors[themeId] || themeColors.ink
-  document.documentElement.style.setProperty('--primary', colors.primary)
-  document.documentElement.style.setProperty('--accent', colors.accent)
+  document.documentElement.style.setProperty('--primary', colors!.primary)
+  document.documentElement.style.setProperty('--accent', colors!.accent)
 }
 
 const applyDisplayMode = (mode: 'light' | 'dark' | 'system') => {

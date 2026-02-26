@@ -215,17 +215,6 @@ const save = async () => {
   })
 }
 
-const reset = () => {
-  content.value = ''
-  extractedFiles.value = []
-  uploadResults.value = []
-  uploadProgress.value = null
-  error.value = ''
-  if (fileInput.value) {
-    fileInput.value.value = ''
-  }
-}
-
 const copyAllLinks = async () => {
   const successResults = uploadResults.value.filter(r => r.success && r.id)
   if (successResults.length === 0) {

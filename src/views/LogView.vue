@@ -283,14 +283,14 @@ const scrollToSearchResult = (_index: number) => {
 const goToNextResult = () => {
   if (searchResults.value.length === 0) return
   searchIndex.value = (searchIndex.value + 1) % searchResults.value.length
-  scrollToSearchResult(searchResults.value[searchIndex.value])
+  scrollToSearchResult(searchResults.value[searchIndex.value]!)
 }
 
 const goToPrevResult = () => {
   if (searchResults.value.length === 0) return
   const len = searchResults.value.length
   searchIndex.value = (searchIndex.value - 1 + len) % searchResults.value.length
-  scrollToSearchResult(searchResults.value[searchIndex.value])
+  scrollToSearchResult(searchResults.value[searchIndex.value]!)
 }
 
 const handleSearchInput = (event: KeyboardEvent) => {

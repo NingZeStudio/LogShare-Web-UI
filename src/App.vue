@@ -6,7 +6,6 @@ import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import ThemeSettings from '@/components/ThemeSettings.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 
-const toggleCount = ref(0)
 const showEasterEgg = ref(false)
 const showCookieConsent = ref(false)
 const isThemeSettingsOpen = ref(false)
