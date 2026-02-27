@@ -8,7 +8,6 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* 圆角变量 */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -17,7 +16,6 @@
   --radius-3xl: 2rem;
   --radius-full: 9999px;
 
-  /* 浅色模式配色 */
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
@@ -38,17 +36,15 @@
   --input: 214.3 31.8% 91.4%;
   --ring: 222.2 84% 4.9%;
 
-  /* 自定义背景 */
   --custom-background-image: none;
   --background-blur: 10px;
   --background-opacity: 0.5;
 }
 
 .dark {
-  /* 深色模式配色 - #2D2D2D 和 #0F0F0F 色系 */
-  --background: 0 0% 6%;        /* #0F0F0F */
+  --background: 0 0% 6%;
   --foreground: 0 0% 95%;
-  --card: 0 0% 18%;              /* #2D2D2D */
+  --card: 0 0% 18%;
   --card-foreground: 0 0% 95%;
   --popover: 0 0% 18%;
   --popover-foreground: 0 0% 95%;

@@ -37,7 +37,7 @@
 }
 
 .level-notice {
-    background-color: rgba(163, 216, 245, 0.1); /* Light blue with 10% opacity */
+    background-color: rgba(163, 216, 245, 0.1);
     padding: 2px 4px;
     border-radius: 3px;
     display: inline-block;
@@ -46,7 +46,7 @@
 }
 
 .level-debug {
-    background-color: rgba(163, 216, 245, 0.05); /* Light blue with 5% opacity */
+    background-color: rgba(163, 216, 245, 0.05);
     padding: 2px 4px;
     border-radius: 3px;
     display: inline-block;
@@ -56,7 +56,7 @@
 
 .level-warning {
     color: #FF6625;
-    background-color: rgba(255, 102, 37, 0.1); /* #FF6625 with 10% opacity */
+    background-color: rgba(255, 102, 37, 0.1);
     padding: 2px 4px;
     border-radius: 3px;
     display: inline-block;
@@ -69,7 +69,7 @@
 .level-emergency,
 .level-stacktrace {
     color: #F62451;
-    background-color: rgba(246, 36, 81, 0.1); /* #F62451 with 10% opacity */
+    background-color: rgba(246, 36, 81, 0.1);
     padding: 2px 4px;
     border-radius: 3px;
     display: inline-block;
@@ -77,7 +77,6 @@
     word-break: break-word;
 }
 
-/* Fallback styles for any unrecognized level types */
 .level-unknown {
     color: #f0f0f0;
     background-color: rgba(128, 128, 128, 0.05);
@@ -88,7 +87,6 @@
     word-break: break-word;
 }
 
-/* Robust container styles */
 .log-container {
     width: 100%;
     max-width: 100%;
@@ -106,40 +104,35 @@
     overflow-y: auto;
 }
 
-/* Better accessibility and contrast */
 .level-error,
 .level-critical,
 .level-emergency {
     font-weight: bold;
-    border-left: 2px solid #F62451;
-    padding-left: 6px;
 }
 
-/* Responsive adjustments */
 @media screen and (max-width: 768px) {
     .level {
         font-size: 12px;
         padding: 1px 2px;
     }
-    
+
     .level-title {
         padding: 0 4px;
         font-size: 12px;
     }
-    
+
     .log-container {
         font-size: 12px;
         padding: 5px;
     }
 }
 
-/* High contrast mode support */
 @media (prefers-contrast: high) {
     .level-warning {
         background-color: rgba(255, 102, 37, 0.3) !important;
         color: #000 !important;
     }
-    
+
     .level-error,
     .level-critical,
     .level-emergency,
@@ -149,7 +142,6 @@
     }
 }
 
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;
@@ -158,17 +150,16 @@
     }
 }
 
-/* Print styles */
 @media print {
     .level {
         background: transparent !important;
         color: black !important;
     }
-    
+
     .level-warning {
         background: rgba(255, 102, 37, 0.2) !important;
     }
-    
+
     .level-error,
     .level-critical,
     .level-emergency,
@@ -335,4 +326,57 @@
     .multiline {
         padding-left: 0;
     }
+}
+
+.level-stack-frame {
+    color: #cccccc;
+}
+
+.level-stack-class {
+    color: #FFAA00;
+    font-weight: 500;
+}
+
+.level-stack-location {
+    color: #55FFFF;
+}
+
+.level-stack-caused-by {
+    color: #FF5555;
+    font-weight: 600;
+}
+
+.level-stack-exception {
+    color: #FF5555;
+    font-weight: 600;
+}
+
+.level-info-prefix {
+    color: #55FF55;
+    font-weight: 500;
+}
+
+.level-timestamp {
+    color: #5555FF;
+    font-weight: 500;
+}
+
+.dark .level-stack-frame {
+    color: #aaaaaa;
+}
+
+.dark .level-stack-class {
+    color: #FFCC00;
+}
+
+.dark .level-stack-location {
+    color: #55FFFF;
+}
+
+.dark .level-stack-caused-by {
+    color: #FF6666;
+}
+
+.dark .level-stack-exception {
+    color: #FF6666;
 }

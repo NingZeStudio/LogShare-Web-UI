@@ -1,0 +1,30 @@
+# robots.txt for LogShare.CN
+# https://www.logshare.cn/robots.txt
+
+User-agent: *
+Allow: /
+
+# 允许所有搜索引擎抓取
+Allow: /api-docs
+Allow: /imprint
+Allow: /privacy
+
+# 日志页面不需要被索引（动态内容）
+Disallow: /*?*
+Disallow: /*.log$
+
+# Sitemap 位置
+Sitemap: https://www.logshare.cn/sitemap.xml
+
+# 常见搜索引擎特定规则
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+# 爬取延迟（避免服务器过载）
+Crawl-delay: 1

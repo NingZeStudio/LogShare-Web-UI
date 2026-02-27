@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { apiClient } from '@/lib/api'
+import { apiClient } from '@/lib/ApiClient'
 import { useRouter } from 'vue-router'
 import { t } from '@/lib/i18n'
 import { parseArchive, isArchiveFile, isTextFile, type ExtractedFile } from '@/lib/archiveParser'
@@ -255,7 +255,7 @@ const copyAllLinks = async () => {
     <div class="container mx-auto px-4 py-8">
       <div class="flex flex-col items-center text-center space-y-4 mb-8">
         <h1 class="text-4xl md:text-5xl font-bold tracking-tight">
-           LogShare.CN <small>v1.1.0</small>
+           LogShare.CN <small>v1.2.0</small>
         </h1>
 
         <p class="text-muted-foreground max-w-xl">

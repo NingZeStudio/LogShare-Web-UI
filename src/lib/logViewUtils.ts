@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { apiClient, getApiUrl } from '@/lib/api'
+import { apiClient, getApiUrl } from '@/lib/ApiClient'
 import { parseLog } from '@/lib/logParser'
 import MarkdownIt from 'markdown-it'
 import {

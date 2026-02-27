@@ -4,6 +4,7 @@ import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { X, Palette } from 'lucide-vue-next'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import ThemeSettings from '@/components/ThemeSettings.vue'
+import PwaUpdateToast from '@/components/PwaUpdateToast.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 
 const showEasterEgg = ref(false)
@@ -67,7 +68,7 @@ onMounted(() => {
     <header class="border-b bg-card/80 sticky top-0 z-40 w-full backdrop-blur-xl shadow-sm">
       <div class="container mx-auto px-4 h-16 flex items-center justify-between">
         <RouterLink to="/" class="flex items-center gap-2 font-bold text-xl">
-          <span class="text-primary">LogShare.CN</span><sup class="text-xs text-muted-foreground">ᴺᵉˣᵀ</sup>
+          <span class="text-primary">LogShare.CN</span><sup class="text-xs text-muted-foreground">v1.2.0</sup>
         </RouterLink>
         <nav class="flex items-center gap-2">
           <RouterLink to="/api-docs" class="text-sm font-bold bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">API 文档</RouterLink>
@@ -90,7 +91,7 @@ onMounted(() => {
     <footer class="border-t py-4 bg-muted/20">
       <div class="container mx-auto px-4 flex flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
         <div class="text-left">
-          &copy; 2026 LogShare.CN
+          &copy; 2026 LogShare.CN ＆ Pwa
         </div>
         <div class="flex items-center gap-3">
           <RouterLink to="/imprint" class="hover:underline transition-colors">法律声明</RouterLink>
@@ -136,6 +137,9 @@ onMounted(() => {
 
     <!-- Theme Settings Panel -->
     <ThemeSettings v-model:open="isThemeSettingsOpen" />
+
+    <!-- PWA Update Toast -->
+    <PwaUpdateToast />
   </div>
 </template>
 

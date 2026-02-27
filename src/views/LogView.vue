@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { apiClient } from '@/lib/api'
+import { apiClient } from '@/lib/ApiClient'
 import { parseLog } from '@/lib/logParser'
 import MarkdownIt from 'markdown-it'
 import { saveAIAnalysisRecord } from '@/lib/localStorage'
 import { setPageTitle } from '@/lib/pageTitle'
 import { t } from '@/lib/i18n'
+import '@/assets/LogsAnalysis.css'
 import {
   WrapText,
   ArrowDownToLine,
@@ -578,6 +579,7 @@ const scrollToFooter = () => {
 <style>
 .log-content table {
   width: 100%;
+  border-collapse: collapse;
 }
 
 .log-content .line-number-container {
@@ -591,6 +593,11 @@ const scrollToFooter = () => {
 
 .log-no-wrap .log-content {
   white-space: pre;
+  overflow-x: auto;
+}
+
+.log-no-wrap .log-content table {
+  width: auto;
 }
 
 .log-no-wrap .level {

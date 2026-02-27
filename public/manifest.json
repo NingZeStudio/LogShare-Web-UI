@@ -1,0 +1,28 @@
+{
+  "name": "LogShare.CN - Minecraft 日志分享与分析平台",
+  "short_name": "LogShare.CN",
+  "description": "轻松上传、分享和分析 Minecraft/Hytale 服务器日志。AI 智能分析，快速定位问题，提供解决方案。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#2d87d3",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/img/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["developer tools", "utilities"],
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "prefer_related_applications": false
+}
