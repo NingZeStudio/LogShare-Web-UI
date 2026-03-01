@@ -321,55 +321,58 @@ const scrollToFooter = () => {
     <p class="text-muted-foreground">{{ error }}</p>
   </div>
 
-  <div v-else :class="isFullscreen ? 'fixed inset-0 z-50 bg-background' : 'container mx-auto px-4 py-6'">
+  <div v-else :class="isFullscreen ? 'fixed inset-0 z-50 bg-background' : 'container mx-auto px-2 sm:px-4 py-6'">
     <div :class="isFullscreen ? 'h-full flex flex-col' : 'flex flex-col lg:flex-row gap-6'">
       <div v-if="!isFullscreen" class="w-full lg:w-80 flex-shrink-0 space-y-4">
         <div class="rounded-lg border bg-card p-4 shadow-sm">
-          <h1 class="text-base font-bold break-all mb-1">{{ log.title }}</h1>
-          <p class="text-xs text-muted-foreground mb-4">ID: {{ log.id }}</p>
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div class="min-w-0 flex-1">
+              <h1 class="text-base font-bold break-all">{{ log.title }}</h1>
+              <p class="text-xs text-muted-foreground">ID: {{ log.id }}</p>
+            </div>
+            <button
+              @click="toggleFullscreen"
+              class="flex-shrink-0 p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
+              :title="isFullscreen ? t('exit_fullscreen') : t('fullscreen')"
+            >
+              <Maximize2 class="h-4 w-4" />
+            </button>
+          </div>
 
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-4 gap-1.5 mb-3">
             <button
               @click="downloadLog"
-              class="inline-flex items-center justify-center gap-1.5 text-sm bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-2 rounded-md transition-colors"
+              class="flex items-center justify-center gap-1 text-xs whitespace-nowrap bg-secondary hover:bg-secondary/80 text-secondary-foreground px-2 py-2 rounded-md transition-colors"
             >
-              <Download class="h-4 w-4" />
-              {{ t('download') }}
+              <Download class="h-3.5 w-3.5 flex-shrink-0" />
+              <span class="text-[13px]">下载</span>
             </button>
             <button
               @click="toggleErrors"
               :class="showErrorsOnly ? 'bg-destructive text-destructive-foreground' : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'"
-              class="inline-flex items-center justify-center gap-1.5 text-sm px-3 py-2 rounded-md transition-colors"
+              class="flex items-center justify-center gap-1 text-xs whitespace-nowrap px-2 py-2 rounded-md transition-colors"
             >
-              <AlertTriangle class="h-4 w-4" />
-              {{ showErrorsOnly ? t('show_all') : t('show_errors_only') }}
-            </button>
-            <button
-              @click="deleteLog"
-              class="inline-flex items-center justify-center gap-1.5 text-sm bg-destructive hover:bg-destructive/90 text-destructive-foreground px-3 py-2 rounded-md transition-colors"
-            >
-              <Trash2 class="h-4 w-4" />
-              {{ t('delete') }}
+              <AlertTriangle class="h-3.5 w-3.5 flex-shrink-0" />
+              <span class="text-[13px]">{{ showErrorsOnly ? '全部' : '错误' }}</span>
             </button>
             <button
               @click="copyShareMessage"
-              :class="isCopySuccess ? 'bg-green-600 hover:bg-green-700' : 'bg-primary hover:bg-primary/90'"
-              class="inline-flex items-center justify-center gap-1.5 text-sm text-primary-foreground px-3 py-2 rounded-md transition-colors"
+              :class="isCopySuccess ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-primary hover:bg-primary/90 text-background'"
+              class="flex items-center justify-center gap-1 text-xs whitespace-nowrap px-2 py-2 rounded-md transition-colors"
             >
-              <Share2 class="h-4 w-4" />
-              {{ isCopySuccess ? t('copied') : t('share') }}
+              <Share2 class="h-3.5 w-3.5 flex-shrink-0" />
+              <span class="text-[13px]">{{ isCopySuccess ? '已复制' : '分享' }}</span>
+            </button>
+            <button
+              @click="deleteLog"
+              class="flex items-center justify-center gap-1 text-xs whitespace-nowrap bg-destructive hover:bg-destructive/90 text-destructive-foreground px-2 py-2 rounded-md transition-colors"
+            >
+              <Trash2 class="h-3.5 w-3.5 flex-shrink-0" />
+              <span class="text-[13px]">删除</span>
             </button>
           </div>
 
-          <button
-            @click="toggleFullscreen"
-            class="w-full mt-2 inline-flex items-center justify-center gap-1.5 text-sm bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-2 rounded-md transition-colors"
-          >
-            <Maximize2 class="h-4 w-4" />
-            {{ isFullscreen ? t('exit_fullscreen') : t('fullscreen') }}
-          </button>
-
-          <div class="flex items-center justify-between mt-4 pt-3 border-t">
+          <div class="flex items-center justify-between pt-3 border-t">
             <div class="flex items-center gap-2">
               <WrapText class="h-4 w-4 text-muted-foreground" />
               <label class="text-sm text-muted-foreground cursor-select-none">{{ t('auto_wrap') }}</label>
