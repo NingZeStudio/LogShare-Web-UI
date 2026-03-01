@@ -26,7 +26,8 @@ import {
   AlertTriangle,
   Info,
   Server,
-  ArrowUp
+  ArrowUp,
+  Code
 } from 'lucide-vue-next'
 
 const md = new MarkdownIt({ html: false, linkify: true })
@@ -332,7 +333,7 @@ const scrollToFooter = () => {
             </div>
             <button
               @click="toggleFullscreen"
-              class="flex-shrink-0 p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
+              class="flex-shrink-0 p-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md transition-colors"
               :title="isFullscreen ? t('exit_fullscreen') : t('fullscreen')"
             >
               <Maximize2 class="h-4 w-4" />
@@ -374,18 +375,23 @@ const scrollToFooter = () => {
 
           <div class="flex items-center justify-between pt-3 border-t">
             <div class="flex items-center gap-2">
-              <WrapText class="h-4 w-4 text-muted-foreground" />
-              <label class="text-sm text-muted-foreground cursor-select-none">{{ t('auto_wrap') }}</label>
               <button
                 @click="wrapLines = !wrapLines"
-                :class="wrapLines ? 'bg-primary' : 'bg-muted'"
-                class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
+                :class="wrapLines ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'"
+                class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
               >
-                <span
-                  :class="wrapLines ? 'translate-x-4' : 'translate-x-0.5'"
-                  class="inline-block h-4 w-4 transform rounded-full bg-background transition-transform"
-                />
+                <WrapText class="h-3.5 w-3.5" />
+                自动换行
               </button>
+              <a
+                :href="`https://api.logshare.cn/1/raw/${id}`"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground px-2.5 py-1.5 rounded-md transition-colors"
+              >
+                <Code class="h-3.5 w-3.5" />
+                原始日志
+              </a>
             </div>
             <button
               @click="scrollToFooter"
@@ -394,6 +400,13 @@ const scrollToFooter = () => {
               <ArrowDownToLine class="h-3.5 w-3.5" />
               {{ t('scroll_footer') }}
             </button>
+          </div>
+
+          <div class="mt-3 p-3 rounded-md border border-amber-500/50 bg-amber-50 dark:bg-amber-950/30">
+            <p class="text-sm text-amber-800 dark:text-amber-200 font-medium">
+              <Info class="h-4 w-4 inline mr-1.5 -mt-0.5" />
+              {{ t('tips') }}
+            </p>
           </div>
         </div>
 
@@ -472,7 +485,6 @@ const scrollToFooter = () => {
               <Sparkles class="h-4 w-4" />
               {{ t('start_analysis') }}
             </button>
-            <p class="text-xs text-muted-foreground mt-2 text-center">{{ t('analysis_disclaimer') }}</p>
           </div>
           <div v-else-if="analyzing" class="text-center py-4">
             <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
@@ -501,12 +513,13 @@ const scrollToFooter = () => {
               <span class="font-medium text-right break-all max-w-[50%]">{{ info.value }}</span>
             </div>
           </div>
+                  <div class="rounded-md border bg-muted/50 p-3 text-xs text-muted-foreground">
+          <Info class="h-3.5 w-3.5 inline mr-1" />
+          {{ t('analysis_disclaimer') }}
+        </div>
         </div>
 
-        <div class="rounded-md border bg-muted/50 p-3 text-xs text-muted-foreground">
-          <Info class="h-3.5 w-3.5 inline mr-1" />
-          {{ t('tips') }}
-        </div>
+
       </div>
 
       <div :class="isFullscreen ? 'flex-1' : 'w-full lg:flex-1 lg:max-w-none'">
