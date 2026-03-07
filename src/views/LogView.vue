@@ -248,89 +248,86 @@ const scrollToFooter = () => {
   </div>
 
   <div v-else :class="isFullscreen ? 'fixed inset-0 z-50 bg-background' : 'container mx-auto px-2 sm:px-4 py-6'">
-    <div :class="isFullscreen ? 'h-full flex flex-col' : 'flex flex-col lg:flex-row gap-6'">
-      <div v-if="!isFullscreen" class="w-full lg:w-80 flex-shrink-0 space-y-4">
+    <div :class="isFullscreen ? 'h-full flex flex-col' : 'flex flex-col gap-6'">
+      <div v-if="!isFullscreen" class="space-y-4">
         <div class="rounded-lg border bg-card p-4 shadow-sm">
-          <div class="flex items-start justify-between gap-2 mb-3">
+          <div class="flex items-center justify-between gap-3 mb-4">
             <div class="min-w-0 flex-1">
-              <h1 class="text-base font-bold break-all">{{ log.title }}</h1>
+              <h1 class="text-lg font-bold break-all">{{ log.title }}</h1>
               <p class="text-xs text-muted-foreground">ID: {{ log.id }}</p>
             </div>
             <button
               @click="toggleFullscreen"
-              class="flex-shrink-0 p-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md transition-colors"
+              class="flex-shrink-0 p-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md transition-colors w-fit"
               :title="isFullscreen ? t('exit_fullscreen') : t('fullscreen')"
             >
               <Maximize2 class="h-4 w-4" />
             </button>
           </div>
 
-          <div class="grid grid-cols-4 gap-1.5 mb-3">
+          <div class="flex flex-wrap items-center gap-2 mb-3">
             <button
               @click="downloadLog"
-              class="flex items-center justify-center gap-1 text-xs whitespace-nowrap bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md transition-colors py-2.5"
+              class="flex items-center justify-center gap-1.5 text-sm whitespace-nowrap bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md transition-colors px-3 py-2"
             >
-              <Download class="h-3.5 w-3.5 flex-shrink-0" />
-              <span class="text-[13px]">下载</span>
+              <Download class="h-4 w-4 flex-shrink-0" />
+              <span>下载</span>
             </button>
             <button
               @click="toggleErrors"
               :class="showErrorsOnly ? 'bg-destructive text-destructive-foreground' : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'"
-              class="flex items-center justify-center gap-1 text-xs whitespace-nowrap rounded-md transition-colors py-2.5"
+              class="flex items-center justify-center gap-1.5 text-sm whitespace-nowrap rounded-md transition-colors px-3 py-2"
             >
-              <AlertTriangle class="h-3.5 w-3.5 flex-shrink-0" />
-              <span class="text-[13px]">{{ showErrorsOnly ? '全部' : '错误' }}</span>
+              <AlertTriangle class="h-4 w-4 flex-shrink-0" />
+              <span>{{ showErrorsOnly ? '显示全部' : '仅错误' }}</span>
             </button>
             <button
               @click="copyShareMessage"
               :class="isCopySuccess ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-primary hover:bg-primary/90 text-background'"
-              class="flex items-center justify-center gap-1 text-xs whitespace-nowrap rounded-md transition-colors py-2.5"
+              class="flex items-center justify-center gap-1.5 text-sm whitespace-nowrap rounded-md transition-colors px-3 py-2"
             >
-              <Share2 class="h-3.5 w-3.5 flex-shrink-0" />
-              <span class="text-[13px]">{{ isCopySuccess ? '已复制' : '分享' }}</span>
+              <Share2 class="h-4 w-4 flex-shrink-0" />
+              <span>{{ isCopySuccess ? '已复制' : '分享' }}</span>
             </button>
             <button
               @click="deleteLog"
-              class="flex items-center justify-center gap-1 text-xs whitespace-nowrap bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-md transition-colors py-2.5"
+              class="flex items-center justify-center gap-1.5 text-sm whitespace-nowrap bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-md transition-colors px-3 py-2"
             >
-              <Trash2 class="h-3.5 w-3.5 flex-shrink-0" />
-              <span class="text-[13px]">删除</span>
+              <Trash2 class="h-4 w-4 flex-shrink-0" />
+              <span>删除</span>
             </button>
-          </div>
-
-          <div class="flex items-center justify-between pt-3 border-t">
-            <div class="flex items-center gap-2">
-              <button
-                @click="wrapLines = !wrapLines"
-                :class="wrapLines ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'"
-                class="inline-flex items-center gap-1.5 text-xs px-3 py-2 rounded-md transition-colors"
-              >
-                <WrapText class="h-3.5 w-3.5" />
-                自动换行
-              </button>
-              <a
-                :href="`https://api.logshare.cn/1/raw/${id}`"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-1.5 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-2 rounded-md transition-colors"
-              >
-                <Code class="h-3.5 w-3.5" />
-                原始日志
-              </a>
-            </div>
+            <button
+              @click="wrapLines = !wrapLines"
+              :class="wrapLines ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'"
+              class="flex items-center gap-1.5 text-sm whitespace-nowrap rounded-md transition-colors px-3 py-2"
+            >
+              <WrapText class="h-4 w-4" />
+              <span>{{ wrapLines ? '换行开启' : '换行关闭' }}</span>
+            </button>
+            <a
+              :href="`https://api.logshare.cn/1/raw/${id}`"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center gap-1.5 text-sm whitespace-nowrap bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md transition-colors px-3 py-2"
+            >
+              <Code class="h-4 w-4" />
+              <span>原始日志</span>
+            </a>
             <button
               @click="scrollToFooter"
-              class="inline-flex items-center gap-1 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-2 rounded-md transition-colors"
+              class="flex items-center gap-1.5 text-sm whitespace-nowrap bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md transition-colors px-3 py-2"
             >
-              <ArrowDownToLine class="h-3.5 w-3.5" />
-              {{ t('scroll_footer') }}
+              <ArrowDownToLine class="h-4 w-4" />
+              <span>{{ t('scroll_footer') }}</span>
             </button>
           </div>
 
-          <div class="mt-3 p-3 rounded-md border border-amber-500/50 bg-amber-50 dark:bg-amber-950/30">
-            <p class="text-sm text-amber-800 dark:text-amber-200 font-medium">
-              {{ t('tips') }}
-            </p>
+          <div class="mt-3">
+            <span class="inline-block p-3 rounded-md border border-amber-500/50 bg-amber-50 dark:bg-amber-950/30">
+              <p class="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                {{ t('tips') }}
+              </p>
+            </span>
           </div>
         </div>
 
@@ -369,14 +366,14 @@ const scrollToFooter = () => {
             <Server class="h-4 w-4" />
             {{ t('server_info') }}
           </h3>
-          <div class="space-y-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             <div
               v-for="info in log.analysis.information"
               :key="info.label"
-              class="flex justify-between text-sm py-2 border-b last:border-0"
+              class="text-sm py-2 px-3 rounded-md bg-secondary/50"
             >
-              <span class="text-muted-foreground">{{ info.label }}</span>
-              <span class="font-medium text-right break-all max-w-[50%]">{{ info.value }}</span>
+              <span class="text-muted-foreground">{{ info.label }}: </span>
+              <span class="font-medium">{{ info.value }}</span>
             </div>
           </div>
         </div>
@@ -384,7 +381,7 @@ const scrollToFooter = () => {
 
       </div>
 
-      <div :class="isFullscreen ? 'flex-1 flex flex-col min-h-0' : 'w-full lg:flex-1 lg:max-w-none'">
+      <div :class="isFullscreen ? 'flex-1 flex flex-col min-h-0' : 'w-full'">
         <div class="rounded-t-lg bg-[#2d2d2d] px-4 py-2.5 flex items-center justify-between border-b border-gray-600">
           <div class="flex items-center gap-2">
             <div class="flex gap-1.5">
@@ -528,5 +525,15 @@ mark {
 
 .log-content {
   transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.log-content p {
+  line-height: 1.3;
 }
 </style>

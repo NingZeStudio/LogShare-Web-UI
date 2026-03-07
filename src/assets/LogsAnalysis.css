@@ -91,9 +91,10 @@
     width: 100%;
     max-width: 100%;
     overflow-x: auto;
-    font-family: 'Courier New', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-    font-size: 14px;
-    line-height: 1.4;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.5;
     background-color: #1a1a1a;
     color: #f0f0f0;
     padding: 10px;

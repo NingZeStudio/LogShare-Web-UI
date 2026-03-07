@@ -13,9 +13,16 @@ export function parseLog(raw: string, showLineNumbers: boolean = true): string {
       if (lines.length === index + 1 && line === '') return
 
       let level = 'info'
+      // 检测错误级别：WARN/ERROR/FATAL/SEVERE 等关键字
       if (line.match(/(\/|: |\[)WARN(ING)?(\]|:| )/i)) level = 'warning'
       else if (line.match(/(\/|: |\[)(ERR(OR)?|FATAL|SEVERE)(\]|:| )/i)) level = 'error'
       else if (line.match(/(\/|: |\[)(DEBUG)(\]|:| )/i)) level = 'debug'
+      // Java 堆栈错误：Exception/Error/Throwable 类名
+      else if (/\b[A-Za-z0-9_$]*(?:Exception|Error|Throwable)\b/.test(line)) level = 'error'
+      // Java 堆栈行：以 "at " 开头的行（包括缩进）
+      else if (/^\s*at\s+/.test(line)) level = 'error'
+      // "Caused by:" 行
+      else if (/^Caused by:\s*/.test(line)) level = 'error'
 
       const entryClass = level === 'error' ? 'entry-error' : 'entry-no-error'
       const levelClass = `level-${level}`
@@ -35,10 +42,16 @@ export function parseLog(raw: string, showLineNumbers: boolean = true): string {
     const lineNumber = index + 1
     let level = 'info'
 
+    // 检测错误级别：WARN/ERROR/FATAL/SEVERE 等关键字
     if (line.match(/(\/|: |\[)WARN(ING)?(\]|:| )/i)) level = 'warning'
     else if (line.match(/(\/|: |\[)(ERR(OR)?|FATAL|SEVERE)(\]|:| )/i)) level = 'error'
     else if (line.match(/(\/|: |\[)(DEBUG)(\]|:| )/i)) level = 'debug'
+    // Java 堆栈错误：Exception/Error/Throwable 类名
     else if (/\b[A-Za-z0-9_$]*(?:Exception|Error|Throwable)\b/.test(line)) level = 'error'
+    // Java 堆栈行：以 "at " 开头的行（包括缩进）
+    else if (/^\s*at\s+/.test(line)) level = 'error'
+    // "Caused by:" 行
+    else if (/^Caused by:\s*/.test(line)) level = 'error'
 
     const entryClass = level === 'error' ? 'entry-error' : 'entry-no-error'
     const levelClass = `level-${level}`
