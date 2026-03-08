@@ -69,6 +69,8 @@ export const zhCN = {
   'field': '字段',
   'type': '类型',
   'description': '描述',
+  'property': '属性',
+  'value': '值',
   'request_params': '请求参数',
   'call_examples': '调用示例',
   'success_response': '成功响应',
@@ -105,7 +107,31 @@ export const zhCN = {
   'announcement_ai_upgrade_desc': 'AI 大模型智能分析功能暂时下架进行升级维护，我们将更换更强大的模型并准备专项资金以提供更好的服务。',
   'announcement_ai_upgrade_reason_1': '更换更强大的 AI 模型，提升分析准确度',
   'announcement_ai_upgrade_reason_2': '准备专项资金，确保服务稳定运行',
-  'announcement_footer': '感谢您的理解与支持！'
+  'announcement_footer': '感谢您的理解与支持！',
+
+  // 教程相关
+  'tutorials': '教程中心',
+  'tutorials_desc': '常见问题解决方案和使用教程',
+  'tutorial_mobileglues_title': 'Android 端 Minecraft 渲染器配置教程 - MobileGlues',
+
+  // 赞助相关
+  'sponsor': '赞助支持',
+  'sponsor_title': '赞助我们',
+  'sponsor_description': '您的支持是我们前进的动力，所有赞助将用于服务器、API 调用和其他基础设施支出。',
+  'sponsor_qrcode': '二维码赞助',
+  'sponsor_afdian': '爱发电',
+  'sponsor_afdian_desc': '在爱发电上支持我们，享受更多专属福利。',
+  'sponsor_goto_afdian': '前往爱发电',
+  'sponsor_afdian_note': '支持月付和一次性赞助',
+  'sponsor_qrcode_placeholder': '二维码赞助暂未开放',
+  'sponsor_list': '赞助者列表',
+  'sponsor_count_unit': '位赞助者',
+  'sponsor_no_sponsors': '暂无赞助者，成为第一位！',
+  'sponsor_footer_thanks': '感谢您的支持！',
+  'sponsor_footer_note': '所有赞助将用于项目运营和发展',
+  'sponsor_alipay': '支付宝',
+  'sponsor_wechat': '微信',
+  'sponsor_scan_to_sponsor': '扫码赞助'
 };
 
 /**
@@ -174,6 +200,8 @@ export const zhTW = {
   'field': '欄位',
   'type': '類型',
   'description': '描述',
+  'property': '屬性',
+  'value': '值',
   'request_params': '請求參數',
   'call_examples': '呼叫範例',
   'success_response': '成功回應',
@@ -209,7 +237,31 @@ export const zhTW = {
   'announcement_ai_upgrade_desc': 'AI 大模型智能分析功能暫時下架進行升級維護，我們將更換更強大的模型並準備專項資金以提供更好的服務。',
   'announcement_ai_upgrade_reason_1': '更換更強大的 AI 模型，提升分析準確度',
   'announcement_ai_upgrade_reason_2': '準備專項資金，確保服務穩定運行',
-  'announcement_footer': '感謝您的理解與支援！'
+  'announcement_footer': '感謝您的理解與支援！',
+
+  // 教程相關
+  'tutorials': '教程中心',
+  'tutorials_desc': '常見問題解決方案和使用教程',
+  'tutorial_mobileglues_title': 'Android 端 Minecraft 渲染器配置教程 - MobileGlues',
+
+  // 贊助相關
+  'sponsor': '贊助支持',
+  'sponsor_title': '贊助我們',
+  'sponsor_description': '您的支持是我們前進的動力，所有贊助將用於伺服器、API 調用和其他基礎設施支出。',
+  'sponsor_qrcode': '二維碼贊助',
+  'sponsor_afdian': '愛發電',
+  'sponsor_afdian_desc': '在愛發電上支持我們，享受更多專屬福利。',
+  'sponsor_goto_afdian': '前往愛發電',
+  'sponsor_afdian_note': '支持月付和一次性贊助',
+  'sponsor_qrcode_placeholder': '二維碼贊助暫未開放',
+  'sponsor_list': '贊助者列表',
+  'sponsor_count_unit': '位贊助者',
+  'sponsor_no_sponsors': '暫無贊助者，成為第一位！',
+  'sponsor_footer_thanks': '感謝您的支持！',
+  'sponsor_footer_note': '所有贊助將用於項目運營和發展',
+  'sponsor_alipay': '支付寶',
+  'sponsor_wechat': '微信',
+  'sponsor_scan_to_sponsor': '掃碼贊助'
 };
 
 // 导出所有语言包

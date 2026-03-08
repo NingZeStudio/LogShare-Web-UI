@@ -41,17 +41,10 @@ const showMenu = ref(false);
 const currentLang = ref(detectSystemLanguage());
 const menuRef = ref<HTMLDivElement | null>(null);
 
-/**
- * 切換語言選單的顯示狀態
- */
 const toggleLanguageMenu = () => {
   showMenu.value = !showMenu.value;
 };
 
-/**
- * 切換語言
- * @param lang - 要切換的語言代碼 ('zh-CN' 或 'zh-TW')
- */
 const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
   currentLang.value = lang;
   localStorage.setItem('preferred_language', lang);
@@ -60,10 +53,6 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
   window.location.reload();
 };
 
-/**
- * 點擊外部區域時關閉選單
- * @param event - 點擊事件
- */
 const handleClickOutside = (event: MouseEvent) => {
   if (menuRef.value && !menuRef.value.contains(event.target as Node)) {
     showMenu.value = false;
@@ -95,39 +84,36 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background-color 0.2s;
 }
 
 .language-button:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
+.dark .language-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .language-menu {
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   min-width: 120px;
   margin-top: 4px;
-}
-
-.dark .language-menu {
-  background: #374151;
-  border-color: #4b5563;
+  overflow: hidden;
 }
 
 .language-option {
   padding: 8px 12px;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
   transition: background-color 0.2s;
-}
-
-.dark .language-option {
-  border-bottom-color: #4b5563;
 }
 
 .language-option:last-child {
@@ -135,24 +121,15 @@ onUnmounted(() => {
 }
 
 .language-option:hover {
-  background-color: #f3f4f6;
-}
-
-.dark .language-option:hover {
-  background-color: #4b5563;
+  background-color: var(--muted);
 }
 
 .language-option.active {
-  background-color: #dbeafe;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
   font-weight: 500;
 }
 
-.dark .language-option.active {
-  background-color: #3b82f6;
-  color: white;
-}
-
-/* 菜单淡入淡出动画 */
 .menu-fade-enter-active,
 .menu-fade-leave-active {
   transition: all 0.2s ease;
@@ -164,7 +141,6 @@ onUnmounted(() => {
   transform: translateY(-8px);
 }
 
-/* 列表项动画 */
 .list-enter-active,
 .list-leave-active {
   transition: all 0.3s ease;

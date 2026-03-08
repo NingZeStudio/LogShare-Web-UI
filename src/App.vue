@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
-import { Palette, X } from 'lucide-vue-next'
-import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
-import ThemeSettings from '@/components/ThemeSettings.vue'
+import { X, Palette, Heart } from 'lucide-vue-next'
 import PwaUpdateToast from '@/components/PwaUpdateToast.vue'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt.vue'
 import AnnouncementDialog from '@/components/AnnouncementDialog.vue'
+import MobileNav from '@/components/MobileNav.vue'
+import ThemeSettings from '@/components/ThemeSettings.vue'
+import LanguageMenu from '@/components/LanguageMenu.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 
 const showEasterEgg = ref(false)
@@ -17,10 +18,6 @@ const easterEggImages = [
   'https://cdn.zeinklab.com/myfile/images/0b9453f27d4823ef.jpg',
   'https://cdn.zeinklab.com/myfile/images/8295488fa57aef04.jpeg'
 ]
-
-const openThemeSettings = () => {
-  isThemeSettingsOpen.value = true
-}
 
 const closeEasterEgg = () => {
   showEasterEgg.value = false
@@ -33,42 +30,44 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.theme-settings-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  color: inherit;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.theme-settings-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.dark .theme-settings-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-</style>
-
 <template>
   <div class="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased transition-colors duration-500">
     <header class="border-b bg-card/80 sticky top-0 z-40 w-full backdrop-blur-xl shadow-sm">
       <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+        <!-- Logo -->
         <RouterLink to="/" class="flex items-center gap-2 font-bold text-xl">
           <span class="text-primary">LogShare.CN</span><sup class="text-xs text-muted-foreground">v1.3.0 RC1</sup>
         </RouterLink>
-        <nav class="flex items-center gap-2">
-          <RouterLink to="/api-docs" class="text-sm font-bold bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">API 文档</RouterLink>
-          <LanguageSwitcher />
-          <button @click="openThemeSettings" class="theme-settings-button" aria-label="主题设置">
-            <Palette class="h-5 w-5" />
-          </button>
+
+        <!-- 中间导航链接 -->
+        <nav class="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+          <RouterLink to="/sponsor" class="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Heart class="h-4 w-4" />
+            赞助支持
+          </RouterLink>
+          <RouterLink to="/tutorials" class="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            教程中心
+          </RouterLink>
+          <RouterLink to="/api-docs" class="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            API 文档
+          </RouterLink>
         </nav>
+
+        <!-- 右侧工具按钮 -->
+        <div class="hidden lg:flex items-center gap-1 ml-auto">
+          <button
+            @click="isThemeSettingsOpen = true"
+            class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            aria-label="主题设置"
+          >
+            <Palette class="h-4 w-4" />
+            主题
+          </button>
+          <LanguageMenu />
+        </div>
+
+        <!-- 移动端菜单 -->
+        <MobileNav />
       </div>
     </header>
 
@@ -97,6 +96,7 @@ onMounted(() => {
           </a>
         </div>
         <div class="flex items-center gap-3">
+          <RouterLink to="/sponsor" class="hover:underline transition-colors">赞助支持</RouterLink>
           <RouterLink to="/imprint" class="hover:underline transition-colors">法律声明</RouterLink>
           <RouterLink to="/privacy" class="hover:underline transition-colors">隐私政策</RouterLink>
         </div>

@@ -34,10 +34,10 @@ export const sponsorConfig: SponsorConfig = {
   current: 0,
   // 爱发电链接
   afdianLink: 'https://afdian.com/a/your-id',
-  // 支付宝二维码图片路径 (放在 public/img/ 目录下)
-  alipayQrCode: '/img/qrcode/alipay.png',
-  // 微信二维码图片路径 (放在 public/img/ 目录下)
-  wechatQrCode: '/img/qrcode/wechat.png'
+  // 支付宝二维码图片路径
+  alipayQrCode: 'https://zs.lemwood.cn/支付宝.jpg',
+  // 微信二维码图片路径
+  wechatQrCode: 'https://zs.lemwood.cn/微信.png'
 }
 
 /**
@@ -45,32 +45,21 @@ export const sponsorConfig: SponsorConfig = {
  * 手动添加赞助者信息
  */
 export const sponsors: Sponsor[] = [
-  // 示例数据，请替换为真实的赞助者信息
   {
     id: 1,
-    name: '热心用户',
-    amount: 50,
+    name: 'ksgf452',
+    amount: 40,
     currency: 'CNY',
-    date: '2025-01-15',
-    message: '项目很棒，继续加油！',
+    date: '2026-03-08',
     platform: 'alipay'
   },
   {
     id: 2,
-    name: '匿名用户',
-    amount: 20,
+    name: '@习习中',
+    amount: 34,
     currency: 'CNY',
-    date: '2025-01-10',
+    date: '2026-03-08',
     platform: 'wechat'
-  },
-  {
-    id: 3,
-    name: 'Minecraft 爱好者',
-    amount: 100,
-    currency: 'CNY',
-    date: '2025-01-05',
-    message: '感谢你们提供的服务',
-    platform: 'afdian'
   }
 ]
 

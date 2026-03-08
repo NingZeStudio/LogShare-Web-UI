@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Heart, QrCode, ExternalLink, Coffee, Sparkles } from 'lucide-vue-next'
+import { Heart, QrCode, ExternalLink, Sparkles } from 'lucide-vue-next'
 import { sponsors, sponsorConfig, getTotalAmount, getSponsorCount, getPlatformIcon, getPlatformColor } from '@/data/sponsors'
 import { t } from '@/lib/i18n'
 import { setPageTitle } from '@/lib/pageTitle'
@@ -11,10 +11,6 @@ const selectedQrCode = ref<'alipay' | 'wechat'>('alipay')
 
 const totalAmount = computed(() => getTotalAmount())
 const sponsorCount = computed(() => getSponsorCount())
-const progressPercent = computed(() => {
-  if (!sponsorConfig.goal) return 0
-  return Math.min(100, Math.round((totalAmount.value / sponsorConfig.goal) * 100))
-})
 
 const sortedSponsors = computed(() => {
   return [...sponsors].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -36,34 +32,6 @@ const sortedSponsors = computed(() => {
         </h1>
         <p class="text-muted-foreground text-sm max-w-md mx-auto">
           {{ t('sponsor_description') }}
-        </p>
-      </div>
-
-      <!-- 目标进度卡片 -->
-      <div v-if="sponsorConfig.goal" class="bg-card border rounded-2xl p-6 mb-6 shadow-lg">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-2">
-            <Coffee class="h-5 w-5 text-amber-500" />
-            <span class="font-semibold">{{ t('sponsor_monthly_goal') }}</span>
-          </div>
-          <div class="text-right">
-            <span class="text-2xl font-bold text-red-500">¥{{ totalAmount }}</span>
-            <span class="text-muted-foreground text-sm"> / ¥{{ sponsorConfig.goal }}</span>
-          </div>
-        </div>
-        <div class="relative h-3 bg-secondary rounded-full overflow-hidden">
-          <div
-            class="absolute inset-y-0 left-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-full transition-all duration-500 ease-out"
-            :style="{ width: `${progressPercent}%` }"
-          ></div>
-        </div>
-        <div class="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-          <span>{{ t('sponsor_current') }}: ¥{{ totalAmount }}</span>
-          <span>{{ progressPercent }}%</span>
-        </div>
-        <p class="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-          <Sparkles class="h-3 w-3" />
-          {{ t('sponsor_goal_desc') }}
         </p>
       </div>
 
@@ -89,7 +57,7 @@ const sortedSponsors = computed(() => {
                   : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
               ]"
             >
-              支付宝
+              {{ t('sponsor_alipay') }}
             </button>
             <button
               @click="selectedQrCode = 'wechat'"
@@ -100,25 +68,21 @@ const sortedSponsors = computed(() => {
                   : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
               ]"
             >
-              微信
+              {{ t('sponsor_wechat') }}
             </button>
           </div>
 
           <!-- 二维码显示 -->
-          <div class="aspect-square bg-secondary/50 rounded-xl flex items-center justify-center mb-3 overflow-hidden">
+          <div class="bg-secondary/50 rounded-xl flex items-center justify-center mb-3 overflow-hidden min-h-[280px]">
             <img
               :src="selectedQrCode === 'alipay' ? sponsorConfig.alipayQrCode : sponsorConfig.wechatQrCode"
               :alt="selectedQrCode === 'alipay' ? '支付宝' : '微信'"
-              class="w-full h-full object-contain p-4"
+              class="max-w-full h-auto object-contain p-4"
               @error="(e) => { const target = e.target as HTMLImageElement; if (target) target.style.display = 'none' }"
             />
-            <div v-if="(!sponsorConfig.alipayQrCode || !sponsorConfig.wechatQrCode)" class="text-center p-4">
-              <QrCode class="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-              <p class="text-sm text-muted-foreground">{{ t('sponsor_qrcode_placeholder') }}</p>
-            </div>
           </div>
           <p class="text-xs text-center text-muted-foreground">
-            {{ selectedQrCode === 'alipay' ? '支付宝' : '微信 }}扫码赞助
+            {{ selectedQrCode === 'alipay' ? t('sponsor_alipay') : t('sponsor_wechat') }}{{ t('sponsor_scan_to_sponsor') }}
           </p>
         </div>
 
@@ -131,7 +95,7 @@ const sortedSponsors = computed(() => {
             <h2 class="text-lg font-semibold">{{ t('sponsor_afdian') }}</h2>
           </div>
 
-          <div class="aspect-square bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl flex items-center justify-center mb-3">
+          <div class="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl flex items-center justify-center mb-3 min-h-[280px]">
             <div class="text-center p-6">
               <Sparkles class="h-12 w-12 text-purple-500 mx-auto mb-3" />
               <p class="text-sm text-muted-foreground mb-4">{{ t('sponsor_afdian_desc') }}</p>

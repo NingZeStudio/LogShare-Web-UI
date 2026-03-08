@@ -43,6 +43,7 @@ export function parseLog(raw: string, showLineNumbers: boolean = true): string {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
     if (i === lines.length - 1 && line === '') continue
+    if (!line) continue
 
     const level = getLevel(line)
     const isHighlight = level === 'error' || level === 'warning'

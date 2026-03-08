@@ -4,6 +4,9 @@ import LogView from '../views/LogView.vue'
 import ApiDocsView from '../views/ApiDocsView.vue'
 import ImprintView from '../views/ImprintView.vue'
 import PrivacyPolicyView from '../views/PrivacyPolicyView.vue'
+import SponsorView from '../views/SponsorView.vue'
+import TutorialsView from '../views/TutorialsView.vue'
+import TutorialArticleView from '../views/TutorialArticleView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 
@@ -35,6 +38,24 @@ const router = createRouter({
       meta: { title: 'privacy' }
     },
     {
+      path: '/sponsor',
+      name: 'sponsor',
+      component: SponsorView,
+      meta: { title: 'sponsor' }
+    },
+    {
+      path: '/tutorials',
+      name: 'tutorials',
+      component: TutorialsView,
+      meta: { title: 'tutorials' }
+    },
+    {
+      path: '/tutorials/:id',
+      name: 'tutorial-article',
+      component: TutorialArticleView,
+      meta: { title: 'tutorialArticle' }
+    },
+    {
       path: '/:id',
       name: 'log',
       component: LogView,
@@ -54,10 +75,9 @@ router.beforeEach((to, _, next) => {
   const template = to.meta.title as string || getCurrentPageTemplate(to.name?.toString());
 
   if (template === 'log' && to.params.id) {
-    // 对于日志页面，我们需要等待组件加载后才能获取到标题
-    // 这里设置一个临时标题，实际标题会在LogView组件中更新
-    // 不要他妈手欠改这里的代码，除非你想要全站固定标题
     setPageTitle(template, { id: to.params.id as string });
+  } else if (template === 'tutorialArticle' && to.params.id) {
+    setPageTitle(template, { title: '加载中...' });
   } else {
     setPageTitle(template);
   }

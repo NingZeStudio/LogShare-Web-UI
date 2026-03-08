@@ -19,7 +19,6 @@ import {
   ChevronRight,
   Check,
   AlertTriangle,
-  Server,
   ArrowUp,
   Code
 } from 'lucide-vue-next'
@@ -250,14 +249,6 @@ const scrollToFooter = () => {
   <div v-else :class="isFullscreen ? 'fixed inset-0 z-50 bg-background' : 'container mx-auto px-1 sm:px-2 py-4'">
     <div :class="isFullscreen ? 'h-full flex flex-col' : 'flex flex-col'">
       <div v-if="!isFullscreen" class="space-y-0">
-        <div class="mb-2">
-          <span class="inline-block px-3 py-2 rounded-md border border-amber-500/50 bg-amber-50 dark:bg-amber-950/30">
-            <p class="text-sm text-amber-800 dark:text-amber-200 font-medium">
-              {{ t('tips') }}
-            </p>
-          </span>
-        </div>
-
         <div class="bg-card px-3 py-2">
           <div class="flex items-center justify-between gap-3 mb-4">
             <div class="min-w-0 flex-1">
@@ -329,6 +320,26 @@ const scrollToFooter = () => {
               <span>{{ t('scroll_footer') }}</span>
             </button>
           </div>
+
+          <div v-if="log.analysis?.information?.length > 0" class="overflow-x-auto">
+            <table class="text-sm border-collapse border border-border">
+              <thead class="bg-muted">
+                <tr>
+                  <th class="border border-border p-2 text-left font-medium text-muted-foreground">{{ t('property') }}</th>
+                  <th class="border border-border p-2 text-left font-medium">{{ t('value') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="info in log.analysis.information"
+                  :key="info.label"
+                >
+                  <td class="border border-border p-2 font-mono text-primary">{{ info.label }}</td>
+                  <td class="border border-border p-2">{{ info.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div v-if="log.analysis?.problems?.length > 0" class="bg-destructive/5 p-4 border border-destructive/50 rounded-lg">
@@ -357,23 +368,6 @@ const scrollToFooter = () => {
                   <span>{{ sol.message }}</span>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="log.analysis?.information?.length > 0" class="bg-card p-4 border border-border rounded-lg">
-          <h3 class="font-semibold mb-3 flex items-center gap-2">
-            <Server class="h-4 w-4" />
-            {{ t('server_info') }}
-          </h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            <div
-              v-for="info in log.analysis.information"
-              :key="info.label"
-              class="text-sm"
-            >
-              <span class="text-muted-foreground">{{ info.label }}: </span>
-              <span class="font-medium">{{ info.value }}</span>
             </div>
           </div>
         </div>
