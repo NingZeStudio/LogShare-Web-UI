@@ -21,7 +21,7 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
   <div class="relative">
     <button
       @click="toggleMenu"
-      class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+      class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
       aria-label="切换语言"
     >
       <Languages class="h-4 w-4" />
@@ -43,14 +43,14 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
       >
         <button
           @click="switchLanguage('zh-CN')"
-          class="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 transition-colors"
+          class="w-full text-left px-4 py-2.5 text-sm hover:bg-secondary/80 transition-colors"
           :class="currentLang === 'zh-CN' ? 'text-primary font-medium' : 'text-muted-foreground'"
         >
           简体中文
         </button>
         <button
           @click="switchLanguage('zh-TW')"
-          class="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 transition-colors border-t border-border"
+          class="w-full text-left px-4 py-2.5 text-sm hover:bg-secondary/80 transition-colors border-t border-border"
           :class="currentLang === 'zh-TW' ? 'text-primary font-medium' : 'text-muted-foreground'"
         >
           繁體中文

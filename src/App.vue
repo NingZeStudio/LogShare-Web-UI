@@ -42,39 +42,39 @@ onMounted(() => {
 
         <!-- 中间导航链接 -->
         <nav class="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-          <RouterLink to="/sponsor" class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+          <RouterLink to="/sponsor" class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors">
             <Heart class="h-4 w-4" />
             赞助支持
           </RouterLink>
-          
-          <RouterLink to="/tutorials" class="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+
+          <RouterLink to="/tutorials" class="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors">
             教程中心
           </RouterLink>
-          <RouterLink to="/api-docs" class="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+          <RouterLink to="/api-docs" class="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors">
             API 文档
           </RouterLink>
-          
+
           <!-- 团队主页 -->
           <a
             href="https://github.com/NingZeStudio/"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
           >
             <Github class="h-4 w-4" />
             团队主页
           </a>
-          
+
           <!-- 开源地址二级菜单 -->
           <div class="relative" @mouseenter="showOpenSourceMenu = true" @mouseleave="showOpenSourceMenu = false">
             <button
-              class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
             >
               <Github class="h-4 w-4" />
               开源地址
               <ChevronDown class="h-3.5 w-3.5 transition-transform" :class="{ 'rotate-180': showOpenSourceMenu }" />
             </button>
-            
+
             <!-- 二级菜单下拉 -->
             <Transition
               enter-active-class="transition-all duration-200"
@@ -92,7 +92,7 @@ onMounted(() => {
                   href="https://github.com/NingZeStudio/McLogs-Next-UI"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  class="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
                 >
                   <span class="font-medium">前端开源地址</span>
                 </a>
@@ -100,7 +100,7 @@ onMounted(() => {
                   href="https://github.com/NingZeStudio/McLogs-Next-API"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-t border-border"
+                  class="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors border-t border-border"
                 >
                   <span class="font-medium">后端开源地址</span>
                 </a>
@@ -113,7 +113,7 @@ onMounted(() => {
         <div class="hidden lg:flex items-center gap-1 ml-auto">
           <button
             @click="isThemeSettingsOpen = true"
-            class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
             aria-label="主题设置"
           >
             <Palette class="h-4 w-4" />

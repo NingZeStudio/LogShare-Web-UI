@@ -34,10 +34,8 @@ export const sponsorConfig: SponsorConfig = {
   current: 0,
   // 爱发电链接
   afdianLink: 'https://afdian.com/a/your-id',
-  // 支付宝二维码图片路径
-  alipayQrCode: 'https://zs.lemwood.cn/支付宝.jpg',
-  // 微信二维码图片路径
-  wechatQrCode: 'https://zs.lemwood.cn/微信.png'
+  alipayQrCode: new URL('@/assets/img/支付宝.jpg', import.meta.url).href,
+  wechatQrCode: new URL('@/assets/img/微信.png', import.meta.url).href,
 }
 
 /**
