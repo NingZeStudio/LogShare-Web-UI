@@ -93,7 +93,6 @@ export const zhCN = {
   'loading': '正在加载...',
   'back_home': '返回首页',
   'api_docs': 'API 文档',
-  'imprint': '备案信息',
   'privacy_policy': '隐私政策',
   'tips': '如果你不曾看懂这个页面所表达的内容，那么请你点击"分享日志"按钮，将链接复制粘贴给可以帮助你的人。谢谢你的配合。',
 
@@ -193,49 +192,13 @@ export const zhCN = {
   'easter_egg_title': '私货',
   'easter_egg_hint': '这些是给最细心的探索者的特别奖励~',
 
-  'sponsor_count': '赞助人数',
-  'total_amount': '赞助总额',
-  'support_methods': '支持方式',
-  'thanks_message': '感谢有您',
-
   'tutorials_center': '教程中心',
   'tutorials_description': '常见问题解决方案和使用教程',
   'need_help': '需要帮助？',
   'view_api_docs': '查看 API 文档',
   'join_qq_group_link': '加入官方 QQ 群',
 
-  // ImprintView
-  'imprint_title': '法律声明 (Imprint)',
-  'service_provider': '服务提供方',
-  'service_provider_desc': '本服务 (LogShare.CN) 由以下團隊聯合提供：',
-  'contact': '聯絡方式',
-  'contact_desc': '如有任何疑問或需要支援，請透過以下方式聯絡我們：',
-  'email': '電子郵件',
-  'content_disclaimer': '內容免責聲明',
-  'content_disclaimer_text': '我們不對使用者上傳的記錄內容的準確性、完整性或合法性負責。記錄內容由使用者自行上傳並承擔責任。作為服務提供者，根據相關法律法規，我們僅對自己提供的原創內容負責。我們沒有義務監控第三方傳輸或儲存的資訊，也沒有義務調查表明非法活動的情況。',
-  'link_disclaimer': '連結免責聲明',
-  'link_disclaimer_text': '我們的服務可能包含指向第三方外部網站的連結，我們無法控制這些網站的內容。因此，我們不對這些外部內容承擔任何責任。連結頁面的提供者或營運者始終對內容負責。',
-  'copyright': '版權說明',
-  'copyright_text': '本網站上的內容和作品受著作權法保護。複製、編輯、分發以及任何超出著作權法限制的使用都需要相關作者或創作者的書面同意。',
-
-  // PrivacyPolicyView
-  'privacy_title': '隱私政策',
-  'last_updated': '最後更新日期',
-  'privacy_overview': '概述',
-  'privacy_overview_text': '我們非常重視您的隱私保護。本隱私權政策旨在說明 LogShare.CN 如何收集、使用和保護您的個人資料。使用本服務即表示您同意本政策中所述的資料收集和使用方式。',
-  'collected_info': '我們收集的資訊',
-  'uploaded_logs': '上傳的記錄內容：',
-  'uploaded_logs_desc': '您主動上傳到我們伺服器的 Minecraft 記錄檔。請注意，記錄可能包含聊天記錄、IP 位址或其他遊戲內資訊。在上傳之前，請確保您有權分享這些內容，並建議刪除敏感資訊。',
-  'access_logs': '存取記錄：',
-  'access_logs_desc': '出於安全和維護目的，我們的伺服器可能會自動記錄您的 IP 位址、瀏覽器類型、存取時間等技術資訊。',
-  'info_usage': '資訊的使用',
-  'info_usage_desc': '我們要收集的資訊僅用於以下用途：',
-  'cookies_usage': 'Cookie 和本機儲存',
-  'cookies_usage_text': '我們可能會使用 Cookie 或本機儲存技術來儲存您的偏好設定（如深色模式狀態），以提升使用者體驗。這些資料通常儲存在您的裝置上。',
-  'info_sharing': '資訊共用',
-  'info_sharing_desc': '我們不會將您的個人資料出售、出租或透過任何方式交給第三方。除非：',
-  'user_rights': '您的權利',
-  'user_rights_text': '您有權要求刪除您上傳的記錄檔。如果您希望刪除特定內容，請透過我們的支援管道聯絡我們，並提供相應的記錄 ID 或連結。'
+  'sponsor_count': '赞助人数',
 };
 
 /**
@@ -328,7 +291,6 @@ export const zhTW = {
   'loading': '正在載入...',
   'back_home': '返回首頁',
   'api_docs': 'API 文件',
-  'imprint': '備案資訊',
   'tips': '如果你不曾看懂這個頁面所表達的內容，那麼請你點擊"分享記錄"按鈕，將鏈接複製粘貼給可以幫助你的人。謝謝你的配合。',
 
   // 公告相關
@@ -427,49 +389,13 @@ export const zhTW = {
   'easter_egg_title': '私貨',
   'easter_egg_hint': '這些是給最細心的探索者的特別獎勵~',
 
-  'sponsor_count': '贊助人數',
-  'total_amount': '贊助總額',
-  'support_methods': '支持方式',
-  'thanks_message': '感謝有您',
-
   'tutorials_center': '教程中心',
   'tutorials_description': '常見問題解決方案和使用教程',
   'need_help': '需要幫助？',
   'view_api_docs': '查看 API 文件',
   'join_qq_group_link': '加入官方 QQ 群',
 
-  // ImprintView
-  'imprint_title': '法律聲明 (Imprint)',
-  'service_provider': '服務提供方',
-  'service_provider_desc': '本服務 (LogShare.CN) 由以下團隊聯合提供：',
-  'contact': '聯絡方式',
-  'contact_desc': '如有任何疑問或需要支援，請透過以下方式聯絡我們：',
-  'email': '電子郵件',
-  'content_disclaimer': '內容免責聲明',
-  'content_disclaimer_text': '我們不對使用者上傳的記錄內容的準確性、完整性或合法性負責。記錄內容由使用者自行上傳並承擔責任。作為服務提供者，根據相關法律法規，我們僅對自己提供的原創內容負責。我們沒有義務監控第三方傳輸或儲存的資訊，也沒有義務調查表明非法活動的情況。',
-  'link_disclaimer': '連結免責聲明',
-  'link_disclaimer_text': '我們的服務可能包含指向第三方外部網站的連結，我們無法控制這些網站的內容。因此，我們不對這些外部內容承擔任何責任。連結頁面的提供者或營運者始終對內容負責。',
-  'copyright': '版權說明',
-  'copyright_text': '本網站上的內容和作品受著作權法保護。複製、編輯、分發以及任何超出著作權法限制的使用都需要相關作者或創作者的書面同意。',
-
-  // PrivacyPolicyView
-  'privacy_title': '隱私政策',
-  'last_updated': '最後更新日期',
-  'privacy_overview': '概述',
-  'privacy_overview_text': '我們非常重視您的隱私保護。本隱私權政策旨在說明 LogShare.CN 如何收集、使用和保護您的個人資料。使用本服務即表示您同意本政策中所述的資料收集和使用方式。',
-  'collected_info': '我們收集的資訊',
-  'uploaded_logs': '上傳的記錄內容：',
-  'uploaded_logs_desc': '您主動上傳到我們伺服器的 Minecraft 記錄檔。請注意，記錄可能包含聊天記錄、IP 位址或其他遊戲內資訊。在上傳之前，請確保您有權分享這些內容，並建議刪除敏感資訊。',
-  'access_logs': '存取記錄：',
-  'access_logs_desc': '出於安全和維護目的，我們的伺服器可能會自動記錄您的 IP 位址、瀏覽器類型、存取時間等技術資訊。',
-  'info_usage': '資訊的使用',
-  'info_usage_desc': '我們要收集的資訊僅用於以下用途：',
-  'cookies_usage': 'Cookie 和本機儲存',
-  'cookies_usage_text': '我們可能會使用 Cookie 或本機儲存技術來儲存您的偏好設定（如深色模式狀態），以提升使用者體驗。這些資料通常儲存在您的裝置上。',
-  'info_sharing': '資訊共用',
-  'info_sharing_desc': '我們不會將您的個人資料出售、出租或透過任何方式交給第三方。除非：',
-  'user_rights': '您的權利',
-  'user_rights_text': '您有權要求刪除您上傳的記錄檔。如果您希望刪除特定內容，請透過我們的支援管道聯絡我們，並提供相應的記錄 ID 或連結。'
+  'sponsor_count': '贊助人數',
 };
 
 // 导出所有语言包

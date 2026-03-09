@@ -33,22 +33,6 @@ export default defineConfig({
             }
             return 'vendor';
           }
-
-          if (id.includes('src/views/HomeView')) {
-            return 'home';
-          }
-          if (id.includes('src/views/LogView')) {
-            return 'log';
-          }
-          if (id.includes('src/views/ApiDocsView')) {
-            return 'api-docs';
-          }
-          if (id.includes('src/views/ImprintView')) {
-            return 'imprint';
-          }
-          if (id.includes('src/views/PrivacyPolicyView')) {
-            return 'privacy';
-          }
         },
       }
     },

@@ -2,8 +2,6 @@ export const pageTitleTemplates = {
   home: '首页 - LogShare.CN',
   log: (title?: string, id?: string) => `${title || '日志'}${id ? ` [#${id}]` : ''} - LogShare.CN`,
   apiDocs: 'API 文档 - LogShare.CN',
-  imprint: '法律声明 - LogShare.CN',
-  privacy: '隐私政策 - LogShare.CN',
   sponsor: '赞助支持 - LogShare.CN',
   tutorials: '教程中心 - LogShare.CN',
   tutorialArticle: (title?: string) => `${title || '教程'} - LogShare.CN`,
@@ -47,10 +45,6 @@ export const getCurrentPageTemplate = (routeName: string | undefined) => {
       return 'log'
     case 'api-docs':
       return 'apiDocs'
-    case 'imprint':
-      return 'imprint'
-    case 'privacy':
-      return 'privacy'
     case 'sponsor':
       return 'sponsor'
     case 'tutorials':

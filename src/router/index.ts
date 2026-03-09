@@ -1,11 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import LogView from '../views/LogView.vue'
-import ApiDocsView from '../views/ApiDocsView.vue'
-import SponsorView from '../views/SponsorView.vue'
-import TutorialsView from '../views/TutorialsView.vue'
-import TutorialArticleView from '../views/TutorialArticleView.vue'
-import NotFoundView from '../views/NotFoundView.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 
 const router = createRouter({
@@ -14,43 +7,43 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView,
+      component: () => import('../views/HomeView.vue'),
       meta: { title: 'home' }
     },
     {
       path: '/api-docs',
       name: 'api-docs',
-      component: ApiDocsView,
+      component: () => import('../views/ApiDocsView.vue'),
       meta: { title: 'apiDocs' }
     },
     {
       path: '/sponsor',
       name: 'sponsor',
-      component: SponsorView,
+      component: () => import('../views/SponsorView.vue'),
       meta: { title: 'sponsor' }
     },
     {
       path: '/tutorials',
       name: 'tutorials',
-      component: TutorialsView,
+      component: () => import('../views/TutorialsView.vue'),
       meta: { title: 'tutorials' }
     },
     {
       path: '/tutorials/:id',
       name: 'tutorial-article',
-      component: TutorialArticleView,
+      component: () => import('../views/TutorialArticleView.vue'),
       meta: { title: 'tutorialArticle' }
     },
     {
       path: '/:id',
       name: 'log',
-      component: LogView,
+      component: () => import('../views/LogView.vue'),
       meta: { title: 'log' }
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: NotFoundView,
+      component: () => import('../views/NotFoundView.vue'),
       meta: { title: '404' }
     }
   ]
