@@ -33,7 +33,7 @@ onMounted(() => {
 <template>
   <div class="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased transition-colors duration-500">
     <header class="border-b bg-card/80 sticky top-0 z-40 w-full backdrop-blur-xl shadow-sm">
-      <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="w-full px-4 h-16 flex items-center justify-between">
         <!-- Logo -->
         <RouterLink to="/" class="flex items-center gap-2 font-bold text-xl">
           <span class="text-primary">LogShare.CN</span><sup class="text-xs text-muted-foreground">v1.3.0 RC1</sup>

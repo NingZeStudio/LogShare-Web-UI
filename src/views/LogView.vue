@@ -246,7 +246,7 @@ const scrollToFooter = () => {
     <p class="text-muted-foreground">{{ error }}</p>
   </div>
 
-  <div v-else :class="isFullscreen ? 'fixed inset-0 z-50 bg-background' : 'container mx-auto px-1 sm:px-2 py-4'">
+  <div v-else :class="isFullscreen ? 'fixed inset-0 z-50 bg-background' : 'w-full px-1 sm:px-2 py-4'">
     <div :class="isFullscreen ? 'h-full flex flex-col' : 'flex flex-col'">
       <div v-if="!isFullscreen" class="space-y-0">
         <div class="bg-card px-3 py-2">
