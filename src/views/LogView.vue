@@ -22,6 +22,30 @@ import {
   BookText
 } from 'lucide-vue-next'
 
+// 扩展 HTMLElement 类型以支持 _clickOutside 属性
+declare global {
+  interface HTMLElement {
+    _clickOutside?: (event: MouseEvent) => void
+  }
+}
+
+// v-click-outside 指令
+const vClickOutside = {
+  mounted: (el: HTMLElement, binding: any) => {
+    el._clickOutside = (event: MouseEvent) => {
+      if (!(el === event.target || el.contains(event.target as Node))) {
+        binding.value()
+      }
+    }
+    document.addEventListener('click', el._clickOutside)
+  },
+  unmounted: (el: HTMLElement) => {
+    if (el._clickOutside) {
+      document.removeEventListener('click', el._clickOutside)
+    }
+  }
+}
+
 const route = useRoute()
 const id = route.params.id as string
 const log = ref<any>(null)
@@ -35,6 +59,7 @@ const searchIndex = ref(0)
 const searchResults = ref<number[]>([])
 const isFullscreen = ref(false)
 const isCopySuccess = ref(false)
+const showActionsMenu = ref(false)
 
 onMounted(async () => {
   try {
@@ -316,42 +341,128 @@ const scrollToProblems = () => {
       <!-- 日志查看器 -->
       <div :class="isFullscreen ? 'flex-1 flex flex-col min-h-0' : ''">
         <!-- 工具栏 -->
-        <div class="flex flex-wrap items-center gap-2 p-3 bg-muted/30">
-          <!-- 视图控制组 -->
-          <div class="flex items-center gap-1.5 pr-3 border-r">
-            <button
-              @click="toggleErrors"
-              :class="showErrorsOnly ? 'bg-destructive text-destructive-foreground' : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'"
-              class="flex items-center gap-1.5 text-sm rounded-md transition-colors px-2.5 py-1.5"
-              :title="showErrorsOnly ? t('show_all') : t('show_errors_only')"
-            >
-              <AlertTriangle class="h-4 w-4" />
-              <span class="hidden sm:inline">{{ showErrorsOnly ? t('show_all') : t('show_errors_only') }}</span>
-            </button>
-            <button
-              @click="wrapLines = !wrapLines"
-              :class="wrapLines ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'"
-              class="flex items-center gap-1.5 text-sm rounded-md transition-colors px-2.5 py-1.5"
-              :title="wrapLines ? t('auto_wrap') : t('auto_wrap')"
-            >
-              <WrapText class="h-4 w-4" />
-              <span class="hidden sm:inline">{{ wrapLines ? t('wrap_lines_on') : t('wrap_lines_off') }}</span>
-            </button>
+        <div class="border-b bg-muted/30">
+          <!-- 主工具栏 -->
+          <div class="flex items-center gap-2 p-2">
+            <!-- 视图控制 -->
+            <div class="flex items-center gap-1">
+              <button
+                @click="toggleErrors"
+                :class="showErrorsOnly ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'bg-secondary/80 hover:bg-secondary text-secondary-foreground'"
+                class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-3 py-1.5 font-medium"
+                :title="showErrorsOnly ? t('show_all') : t('show_errors_only')"
+              >
+                <AlertTriangle class="h-4 w-4" />
+                <span class="hidden sm:inline">{{ showErrorsOnly ? t('show_all') : t('show_errors_only') }}</span>
+              </button>
+              <button
+                @click="wrapLines = !wrapLines"
+                :class="wrapLines ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-secondary/80 hover:bg-secondary text-secondary-foreground'"
+                class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-3 py-1.5 font-medium"
+                :title="t('toggle_wrap')"
+              >
+                <WrapText class="h-4 w-4" />
+                <span class="hidden sm:inline">{{ wrapLines ? t('wrap_lines_on') : t('wrap_lines_off') }}</span>
+              </button>
+            </div>
+
+            <!-- 搜索框 -->
+            <div class="flex-1 min-w-0">
+              <div class="relative">
+                <Search class="h-4 w-4 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  v-model="searchTerm"
+                  @keyup="handleSearchInput"
+                  :placeholder="t('search') + ' (Ctrl+F)'"
+                  class="w-full bg-background border border-border rounded-md pl-9 pr-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
+                />
+              </div>
+            </div>
+
+            <!-- 搜索结果导航 -->
+            <div v-if="searchResults.length > 0" class="hidden sm:flex items-center gap-1">
+              <span class="text-xs text-muted-foreground font-mono min-w-[60px] text-center">{{ searchIndex + 1 }}/{{ searchResults.length }}</span>
+              <button
+                @click="goToPrevResult"
+                class="p-1.5 rounded-md hover:bg-secondary transition-colors"
+                :title="t('previous_result')"
+              >
+                <ChevronLeft class="h-4 w-4" />
+              </button>
+              <button
+                @click="goToNextResult"
+                class="p-1.5 rounded-md hover:bg-secondary transition-colors"
+                :title="t('next_result')"
+              >
+                <ChevronRight class="h-4 w-4" />
+              </button>
+            </div>
+
+            <!-- 主要操作 -->
+            <div class="flex items-center gap-1">
+              <span class="hidden md:inline-flex items-center gap-1 text-xs text-muted-foreground pr-2 mr-1 border-r">
+                {{ t('click_share_button_tip').split('{icon}')[0] }}<Share2 class="h-3.5 w-3.5" />{{ t('click_share_button_tip').split('{icon}')[1] }}
+              </span>
+              <button
+                @click="copyShareMessage"
+                :class="isCopySuccess ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-primary text-primary-foreground hover:bg-primary/90'"
+                class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-3 py-1.5 font-medium"
+                :title="t('share')"
+              >
+                <Share2 class="h-4 w-4" />
+                <span class="hidden sm:inline">{{ isCopySuccess ? t('copied') : t('share') }}</span>
+              </button>
+            </div>
+
+            <!-- 更多操作下拉菜单 -->
+            <div class="relative">
+              <button
+                @click.stop="showActionsMenu = !showActionsMenu"
+                class="p-2 rounded-md hover:bg-secondary transition-colors"
+                :title="t('more_actions')"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+                </svg>
+              </button>
+
+              <!-- 下拉菜单 -->
+              <div
+                v-if="showActionsMenu"
+                class="absolute right-0 top-full mt-1 w-48 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden"
+                v-click-outside="() => showActionsMenu = false"
+              >
+                <button
+                  @click="downloadLog; showActionsMenu = false"
+                  class="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                >
+                  <Download class="h-4 w-4" />
+                  {{ t('download') }}
+                </button>
+                <a
+                  :href="`https://api.logshare.cn/1/raw/${id}`"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  <Code class="h-4 w-4" />
+                  {{ t('view_raw_log') }}
+                </a>
+                <button
+                  @click="deleteLog; showActionsMenu = false"
+                  class="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
+                >
+                  <Trash2 class="h-4 w-4" />
+                  {{ t('delete') }}
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- 搜索组 -->
-          <div class="flex items-center gap-1.5 px-3 flex-1 min-w-[200px] w-full lg:w-auto lg:max-w-[calc(100%-280px)]">
-            <div class="relative flex-1">
-              <Search class="h-3.5 w-3.5 text-muted-foreground absolute left-2 top-1/2 -translate-y-1/2" />
-              <input
-                v-model="searchTerm"
-                @keyup="handleSearchInput"
-                :placeholder="t('search') + '...'"
-                class="w-full bg-background border border-border rounded-md pl-7 pr-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
-              />
-            </div>
-            <div v-if="searchResults.length > 0" class="flex items-center gap-1">
-              <span class="text-xs text-muted-foreground">{{ searchIndex + 1 }}/{{ searchResults.length }}</span>
+          <!-- 移动端搜索导航 -->
+          <div v-if="searchResults.length > 0" class="sm:hidden flex items-center justify-between px-2 pb-2">
+            <span class="text-xs text-muted-foreground font-mono">{{ searchIndex + 1 }}/{{ searchResults.length }}</span>
+            <div class="flex items-center gap-1">
               <button
                 @click="goToPrevResult"
                 class="p-1.5 rounded-md hover:bg-secondary transition-colors"
@@ -366,51 +477,11 @@ const scrollToProblems = () => {
               </button>
             </div>
           </div>
-
-          <!-- 操作组 -->
-          <div class="flex items-center gap-1.5 pl-3 border-l ml-auto lg:flex">
-            <div class="flex items-center gap-1 text-muted-foreground pr-2 border-r">
-              <span>{{ t('click_share_button_tip').split('{icon}')[0] }}</span>
-              <Share2 class="h-4 w-4" />
-              <span>{{ t('click_share_button_tip').split('{icon}')[1] }}</span>
-            </div>
-            <button
-              @click="downloadLog"
-              class="p-2 rounded-md hover:bg-secondary transition-colors"
-              :title="t('download')"
-            >
-              <Download class="h-4 w-4" />
-            </button>
-            <button
-              @click="copyShareMessage"
-              :class="isCopySuccess ? 'bg-green-500 text-white' : 'hover:bg-secondary'"
-              class="p-2 rounded-md transition-colors"
-              :title="t('share')"
-            >
-              <Share2 class="h-4 w-4" />
-            </button>
-            <a
-              :href="`https://api.logshare.cn/1/raw/${id}`"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="p-2 rounded-md hover:bg-secondary transition-colors"
-              :title="t('view_raw_log')"
-            >
-              <Code class="h-4 w-4" />
-            </a>
-            <button
-              @click="deleteLog"
-              class="p-2 rounded-md hover:bg-destructive hover:text-destructive-foreground transition-colors"
-              :title="t('delete')"
-            >
-              <Trash2 class="h-4 w-4" />
-            </button>
-          </div>
         </div>
 
         <!-- 日志内容 -->
         <div :class="isFullscreen ? 'flex-1 flex flex-col min-h-0' : ''">
-          <div :class="isFullscreen ? 'flex-1 overflow-y-auto' : 'overflow-x-auto'" class="bg-[#2a2a2a] py-2">
+          <div :class="isFullscreen ? 'flex-1 overflow-y-auto' : 'overflow-x-auto relative'" class="bg-[#2a2a2a] py-2">
             <div
               class="log-content font-mono text-xs text-gray-100"
               :class="{ 'show-errors-only': showErrorsOnly, 'log-wrap': wrapLines, 'log-no-wrap': !wrapLines }"
@@ -418,7 +489,7 @@ const scrollToProblems = () => {
             ></div>
             <button
               @click="scrollToTop"
-              class="absolute bottom-3 right-3 inline-flex items-center gap-1.5 text-xs bg-[#3d3d3d] hover:bg-[#4a4a4a] text-gray-100 px-4 py-2 rounded-md transition-colors shadow-lg"
+              class="fixed bottom-4 right-4 inline-flex items-center gap-1.5 text-xs bg-[#3d3d3d] hover:bg-[#4a4a4a] text-gray-100 px-4 py-2 rounded-md transition-colors shadow-lg"
             >
               <ArrowUp class="h-3.5 w-3.5" />
               {{ t('scroll_top') }}
@@ -558,7 +629,7 @@ mark {
 
 .log-content {
   transition: background-color 0.3s ease, color 0.3s ease;
-  font-family: 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-family: var(--font-mono);
   font-weight: 500;
   font-size: 14px;
   line-height: 1.3;

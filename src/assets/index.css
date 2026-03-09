@@ -4,6 +4,38 @@
 
 /* 字体定义 */
 @font-face {
+  font-family: 'Maple Mono';
+  src: url('./fonts/MapleMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Maple Mono';
+  src: url('./fonts/MapleMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Maple Mono';
+  src: url('./fonts/MapleMono-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Maple Mono';
+  src: url('./fonts/MapleMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Fira Code';
   src: url('./fonts/FiraCode-Regular.woff2') format('woff2');
   font-weight: 400;
@@ -35,26 +67,13 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: 'Fira Code';
-  src: url('./fonts/FiraCode-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Fira Code';
-  src: url('./fonts/FiraCode-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+
+    /* 等宽字体 - 用于代码和日志显示 */
+    --font-mono: 'Maple Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', 'Consolas', monospace;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -90,7 +109,7 @@
     --radius-3xl: 1.5rem;
     --radius-full: 9999px;
   }
- 
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -136,5 +155,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-mono);
+  }
+  code, pre, kbd, samp {
+    font-family: var(--font-mono);
   }
 }

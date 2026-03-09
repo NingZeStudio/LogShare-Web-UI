@@ -1,7 +1,8 @@
 export const LOCAL_STORAGE_KEYS = {
   AI_ANALYSIS_HISTORY: 'ai_analysis_history',
   USER_LOG_RECORDS: 'user_log_records',
-  PAGE_TITLE: 'page_title'
+  PAGE_TITLE: 'page_title',
+  FONT_FAMILY: 'font_family'
 }
 
 export interface AIAnalysisRecord {

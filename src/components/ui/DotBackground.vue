@@ -28,35 +28,39 @@ const isDarkMode = () => {
 // 绘制网格点
 const drawDots = (ctx: CanvasRenderingContext2D, width: number, height: number, time: number) => {
   const { dotSize, dotSpacing, baseOpacity, hoverOpacity, hoverRadius, dotColor } = config
-  
+
   ctx.clearRect(0, 0, width, height)
-  
+
   const rgb = isDarkMode() ? dotColor.dark : dotColor.light
-  
+
   // 计算网格
   const cols = Math.ceil(width / dotSpacing)
   const rows = Math.ceil(height / dotSpacing)
-  
+
   // 添加轻微的波浪动画偏移
   const waveOffset = Math.sin(time * config.animationSpeed) * 2
-  
+
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const x = col * dotSpacing + dotSpacing / 2
       const y = row * dotSpacing + dotSpacing / 2 + waveOffset * Math.sin(col * 0.1)
-      
+
       // 计算与鼠标的距离
       const dx = x - mouseX
       const dy = y - mouseY
       const distance = Math.sqrt(dx * dx + dy * dy)
-      
+
       // 计算透明度
       let opacity = baseOpacity
       if (distance < hoverRadius) {
         const distanceRatio = 1 - distance / hoverRadius
         opacity = baseOpacity + (hoverOpacity - baseOpacity) * distanceRatio * distanceRatio
       }
-      
+
+      // 添加从上往下的渐变效果（越往下越淡）
+      const fadeRatio = 1 - (y / height) * 0.92  // 底部透明度降低到 8%
+      opacity *= fadeRatio * 1.3  // 整体加深顶部亮度
+
       // 绘制点
       ctx.beginPath()
       ctx.arc(x, y, dotSize, 0, Math.PI * 2)
