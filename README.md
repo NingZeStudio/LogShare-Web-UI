@@ -1,8 +1,8 @@
-# McLogs Next UI
+# LogShareUI-v1
 
 > 本项目在开发初期因时间紧迫，曾使用 Qwen 辅助生成部分代码，但核心逻辑均为人工编写。由于 AI 辅助生成的代码存在冗余和低质量问题，我们正在进行全面的代码清理工作。目前清理工作仍在进行中，部分模块可能仍包含待优化的代码，敬请谅解。
 
-McLogs-Next-API的官方开源Web UI实现方案，基于Vue+Typesctipt+TailwindCSS。
+LogShare-v1的官方开源Web UI实现方案，基于Vue+Typesctipt+TailwindCSS。
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Vue](https://img.shields.io/badge/Vue.js-3.x-4FC08D.svg?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/)
@@ -11,7 +11,7 @@ McLogs-Next-API的官方开源Web UI实现方案，基于Vue+Typesctipt+Tailwind
 
 ## 🚀 项目简介
 
-McLogs Next UI 是一个现代化的前端应用程序，专为 Minecraft 服务器管理员设计，用于分享、分析和诊断服务器日志。该项目基于 Vue 3 + TypeScript + Tailwind CSS 构建，提供了流畅的用户体验和强大的日志分析功能。
+LogShareUI-v1 是一个现代化的前端应用程序，专为 Minecraft 服务器管理员设计，用于分享、分析和诊断服务器日志。该项目基于 Vue 3 + TypeScript + Tailwind CSS 构建，提供了流畅的用户体验和强大的日志分析功能。
 
 主要特点：
 - 简化日志分享：通过唯一 URL 轻松分享大型日志文件
@@ -68,8 +68,8 @@ Markdown 渲染	Markdown-it	AI 分析结果渲染
 1. 克隆项目
 
 ```bash
-   git clone https://github.com/NingZeStudio/McLogs-Next-UI.git
-   cd McLogs-Next-UI
+   git clone https://cnb.cool/MornZe-Dev/LogShareUI-v1
+   cd LogShareUI-v1
    ```
 
 2. 安装依赖
