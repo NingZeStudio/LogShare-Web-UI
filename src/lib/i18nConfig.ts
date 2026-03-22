@@ -184,6 +184,9 @@ export const zhCN = {
   'join_qq_group_link': '加入官方 QQ 群',
 
   'sponsor_count': '赞助人数',
+  'thanks_message': '感谢',
+  'support_methods': '支持方式',
+  'total_amount': '总金额',
 };
 
 export const zhTW = {
@@ -371,6 +374,9 @@ export const zhTW = {
   'join_qq_group_link': '加入官方 QQ 群',
 
   'sponsor_count': '贊助人數',
+  'thanks_message': '感謝',
+  'support_methods': '支持方式',
+  'total_amount': '總金額',
 };
 
 export type LanguagePack = typeof zhCN | typeof zhTW;

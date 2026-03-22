@@ -90,7 +90,7 @@ onMounted(() => {
                 class="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50"
               >
                 <a
-                  href="https://github.com/NingZeStudio/McLogs-Next-UI"
+                  href="https://cnb.cool/MornZe-Dev/LogShareUI-v1"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
@@ -98,7 +98,7 @@ onMounted(() => {
                   <span class="font-medium">{{ t('frontend_repo') }}</span>
                 </a>
                 <a
-                  href="https://github.com/NingZeStudio/McLogs-Next-API"
+                  href="https://cnb.cool/MornZe-Dev/LogShare-v1"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors border-t border-border"

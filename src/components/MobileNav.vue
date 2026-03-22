@@ -204,7 +204,7 @@ const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
             >
               <div v-if="openSourceOpen" class="ml-4 mt-1 space-y-1 border-l-2 border-border pl-3">
                 <a
-                  href="https://github.com/NingZeStudio/McLogs-Next-UI"
+                  href="https://cnb.cool/MornZe-Dev/LogShareUI-v1"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
@@ -212,7 +212,7 @@ const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
                   前端开源地址
                 </a>
                 <a
-                  href="https://github.com/NingZeStudio/McLogs-Next-API"
+                  href="https://cnb.cool/MornZe-Dev/LogShare-v1"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"

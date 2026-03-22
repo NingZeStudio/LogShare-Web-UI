@@ -45,6 +45,15 @@ export const sponsors: Sponsor[] = [
     currency: 'CNY',
     date: '2026-03-08',
     platform: 'wechat'
+  },
+  {
+    id: 3,
+    name: '@WZW_王宗王',
+    amount: 50,
+    currency: 'CNY',
+    date: '2026-03-22',
+    platform: 'wechat',
+    message: 'Bilibili UP 主 UID: 504274118'
   }
 ]
 
