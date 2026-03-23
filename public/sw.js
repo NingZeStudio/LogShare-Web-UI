@@ -3,7 +3,7 @@
  * 提供离线缓存和应用更新检测
  */
 
-const CACHE_NAME = 'logshare-v1'
+const CACHE_NAME = 'logshare-v1.5.0'
 const UPDATE_CHANNEL = 'pwa-update'
 
 // 需要缓存的静态资源

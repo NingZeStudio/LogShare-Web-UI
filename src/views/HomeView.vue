@@ -31,7 +31,7 @@ const removeNotification = (id: number) => {
 
 const extractedFiles = ref<ExtractedFile[]>([])
 const uploadProgress = ref<{ current: number; total: number; uploading: string } | null>(null)
-const uploadResults = ref<{ name: string; path: string; success: boolean; id?: string | null; error?: string }[]>([])
+const uploadResults = ref<{ name: string; path: string; success: boolean; id?: string | null; token?: string | null; error?: string }[]>([])
 const isCopySuccess = ref(false)
 
 const triggerFileSelect = () => {
@@ -122,20 +122,35 @@ const removeFile = (path: string) => {
   uploadResults.value = uploadResults.value.filter(r => r.path !== path)
 }
 
-const uploadFile = async (file: ExtractedFile): Promise<string | null> => {
-  const params = new URLSearchParams()
-  params.append('content', file.content)
+const uploadFile = async (file: ExtractedFile): Promise<{ id: string | null; token: string | null }> => {
+  try {
+    const result = await apiClient.submitLog({
+      content: file.content,
+      metadata: [
+        {
+          key: 'filename',
+          value: file.name,
+          label: '文件名',
+          visible: false
+        },
+        {
+          key: 'size',
+          value: file.size,
+          label: '文件大小',
+          visible: false
+        }
+      ],
+      source: 'web-upload'
+    })
 
-  const response = await apiClient.post('/1/log', params, {
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
+    if (result.success) {
+      return { id: result.id, token: result.token }
+    } else {
+      throw new Error(result.message || t('unknown_error'))
     }
-  })
-
-  if (response.data.success) {
-    return response.data.id
-  } else {
-    throw new Error(response.data.error || t('unknown_error'))
+  } catch (e: any) {
+    console.error('Upload error:', e)
+    throw new Error(e.message || t('save_failed'))
   }
 }
 
@@ -158,12 +173,13 @@ const uploadAllFiles = async () => {
       }
 
       try {
-        const id = await uploadFile(file)
+        const result = await uploadFile(file)
         uploadResults.value.push({
           name: file.name,
           path: file.path,
           success: true,
-          id: id || undefined
+          id: result.id,
+          token: result.token
         })
         addNotification('success', `${file.name} 上传成功`)
       } catch (e: any) {
@@ -195,8 +211,12 @@ const uploadSingleFile = async (file: ExtractedFile | undefined) => {
   error.value = ''
 
   try {
-    const id = await uploadFile(file)
-    router.push(`/${id}`)
+    const result = await uploadFile(file)
+    if (result.id) {
+      // 将 token 保存到 localStorage，方便后续删除
+      localStorage.setItem(`log_token_${result.id}`, result.token || '')
+      router.push(`/${result.id}`)
+    }
   } catch (e: any) {
     console.error(e)
     error.value = e.message || t('save_failed')
@@ -259,7 +279,7 @@ const copyAllLinks = async () => {
       <div class="container mx-auto px-4 py-8">
       <div class="flex flex-col items-center text-center space-y-4 mb-8">
         <h1 class="text-4xl md:text-5xl font-bold tracking-tight">
-           LogShare.CN <small>v1.3.6</small>
+           LogShare.CN <small>v1.5.0</small>
         </h1>
 
         <p class="text-muted-foreground max-w-xl">

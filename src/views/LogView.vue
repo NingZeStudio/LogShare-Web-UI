@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { apiClient } from '@/lib/ApiClient'
 import { parseLog } from '@/lib/logParser'
 import { setPageTitle } from '@/lib/pageTitle'
@@ -18,7 +18,8 @@ import {
   AlertTriangle,
   ArrowUp,
   Code,
-  BookText
+  BookText,
+  Trash2
 } from 'lucide-vue-next'
 
 declare global {
@@ -28,6 +29,7 @@ declare global {
 }
 
 const route = useRoute()
+const router = useRouter()
 const id = route.params.id as string
 const log = ref<any>(null)
 const logContent = ref('')
@@ -40,9 +42,27 @@ const searchIndex = ref(0)
 const searchResults = ref<number[]>([])
 const isFullscreen = ref(false)
 const isCopySuccess = ref(false)
+const isDeleting = ref(false)
+const logToken = ref<string | null>(null)
+const notifications = ref<{ id: number; type: 'success' | 'error'; message: string }[]>([])
+let notificationId = 0
+
+const addNotification = (type: 'success' | 'error', message: string) => {
+  const id = ++notificationId
+  notifications.value.push({ id, type, message })
+  setTimeout(() => {
+    notifications.value = notifications.value.filter(n => n.id !== id)
+  }, 5000)
+}
+
+const removeNotification = (id: number) => {
+  notifications.value = notifications.value.filter(n => n.id !== id)
+}
 
 onMounted(() => {
   loadLog()
+  // 尝试从 localStorage 获取 token
+  logToken.value = localStorage.getItem(`log_token_${id}`)
 })
 
 const loadLog = async () => {
@@ -73,6 +93,41 @@ const loadLog = async () => {
 
 const toggleErrors = () => {
   showErrorsOnly.value = !showErrorsOnly.value
+}
+
+const deleteLog = async () => {
+  if (!logToken.value) {
+    if (!confirm(`${t('delete_log_confirm_no_token')}\n\n${t('delete_log_confirm')}`)) {
+      return
+    }
+  } else {
+    if (!confirm(t('delete_log_confirm'))) {
+      return
+    }
+  }
+
+  isDeleting.value = true
+  try {
+    if (logToken.value) {
+      const result = await apiClient.deleteLog(id, logToken.value)
+      if (result.success) {
+        // 删除成功后跳转到首页
+        localStorage.removeItem(`log_token_${id}`)
+        router.push('/')
+        addNotification('success', t('delete_log_success'))
+      } else {
+        addNotification('error', t('delete_log_failed') + ': ' + (result.failed[0]?.message || ''))
+      }
+    } else {
+      // 没有 token 的情况下尝试删除（可能会失败）
+      addNotification('error', t('delete_log_no_token'))
+    }
+  } catch (e: any) {
+    console.error('Delete error:', e)
+    addNotification('error', e.response?.data?.error || t('delete_log_failed'))
+  } finally {
+    isDeleting.value = false
+  }
 }
 
 const copyShareMessage = async () => {
@@ -349,6 +404,15 @@ const scrollToProblems = () => {
                 <span class="hidden sm:inline">{{ t('view_raw_log') }}</span>
               </a>
               <button
+                @click="deleteLog"
+                :disabled="isDeleting"
+                class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium bg-destructive/10 hover:bg-destructive/20 text-destructive disabled:opacity-50"
+                :title="t('delete')"
+              >
+                <Trash2 class="h-5 w-5" />
+                <span class="hidden sm:inline">{{ isDeleting ? t('deleting') : t('delete') }}</span>
+              </button>
+              <button
                 v-if="!isFullscreen"
                 @click="enterFullscreen"
                 class="inline-flex items-center gap-1.5 text-sm rounded-md transition-all duration-300 px-4 py-2 font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground"
@@ -464,6 +528,25 @@ const scrollToProblems = () => {
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- 通知组件 -->
+  <div class="fixed top-24 right-4 z-50 space-y-2">
+    <TransitionGroup name="notification">
+      <div
+        v-for="notification in notifications"
+        :key="notification.id"
+        class="flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg bg-card min-w-[300px]"
+        :class="notification.type === 'success' ? 'border-green-500/50' : 'border-destructive/50'"
+      >
+        <Check v-if="notification.type === 'success'" class="h-5 w-5 text-green-500 flex-shrink-0" />
+        <AlertTriangle v-else class="h-5 w-5 text-destructive flex-shrink-0" />
+        <span class="text-sm flex-1">{{ notification.message }}</span>
+        <button @click="removeNotification(notification.id)" class="text-gray-400 hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+    </TransitionGroup>
   </div>
 
 </template>
@@ -625,5 +708,21 @@ mark {
     padding-right: 10px;
     margin-right: 10px;
   }
+}
+
+/* 通知动画 */
+.notification-enter-active,
+.notification-leave-active {
+  transition: all 0.3s ease;
+}
+
+.notification-enter-from {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.notification-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
 }
 </style>

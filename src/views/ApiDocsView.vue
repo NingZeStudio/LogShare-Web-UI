@@ -22,159 +22,345 @@ const endpoints = [
         methodType: 'post',
         path: '/1/log',
         title: t('paste_log'),
-        description: '提交新的日志内容到服务器，生成分享链接和分析结果。',
+        description: '提交新的日志数据进行分析，生成分享链接和分析结果。',
         params: [
-            { name: 'content', type: 'string', required: true, desc: '原始日志文件内容字符串。最大长度为 10 MiB 和 25,000 行。' }
+            { name: 'content', type: 'string', required: true, desc: '日志内容字符串（必需）' },
+            { name: 'metadata', type: 'array', required: false, desc: '元数据数组，包含 key、value、label、visible 字段' },
+            { name: 'source', type: 'string', required: false, desc: '来源标识（最长 64 字符）' }
         ],
         response: {
             success: {
                 code: 200,
                 example: `{
     "success": true,
-    "id": "8FlTowW",
-    "url": "https://logshare.cn/8FlTowW",
-    "raw": "https://api.logshare.cn/1/raw/8FlTowW"
+    "message": "Log submitted successfully",
+    "id": "abc1234",
+    "url": "http://localhost:9300/abc1234",
+    "raw": "http://localhost:9300/1/raw/abc1234",
+    "token": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
 }`
             },
             error: {
                 example: `{
     "success": false,
-    "error": "必需的 POST 参数 'content' 为空。"
+    "error": "请求参数错误"
 }`
             }
         },
         examples: {
-            js: `const content = "Your log content here...";
-const response = await fetch('https://api.logshare.cn/1/log', {
+            js: `const response = await fetch('https://api.logshare.cn/1/log', {
     method: 'POST',
-    body: new URLSearchParams({ content })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        content: "[Server thread/INFO]: Starting minecraft server",
+        metadata: [{ key: "version", value: "1.20.1", label: "服务器版本" }],
+        source: "web-upload"
+    })
 });
 const data = await response.json();
 console.log(data);`,
             php: `<?php
-$content = "Your log content here...";
+$data = [
+    'content' => "[Server thread/INFO]: Starting minecraft server",
+    'metadata' => [['key' => 'version', 'value' => '1.20.1']],
+    'source' => 'web-upload'
+];
 $ch = curl_init('https://api.logshare.cn/1/log');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['content' => $content]));
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 $response = curl_exec($ch);
-$data = json_decode($response, true);
+$result = json_decode($response, true);
 curl_close($ch);
-print_r($data);`,
-            curl: `curl -X POST --data-urlencode 'content@path/to/latest.log' 'https://api.logshare.cn/1/log'`
+print_r($result);`,
+            curl: `curl -X POST https://api.logshare.cn/1/log \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "content": "[Server thread/INFO]: Starting minecraft server",
+    "metadata": [{"key": "version", "value": "1.20.1"}],
+    "source": "cli-upload"
+  }'`
         }
     },
     {
         method: 'GET',
         methodType: 'get',
-        path: '/1/insights/[id]',
-        title: t('get_insights'),
-        description: t('get_insights_desc'),
-        params: [
-            { name: 'id', type: 'string', required: true, desc: '日志的唯一标识符' }
-        ],
-        response: {
-            success: {
-                code: 200,
-                example: `{
-    "analysis": {
-        "software": "Spigot",
-        "version": "1.20.1",
-        "issues": [
-            {
-                "message": "A plugin crashed during enable.",
-                "solutions": [
-                    { "message": "Update the plugin or check its configuration." }
-                ]
-            }
-        ]
-    }
-}`
-            }
-        },
-        examples: {
-            js: `const response = await fetch('https://api.logshare.cn/1/insights/8FlTowW');
-const data = await response.json();
-console.log(data);`,
-            php: `<?php
-$data = json_decode(file_get_contents('https://api.logshare.cn/1/insights/8FlTowW'), true);
-print_r($data);`,
-            curl: `curl https://api.logshare.cn/1/insights/8FlTowW`
-        }
-    },
-    {
-        method: 'GET',
-        methodType: 'get',
-        path: '/1/raw/[id]',
+        path: '/1/raw/{id}',
         title: t('get_raw_log'),
-        description: t('get_raw_log_desc'),
+        description: '获取指定日志的原始内容。支持多个 ID 用逗号分隔。',
         params: [
-            { name: 'id', type: 'string', required: true, desc: '日志的唯一标识符' }
+            { name: 'id', type: 'string', required: true, desc: '日志 ID（支持多个 ID，用逗号分隔）' }
         ],
         response: {
             success: {
                 code: 200,
                 type: 'text/plain',
-                example: `[2023-01-01 12:00:00] [Server thread/INFO]: Starting minecraft server version 1.19.2
-[2023-01-01 12:00:01] [Server thread/INFO]: Using default channel type
-...`
+                example: `[Server thread/INFO]: Starting minecraft server version 1.20.1
+[Server thread/INFO]: Loading properties
+[Server thread/INFO]: Default game type: SURVIVAL`
+            },
+            error: {
+                example: `{
+    "success": false,
+    "error": "Log not found."
+}`
             }
         },
         examples: {
-            js: `const response = await fetch('https://api.logshare.cn/1/raw/8FlTowW');
+            js: `// 获取单个日志
+const response = await fetch('https://api.logshare.cn/1/raw/abc1234');
 const text = await response.text();
-console.log(text);`,
+console.log(text);
+
+// 获取多个日志
+const response = await fetch('https://api.logshare.cn/1/raw/abc1234,def5678');`,
             php: `<?php
-echo file_get_contents('https://api.logshare.cn/1/raw/8FlTowW');`,
-            curl: `curl https://api.logshare.cn/1/raw/8FlTowW`
+// 获取单个日志
+$text = file_get_contents('https://api.logshare.cn/1/raw/abc1234');
+echo $text;
+
+// 获取多个日志
+$text = file_get_contents('https://api.logshare.cn/1/raw/abc1234,def5678');`,
+            curl: `# 获取单个日志
+curl https://api.logshare.cn/1/raw/abc1234
+
+# 获取多个日志
+curl https://api.logshare.cn/1/raw/abc1234,def5678`
+        }
+    },
+    {
+        method: 'GET',
+        methodType: 'get',
+        path: '/1/insights/{id}',
+        title: t('get_insights'),
+        description: '获取已存储日志的分析洞察，包括服务器软件类型、版本和问题检测。',
+        params: [
+            { name: 'id', type: 'string', required: true, desc: '日志 ID' }
+        ],
+        response: {
+            success: {
+                code: 200,
+                example: `{
+    "name": "Vanilla Server Log",
+    "type": "minecraft",
+    "software": "vanilla",
+    "version": "1.20.1",
+    "insights": [
+        {
+            "type": "version",
+            "value": "1.20.1",
+            "label": "Minecraft Version"
+        }
+    ]
+}`
+            }
+        },
+        examples: {
+            js: `const response = await fetch('https://api.logshare.cn/1/insights/abc1234');
+const data = await response.json();
+console.log(data);`,
+            php: `<?php
+$data = json_decode(file_get_contents('https://api.logshare.cn/1/insights/abc1234'), true);
+print_r($data);`,
+            curl: `curl https://api.logshare.cn/1/insights/abc1234`
         }
     },
     {
         method: 'DELETE',
         methodType: 'delete',
-        path: '/1/delete/[id]',
+        path: '/1/delete/{id}',
         title: t('delete_log'),
-        description: '删除指定 ID 的日志文件。此操作不可逆，请谨慎使用。',
+        description: '删除指定的日志（需要 Token 认证）。支持多个 ID 用逗号分隔。',
         params: [
-            { name: 'id', type: 'string', required: true, desc: '要删除的日志文件的唯一标识符' }
+            { name: 'id', type: 'string', required: true, desc: '日志 ID（支持多个 ID，用逗号分隔）' }
+        ],
+        headers: [
+            { name: 'Authorization', type: 'string', required: true, desc: 'Bearer {token}' }
         ],
         response: {
             success: {
                 code: 200,
                 example: `{
     "success": true,
-    "message": "Log deleted successfully"
+    "deleted": ["abc1234", "def5678"],
+    "failed": [],
+    "total": 2,
+    "deletedCount": 2,
+    "failedCount": 0
 }`
             },
             error: {
                 example: `{
     "success": false,
-    "error": "Log not found"
+    "error": "Missing token in Authorization header."
 }`
             }
         },
         examples: {
-            js: `const logId = "8FlTowW";
-const response = await fetch(\`https://api.logshare.cn/1/delete/\${logId}\`, {
+            js: `// 删除单个日志
+const response = await fetch('https://api.logshare.cn/1/delete/abc1234', {
     method: 'DELETE',
     headers: {
-        'Content-Type': 'application/json'
+        'Authorization': 'Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0'
     }
 });
 const data = await response.json();
-console.log(data);`,
+
+// 删除多个日志
+const response = await fetch('https://api.logshare.cn/1/delete/abc1234,def5678', {
+    method: 'DELETE',
+    headers: {
+        'Authorization': 'Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0'
+    }
+});`,
             php: `<?php
-$logId = "8FlTowW";
-$ch = curl_init("https://api.logshare.cn/1/delete/$logId");
+// 删除单个日志
+$ch = curl_init('https://api.logshare.cn/1/delete/abc1234');
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    "Content-Type: application/json"
+    "Authorization: Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
 ]);
 $response = curl_exec($ch);
 $data = json_decode($response, true);
 curl_close($ch);
+
+// 删除多个日志
+$ch = curl_init('https://api.logshare.cn/1/delete/abc1234,def5678');
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
+]);
+$response = curl_exec($ch);
+$data = json_decode($response, true);
+curl_close($ch);`,
+            curl: `# 删除单个日志
+curl -X DELETE https://api.logshare.cn/1/delete/abc1234 \\
+  -H "Authorization: Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
+
+# 删除多个日志
+curl -X DELETE https://api.logshare.cn/1/delete/abc1234,def5678 \\
+  -H "Authorization: Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"`
+        }
+    },
+    {
+        method: 'POST',
+        methodType: 'post',
+        path: '/1/bulk/log/delete',
+        title: '批量删除日志',
+        description: '使用 JSON 请求体批量删除多个日志。最多一次删除 256 个日志。',
+        params: [
+            { name: 'logs', type: 'array', required: true, desc: '日志数组，每个元素包含 id 和 token' }
+        ],
+        response: {
+            success: {
+                code: 200,
+                example: `{
+    "success": true,
+    "results": {
+        "abc1234": { "success": true },
+        "def5678": { "success": false, "error": "Invalid token.", "code": 403 }
+    }
+}`
+            }
+        },
+        examples: {
+            js: `const response = await fetch('https://api.logshare.cn/1/bulk/log/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify([
+        { id: "abc1234", token: "token1" },
+        { id: "def5678", token: "token2" }
+    ])
+});
+const data = await response.json();`,
+            php: `<?php
+$logs = [
+    ['id' => 'abc1234', 'token' => 'token1'],
+    ['id' => 'def5678', 'token' => 'token2']
+];
+$ch = curl_init('https://api.logshare.cn/1/bulk/log/delete');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($logs));
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+$response = curl_exec($ch);
+$data = json_decode($response, true);
+curl_close($ch);`,
+            curl: `curl -X POST https://api.logshare.cn/1/bulk/log/delete \\
+  -H "Content-Type: application/json" \\
+  -d '[
+    {"id": "abc1234", "token": "token1"},
+    {"id": "def5678", "token": "token2"}
+  ]'`
+        }
+    },
+    {
+        method: 'GET',
+        methodType: 'get',
+        path: '/1/limits',
+        title: t('get_limits'),
+        description: t('get_limits_desc'),
+        params: [],
+        response: {
+            success: {
+                code: 200,
+                example: `{
+    "storageTime": 7776000,
+    "maxLength": 10485760,
+    "maxLines": 25000
+}`
+            }
+        },
+        examples: {
+            js: `const response = await fetch('https://api.logshare.cn/1/limits');
+const data = await response.json();
+console.log(data);`,
+            php: `<?php
+$data = json_decode(file_get_contents('https://api.logshare.cn/1/limits'), true);
 print_r($data);`,
-            curl: `curl -X DELETE -H "Content-Type: application/json" 'https://api.logshare.cn/1/delete/8FlTowW'`
+            curl: `curl https://api.logshare.cn/1/limits`
+        }
+    },
+    {
+        method: 'GET',
+        methodType: 'get',
+        path: '/1/filters',
+        title: '获取过滤器信息',
+        description: '获取当前启用的日志过滤器信息，包括隐私保护规则。',
+        params: [],
+        response: {
+            success: {
+                code: 200,
+                example: `{
+    "success": true,
+    "filters": [
+        { "type": "trim", "data": null },
+        { "type": "limit-bytes", "data": { "limit": 10485760 } },
+        { "type": "limit-lines", "data": { "limit": 25000 } },
+        {
+            "type": "regex",
+            "data": {
+                "patterns": [
+                    { "pattern": "IPv4", "replacement": "**.**.**.**" },
+                    { "pattern": "IPv6", "replacement": "****:****:****:****:****:****:****:****" },
+                    { "pattern": "Username", "replacement": "********" },
+                    { "pattern": "AccessToken", "replacement": "********" }
+                ]
+            }
+        }
+    ]
+}`
+            }
+        },
+        examples: {
+            js: `const response = await fetch('https://api.logshare.cn/1/filters');
+const data = await response.json();
+console.log(data);`,
+            php: `<?php
+$data = json_decode(file_get_contents('https://api.logshare.cn/1/filters'), true);
+print_r($data);`,
+            curl: `curl https://api.logshare.cn/1/filters`
         }
     },
     {
@@ -182,7 +368,7 @@ print_r($data);`,
         methodType: 'get',
         path: '/1/errors/rate',
         title: t('rate_limit_info'),
-        description: '返回标准的 429 Too Many Requests 错误响应。这主要用于测试或前端显示标准错误消息。',
+        description: '获取错误率限制信息（由 Cloudflare 提供）。',
         params: [],
         response: {
             success: {
@@ -201,33 +387,6 @@ console.log(data);`,
 $data = json_decode(file_get_contents('https://api.logshare.cn/1/errors/rate'), true);
 print_r($data);`,
             curl: `curl https://api.logshare.cn/1/errors/rate`
-        }
-    },
-    {
-        method: 'GET',
-        methodType: 'get',
-        path: '/1/limits',
-        title: t('get_limits'),
-        description: t('get_limits_desc'),
-        params: [],
-        response: {
-            success: {
-                code: 200,
-                example: `{
-    "storageTime": 86400,
-    "maxLength": 10485760,
-    "maxLines": 25000
-}`
-            }
-        },
-        examples: {
-            js: `const response = await fetch('https://api.logshare.cn/1/limits');
-const data = await response.json();
-console.log(data);`,
-            php: `<?php
-$data = json_decode(file_get_contents('https://api.logshare.cn/1/limits'), true);
-print_r($data);`,
-            curl: `curl https://api.logshare.cn/1/limits`
         }
     }
 ]
@@ -369,22 +528,29 @@ const methodTypeClass = (type: string) => {
                                 <td class="p-3">
                                     <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('get')">GET</span>
                                 </td>
-                                <td class="p-3 font-mono text-xs">/1/insights/[id]</td>
-                                <td class="p-3 text-muted-foreground">获取分析结果</td>
+                                <td class="p-3 font-mono text-xs">/1/raw/{id}</td>
+                                <td class="p-3 text-muted-foreground">获取原始日志</td>
                             </tr>
                             <tr class="border-t border-border hover:bg-muted/30 transition-colors">
                                 <td class="p-3">
                                     <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('get')">GET</span>
                                 </td>
-                                <td class="p-3 font-mono text-xs">/1/raw/[id]</td>
-                                <td class="p-3 text-muted-foreground">获取原始日志</td>
+                                <td class="p-3 font-mono text-xs">/1/insights/{id}</td>
+                                <td class="p-3 text-muted-foreground">获取日志洞察</td>
                             </tr>
                             <tr class="border-t border-border hover:bg-muted/30 transition-colors">
                                 <td class="p-3">
                                     <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('delete')">DELETE</span>
                                 </td>
-                                <td class="p-3 font-mono text-xs">/1/delete/[id]</td>
-                                <td class="p-3 text-muted-foreground">删除日志</td>
+                                <td class="p-3 font-mono text-xs">/1/delete/{id}</td>
+                                <td class="p-3 text-muted-foreground">删除日志（需 Token）</td>
+                            </tr>
+                            <tr class="border-t border-border hover:bg-muted/30 transition-colors">
+                                <td class="p-3">
+                                    <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('post')">POST</span>
+                                </td>
+                                <td class="p-3 font-mono text-xs">/1/bulk/log/delete</td>
+                                <td class="p-3 text-muted-foreground">批量删除日志</td>
                             </tr>
                             <tr class="border-t border-border hover:bg-muted/30 transition-colors">
                                 <td class="p-3">
@@ -392,6 +558,20 @@ const methodTypeClass = (type: string) => {
                                 </td>
                                 <td class="p-3 font-mono text-xs">/1/limits</td>
                                 <td class="p-3 text-muted-foreground">获取限制信息</td>
+                            </tr>
+                            <tr class="border-t border-border hover:bg-muted/30 transition-colors">
+                                <td class="p-3">
+                                    <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('get')">GET</span>
+                                </td>
+                                <td class="p-3 font-mono text-xs">/1/filters</td>
+                                <td class="p-3 text-muted-foreground">获取过滤器信息</td>
+                            </tr>
+                            <tr class="border-t border-border hover:bg-muted/30 transition-colors">
+                                <td class="p-3">
+                                    <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('get')">GET</span>
+                                </td>
+                                <td class="p-3 font-mono text-xs">/1/errors/rate</td>
+                                <td class="p-3 text-muted-foreground">速率限制错误</td>
                             </tr>
                         </tbody>
                     </table>
@@ -428,6 +608,38 @@ const methodTypeClass = (type: string) => {
                 <p class="text-sm text-muted-foreground">
                     {{ endpoint.description }}
                 </p>
+
+                <!-- 请求头 -->
+                <div v-if="endpoint.headers && endpoint.headers.length > 0" class="space-y-2">
+                    <h3 class="text-sm font-semibold">请求头</h3>
+                    <div class="rounded-lg border border-border overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-muted/50">
+                                <tr>
+                                    <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">参数</th>
+                                    <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">类型</th>
+                                    <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">必需</th>
+                                    <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">描述</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="header in endpoint.headers"
+                                    :key="header.name"
+                                    class="border-t border-border"
+                                >
+                                    <td class="p-2.5 font-mono text-xs text-primary">{{ header.name }}</td>
+                                    <td class="p-2.5"><code class="bg-muted px-1.5 py-0.5 rounded text-xs">{{ header.type }}</code></td>
+                                    <td class="p-2.5">
+                                        <span v-if="header.required" class="text-xs text-destructive font-medium">必需</span>
+                                        <span v-else class="text-xs text-muted-foreground">可选</span>
+                                    </td>
+                                    <td class="p-2.5 text-xs text-muted-foreground">{{ header.desc }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
                 <!-- 请求参数 -->
                 <div v-if="endpoint.params.length > 0" class="space-y-2">
@@ -573,11 +785,38 @@ const methodTypeClass = (type: string) => {
                     </li>
                     <li class="flex items-start gap-3">
                         <span class="text-primary font-medium min-w-fit">{{ t('storage_time') }}：</span>
-                        <span class="text-muted-foreground">日志在最后一次查看后至少保留 <strong class="text-foreground">90 天</strong></span>
+                        <span class="text-muted-foreground">日志在最后一次查看后至少保留 <strong class="text-foreground">90 天</strong>（7,776,000 秒）</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="text-primary font-medium min-w-fit">批量删除限制：</span>
+                        <span class="text-muted-foreground">最多一次删除 <strong class="text-foreground">256 个日志</strong></span>
                     </li>
                     <li class="flex items-start gap-3">
                         <span class="text-primary font-medium min-w-fit">Content-Type：</span>
-                        <span class="text-muted-foreground"><code class="bg-muted px-1.5 py-0.5 rounded text-xs">application/x-www-form-urlencoded</code></span>
+                        <span class="text-muted-foreground"><code class="bg-muted px-1.5 py-0.5 rounded text-xs">application/json</code></span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="rounded-lg border border-border bg-card p-5">
+                <h2 class="text-lg font-semibold mb-4">隐私保护过滤器</h2>
+                <p class="text-sm text-muted-foreground mb-4">所有提交的日志会自动应用以下过滤器：</p>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-start gap-2">
+                        <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span class="text-muted-foreground"><strong class="text-foreground">IPv4 地址</strong> 替换为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">**.**.**.**</code></span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span class="text-muted-foreground"><strong class="text-foreground">IPv6 地址</strong> 替换为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">****:****:****:****:****:****:****:****</code></span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span class="text-muted-foreground"><strong class="text-foreground">用户名</strong> 替换为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">********</code></span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span class="text-muted-foreground"><strong class="text-foreground">访问令牌</strong> 替换为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">********</code></span>
                     </li>
                 </ul>
             </div>
@@ -598,12 +837,24 @@ const methodTypeClass = (type: string) => {
                                 <td class="p-2.5 text-muted-foreground">请求参数错误</td>
                             </tr>
                             <tr class="border-t border-border">
+                                <td class="p-2.5 font-mono text-xs">403</td>
+                                <td class="p-2.5 text-muted-foreground">Token 无效或权限不足</td>
+                            </tr>
+                            <tr class="border-t border-border">
                                 <td class="p-2.5 font-mono text-xs">404</td>
                                 <td class="p-2.5 text-muted-foreground">资源未找到</td>
                             </tr>
                             <tr class="border-t border-border">
                                 <td class="p-2.5 font-mono text-xs">405</td>
                                 <td class="p-2.5 text-muted-foreground">方法不被允许</td>
+                            </tr>
+                            <tr class="border-t border-border">
+                                <td class="p-2.5 font-mono text-xs">413</td>
+                                <td class="p-2.5 text-muted-foreground">请求体过大</td>
+                            </tr>
+                            <tr class="border-t border-border">
+                                <td class="p-2.5 font-mono text-xs">415</td>
+                                <td class="p-2.5 text-muted-foreground">不支持的内容类型</td>
                             </tr>
                             <tr class="border-t border-border">
                                 <td class="p-2.5 font-mono text-xs">429</td>
