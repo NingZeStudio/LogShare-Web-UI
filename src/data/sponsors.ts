@@ -26,7 +26,7 @@ export const sponsorConfig: SponsorConfig = {
   current: 0,
   afdianLink: 'https://afdian.com/a/your-id',
   alipayQrCode: new URL('@/assets/img/支付宝.jpg', import.meta.url).href,
-  wechatQrCode: new URL('@/assets/img/微信.png', import.meta.url).href,
+  wechatQrCode: new URL('@/assets/img/微信.png', import.meta.url).href
 }
 
 export const sponsors: Sponsor[] = [

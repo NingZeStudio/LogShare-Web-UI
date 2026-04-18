@@ -30,11 +30,14 @@ export interface BulkDeleteItem {
 
 export interface BulkDeleteResponse {
   success: boolean
-  results: Record<string, {
-    success: boolean
-    error?: string
-    code?: number
-  }>
+  results: Record<
+    string,
+    {
+      success: boolean
+      error?: string
+      code?: number
+    }
+  >
 }
 
 export interface DeleteResponse {
@@ -72,14 +75,14 @@ export class ApiClient {
       baseURL,
       timeout: 30000,
       headers: {
-        'Accept': 'application/json'
+        Accept: 'application/json'
       },
       withCredentials: false
     })
 
     this.client.interceptors.response.use(
-      (response) => response,
-      (error) => {
+      response => response,
+      error => {
         console.error('API 请求错误:', {
           status: error.response?.status,
           message: error.message,
@@ -98,7 +101,11 @@ export class ApiClient {
     return this.client.get<T>(url, config)
   }
 
-  async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+  async post<T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<T>> {
     const postConfig: AxiosRequestConfig = {
       ...config,
       headers: {
@@ -113,7 +120,11 @@ export class ApiClient {
     return this.client.delete<T>(url, config)
   }
 
-  async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+  async put<T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<T>> {
     return this.client.put<T>(url, data, config)
   }
 
@@ -130,7 +141,7 @@ export class ApiClient {
    */
   async getRawLog(id: string): Promise<string> {
     const response = await this.get<string>(`/1/raw/${id}`, {
-      headers: { 'Accept': 'text/plain' }
+      headers: { Accept: 'text/plain' }
     })
     return response.data
   }
@@ -150,8 +161,8 @@ export class ApiClient {
     const ids = Array.isArray(id) ? id.join(',') : id
     const response = await this.delete<DeleteResponse>(`/1/delete/${ids}`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json'
       }
     })
     return response.data

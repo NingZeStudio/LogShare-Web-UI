@@ -20,9 +20,9 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
 <template>
   <div class="relative">
     <button
-      @click="toggleMenu"
       class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
       aria-label="切换语言"
+      @click="toggleMenu"
     >
       <Languages class="h-4 w-4" />
       <span>语言</span>
@@ -42,16 +42,16 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
         class="absolute right-0 top-full mt-1 w-32 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50"
       >
         <button
-          @click="switchLanguage('zh-CN')"
           class="w-full text-left px-4 py-2.5 text-sm hover:bg-secondary/80 transition-colors"
           :class="currentLang === 'zh-CN' ? 'text-primary font-medium' : 'text-muted-foreground'"
+          @click="switchLanguage('zh-CN')"
         >
           简体中文
         </button>
         <button
-          @click="switchLanguage('zh-TW')"
           class="w-full text-left px-4 py-2.5 text-sm hover:bg-secondary/80 transition-colors border-t border-border"
           :class="currentLang === 'zh-TW' ? 'text-primary font-medium' : 'text-muted-foreground'"
+          @click="switchLanguage('zh-TW')"
         >
           繁體中文
         </button>
@@ -67,11 +67,7 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div
-        v-if="showMenu"
-        class="fixed inset-0 z-40"
-        @click="showMenu = false"
-      />
+      <div v-if="showMenu" class="fixed inset-0 z-40" @click="showMenu = false" />
     </Transition>
   </div>
 </template>

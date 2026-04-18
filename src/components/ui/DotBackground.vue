@@ -147,7 +147,7 @@ onUnmounted(() => {
     <canvas
       ref="canvasRef"
       class="fixed inset-0 pointer-events-none"
-      style="touch-action: none; z-index: 0;"
+      style="touch-action: none; z-index: 0"
     />
   </Teleport>
 </template>

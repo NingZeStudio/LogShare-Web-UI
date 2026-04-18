@@ -1,6 +1,17 @@
 import JSZip from 'jszip'
 
-const TEXT_EXTENSIONS = ['.txt', '.log', '.yml', '.yaml', '.json', '.xml', '.cfg', '.conf', '.properties', '.toml']
+const TEXT_EXTENSIONS = [
+  '.txt',
+  '.log',
+  '.yml',
+  '.yaml',
+  '.json',
+  '.xml',
+  '.cfg',
+  '.conf',
+  '.properties',
+  '.toml'
+]
 
 export interface ExtractedFile {
   name: string

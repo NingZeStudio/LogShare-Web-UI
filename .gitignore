@@ -9,6 +9,8 @@ lerna-debug.log*
 QWEN.md
 
 node_modules
+.yarn
+.pnp.cjs
 dist-ssr
 dist
 *.local

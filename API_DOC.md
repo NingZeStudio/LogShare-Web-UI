@@ -21,6 +21,7 @@ curl -X POST http://localhost:9300/1/log \
 ```
 
 **响应示例**:
+
 ```json
 {
   "success": true,
@@ -43,11 +44,13 @@ curl -X POST http://localhost:9300/1/log \
 提交新的日志数据进行分析。
 
 **请求头**:
+
 ```
 Content-Type: application/json
 ```
 
 **请求体**:
+
 ```json
 {
   "content": "日志内容字符串",
@@ -65,17 +68,18 @@ Content-Type: application/json
 
 **参数说明**:
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `content` | string | ✅ | 日志内容（必需） |
-| `metadata` | array | ❌ | 元数据数组 |
-| `metadata[].key` | string | ❌ | 元数据键名 |
-| `metadata[].value` | mixed | ❌ | 元数据值 |
-| `metadata[].label` | string | ❌ | 显示标签 |
-| `metadata[].visible` | boolean | ❌ | 是否公开可见 |
-| `source` | string | ❌ | 来源标识（最长 64 字符） |
+| 字段                 | 类型    | 必填 | 说明                     |
+| -------------------- | ------- | ---- | ------------------------ |
+| `content`            | string  | ✅   | 日志内容（必需）         |
+| `metadata`           | array   | ❌   | 元数据数组               |
+| `metadata[].key`     | string  | ❌   | 元数据键名               |
+| `metadata[].value`   | mixed   | ❌   | 元数据值                 |
+| `metadata[].label`   | string  | ❌   | 显示标签                 |
+| `metadata[].visible` | boolean | ❌   | 是否公开可见             |
+| `source`             | string  | ❌   | 来源标识（最长 64 字符） |
 
 **响应示例**:
+
 ```json
 {
   "success": true,
@@ -89,14 +93,14 @@ Content-Type: application/json
 
 **字段说明**:
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `success` | boolean | 操作是否成功 |
-| `message` | string | 响应消息 |
-| `id` | string | 日志唯一标识符 |
-| `url` | string | 日志查看页面 URL |
-| `raw` | string | 原始日志内容 API URL |
-| `token` | string | 删除令牌（请妥善保存） |
+| 字段      | 类型    | 说明                   |
+| --------- | ------- | ---------------------- |
+| `success` | boolean | 操作是否成功           |
+| `message` | string  | 响应消息               |
+| `id`      | string  | 日志唯一标识符         |
+| `url`     | string  | 日志查看页面 URL       |
+| `raw`     | string  | 原始日志内容 API URL   |
+| `token`   | string  | 删除令牌（请妥善保存） |
 
 ---
 
@@ -105,9 +109,11 @@ Content-Type: application/json
 获取指定日志的原始内容。
 
 **路径参数**:
+
 - `id` - 日志 ID（支持多个 ID，用逗号分隔）
 
 **请求示例**:
+
 ```bash
 # 获取单个日志
 curl http://localhost:9300/1/raw/abc1234
@@ -117,6 +123,7 @@ curl http://localhost:9300/1/raw/abc1234,def5678,ghi9012
 ```
 
 **响应**:
+
 ```
 Content-Type: text/plain
 
@@ -127,6 +134,7 @@ Content-Type: text/plain
 ```
 
 **错误响应**:
+
 ```json
 {
   "success": false,
@@ -141,11 +149,13 @@ Content-Type: text/plain
 分析日志内容并返回结构化数据。
 
 **请求头**:
+
 ```
 Content-Type: application/json
 ```
 
 **请求体**:
+
 ```json
 {
   "content": "[Server thread/INFO]: Starting minecraft server version 1.20.1"
@@ -153,6 +163,7 @@ Content-Type: application/json
 ```
 
 **响应示例**:
+
 ```json
 {
   "name": "Vanilla Server Log",
@@ -170,14 +181,17 @@ Content-Type: application/json
 获取已存储日志的分析洞察。
 
 **路径参数**:
+
 - `id` - 日志 ID
 
 **请求示例**:
+
 ```bash
 curl http://localhost:9300/1/insights/abc1234
 ```
 
 **响应示例**:
+
 ```json
 {
   "name": "Vanilla Server Log",
@@ -201,14 +215,17 @@ curl http://localhost:9300/1/insights/abc1234
 删除指定的日志（需要 Token 认证）。
 
 **路径参数**:
+
 - `id` - 日志 ID（支持多个 ID，用逗号分隔）
 
 **请求头**:
+
 ```
 Authorization: Bearer {token}
 ```
 
 **请求示例**:
+
 ```bash
 # 删除单个日志
 curl -X DELETE http://localhost:9300/1/delete/abc1234 \
@@ -220,6 +237,7 @@ curl -X DELETE http://localhost:9300/1/delete/abc1234,def5678 \
 ```
 
 **成功响应**:
+
 ```json
 {
   "success": true,
@@ -232,6 +250,7 @@ curl -X DELETE http://localhost:9300/1/delete/abc1234,def5678 \
 ```
 
 **部分失败响应**:
+
 ```json
 {
   "success": true,
@@ -250,6 +269,7 @@ curl -X DELETE http://localhost:9300/1/delete/abc1234,def5678 \
 ```
 
 **错误响应**:
+
 ```json
 {
   "success": false,
@@ -264,11 +284,13 @@ curl -X DELETE http://localhost:9300/1/delete/abc1234,def5678 \
 使用 JSON 请求体批量删除多个日志。
 
 **请求头**:
+
 ```
 Content-Type: application/json
 ```
 
 **请求体**:
+
 ```json
 [
   {
@@ -283,6 +305,7 @@ Content-Type: application/json
 ```
 
 **响应示例**:
+
 ```json
 {
   "success": true,
@@ -300,6 +323,7 @@ Content-Type: application/json
 ```
 
 **限制**:
+
 - 最多一次删除 256 个日志
 
 ---
@@ -309,11 +333,13 @@ Content-Type: application/json
 获取 API 的存储限制信息。
 
 **请求示例**:
+
 ```bash
 curl http://localhost:9300/1/limits
 ```
 
 **响应示例**:
+
 ```json
 {
   "storageTime": 7776000,
@@ -324,11 +350,11 @@ curl http://localhost:9300/1/limits
 
 **字段说明**:
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
+| 字段          | 类型    | 说明                           |
+| ------------- | ------- | ------------------------------ |
 | `storageTime` | integer | 日志存储时间（秒），默认 90 天 |
-| `maxLength` | integer | 最大字节数，默认 10MB |
-| `maxLines` | integer | 最大行数，默认 25000 行 |
+| `maxLength`   | integer | 最大字节数，默认 10MB          |
+| `maxLines`    | integer | 最大行数，默认 25000 行        |
 
 ---
 
@@ -337,11 +363,13 @@ curl http://localhost:9300/1/limits
 获取当前启用的日志过滤器信息。
 
 **请求示例**:
+
 ```bash
 curl http://localhost:9300/1/filters
 ```
 
 **响应示例**:
+
 ```json
 {
   "success": true,
@@ -396,6 +424,7 @@ curl http://localhost:9300/1/filters
 获取错误率限制信息（由 Cloudflare 提供）。
 
 **响应示例**:
+
 ```json
 {
   "success": false,
@@ -433,16 +462,16 @@ Token 在提交日志时返回，请妥善保存。
 
 ### 常见错误码
 
-| 状态码 | 说明 |
-|--------|------|
-| 400 | 请求参数错误 |
-| 403 | Token 无效或权限不足 |
-| 404 | 日志不存在 |
-| 405 | 请求方法不允许 |
-| 413 | 请求体过大 |
-| 415 | 不支持的内容类型 |
-| 429 | 请求频率超限 |
-| 500 | 服务器内部错误 |
+| 状态码 | 说明                 |
+| ------ | -------------------- |
+| 400    | 请求参数错误         |
+| 403    | Token 无效或权限不足 |
+| 404    | 日志不存在           |
+| 405    | 请求方法不允许       |
+| 413    | 请求体过大           |
+| 415    | 不支持的内容类型     |
+| 429    | 请求频率超限         |
+| 500    | 服务器内部错误       |
 
 ---
 
@@ -458,6 +487,7 @@ Token 在提交日志时返回，请妥善保存。
 ### 豁免规则
 
 以下 IP 地址不会被过滤：
+
 - `127.0.0.0/8` - 本地回环
 - `0.0.0.0` - 任意地址
 - `1.0.0.1`, `1.1.1.1` - 公共 DNS
@@ -505,17 +535,17 @@ if __name__ == "__main__":
         "[Server thread/INFO]: Starting minecraft server",
         metadata=[{"key": "version", "value": "1.20.1"}]
     )
-    
+
     log_id = result["id"]
     log_token = result["token"]
-    
+
     print(f"Log ID: {log_id}")
     print(f"Token: {log_token}")
-    
+
     # 获取日志
     content = get_raw_log(log_id)
     print(f"Content: {content[:100]}...")
-    
+
     # 删除日志
     delete_result = delete_log(log_id, log_token)
     print(f"Delete result: {delete_result}")
@@ -524,52 +554,51 @@ if __name__ == "__main__":
 ### Node.js 示例
 
 ```javascript
-const axios = require('axios');
+const axios = require('axios')
 
-const API_BASE = 'http://localhost:9300';
+const API_BASE = 'http://localhost:9300'
 
 // 提交日志
 async function submitLog(content, metadata = []) {
   const response = await axios.post(`${API_BASE}/1/log`, {
     content,
     metadata
-  });
-  return response.data;
+  })
+  return response.data
 }
 
 // 获取原始日志
 async function getRawLog(logId) {
-  const response = await axios.get(`${API_BASE}/1/raw/${logId}`);
-  return response.data;
+  const response = await axios.get(`${API_BASE}/1/raw/${logId}`)
+  return response.data
 }
 
 // 删除日志
 async function deleteLog(logId, token) {
   const response = await axios.delete(`${API_BASE}/1/delete/${logId}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  return response.data;
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  return response.data
 }
 
 // 使用示例
-(async () => {
+;(async () => {
   // 提交日志
-  const result = await submitLog(
-    '[Server thread/INFO]: Starting minecraft server',
-    [{ key: 'version', value: '1.20.1' }]
-  );
-  
-  console.log(`Log ID: ${result.id}`);
-  console.log(`Token: ${result.token}`);
-  
+  const result = await submitLog('[Server thread/INFO]: Starting minecraft server', [
+    { key: 'version', value: '1.20.1' }
+  ])
+
+  console.log(`Log ID: ${result.id}`)
+  console.log(`Token: ${result.token}`)
+
   // 获取日志
-  const content = await getRawLog(result.id);
-  console.log(`Content: ${content.substring(0, 100)}...`);
-  
+  const content = await getRawLog(result.id)
+  console.log(`Content: ${content.substring(0, 100)}...`)
+
   // 删除日志
-  const deleteResult = await deleteLog(result.id, result.token);
-  console.log(`Delete result:`, deleteResult);
-})();
+  const deleteResult = await deleteLog(result.id, result.token)
+  console.log(`Delete result:`, deleteResult)
+})()
 ```
 
 ### cURL 完整示例
@@ -646,12 +675,12 @@ try:
     )
     response.raise_for_status()
     result = response.json()
-    
+
     if result.get('success'):
         print("删除成功")
     else:
         print(f"删除失败：{result.get('error')}")
-        
+
 except requests.exceptions.HTTPError as e:
     print(f"HTTP 错误：{e.response.status_code}")
 except requests.exceptions.RequestException as e:
@@ -699,6 +728,7 @@ A: 请联系管理员或发送邮件至 abuse 报告邮箱（如配置）。
 ## 更新日志
 
 ### v1.0.0
+
 - ✅ 新增 Token 认证系统
 - ✅ 新增 Metadata 元数据支持
 - ✅ 新增批量删除 API
@@ -711,6 +741,7 @@ A: 请联系管理员或发送邮件至 abuse 报告邮箱（如配置）。
 ## 支持
 
 如有问题或建议，请：
+
 - 查看 [Issues](https://github.com/your-repo/issues)
 - 提交新的 Issue
 - 查阅项目文档

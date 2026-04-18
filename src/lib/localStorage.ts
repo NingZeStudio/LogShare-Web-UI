@@ -12,7 +12,9 @@ export interface AIAnalysisRecord {
 
 export const saveAIAnalysisRecord = (logId: string, analysis: string): void => {
   try {
-    const records: AIAnalysisRecord[] = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.AI_ANALYSIS_HISTORY) || '[]')
+    const records: AIAnalysisRecord[] = JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE_KEYS.AI_ANALYSIS_HISTORY) || '[]'
+    )
 
     const existingIndex = records.findIndex(record => record.logId === logId)
     const newRecord: AIAnalysisRecord = {
@@ -41,7 +43,9 @@ export const saveAIAnalysisRecord = (logId: string, analysis: string): void => {
 
 export const getAIAnalysisRecords = (logId: string): AIAnalysisRecord[] => {
   try {
-    const records: AIAnalysisRecord[] = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.AI_ANALYSIS_HISTORY) || '[]')
+    const records: AIAnalysisRecord[] = JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE_KEYS.AI_ANALYSIS_HISTORY) || '[]'
+    )
     return records.filter(record => record.logId === logId)
   } catch (error) {
     console.error('获取 AI 分析记录失败:', error)
@@ -51,7 +55,9 @@ export const getAIAnalysisRecords = (logId: string): AIAnalysisRecord[] => {
 
 export const deleteAIAnalysisRecords = (logId: string): void => {
   try {
-    const records: AIAnalysisRecord[] = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.AI_ANALYSIS_HISTORY) || '[]')
+    const records: AIAnalysisRecord[] = JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE_KEYS.AI_ANALYSIS_HISTORY) || '[]'
+    )
     const filteredRecords = records.filter(record => record.logId !== logId)
     localStorage.setItem(LOCAL_STORAGE_KEYS.AI_ANALYSIS_HISTORY, JSON.stringify(filteredRecords))
   } catch (error) {

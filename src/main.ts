@@ -47,7 +47,7 @@ if ('serviceWorker' in navigator) {
         })
       })
 
-      navigator.serviceWorker.addEventListener('message', (event) => {
+      navigator.serviceWorker.addEventListener('message', event => {
         if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
           console.log('Service Worker 更新可用')
         }

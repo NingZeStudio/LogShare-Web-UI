@@ -8,7 +8,10 @@ export const pageTitleTemplates = {
   notFound: '页面未找到 - LogShare.CN'
 }
 
-export const setPageTitle = (template: keyof typeof pageTitleTemplates | string, params?: { title?: string; id?: string }) => {
+export const setPageTitle = (
+  template: keyof typeof pageTitleTemplates | string,
+  params?: { title?: string; id?: string }
+) => {
   let title = ''
 
   if (typeof template === 'string' && template in pageTitleTemplates) {

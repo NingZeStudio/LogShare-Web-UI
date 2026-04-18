@@ -7,7 +7,7 @@ let deferredPrompt: any = null
 
 const installApp = () => {
   if (!deferredPrompt) return
-  
+
   deferredPrompt.prompt()
   deferredPrompt.userChoice.then((choiceResult: any) => {
     if (choiceResult.outcome === 'accepted') {
@@ -55,15 +55,15 @@ onUnmounted(() => {
         </div>
         <div class="flex items-center gap-2 flex-shrink-0">
           <button
-            @click="installApp"
             class="text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-md transition-colors font-medium whitespace-nowrap"
+            @click="installApp"
           >
             立即安装
           </button>
           <button
-            @click="dismissPrompt"
             class="p-1 hover:bg-muted rounded transition-colors flex-shrink-0"
             aria-label="关闭"
+            @click="dismissPrompt"
           >
             <X class="h-4 w-4 text-muted-foreground" />
           </button>

@@ -20,7 +20,7 @@ export function parseLog(raw: string, showLineNumbers: boolean = true): string {
       const level = getLevel(line)
       const entryClass = level === 'error' ? 'entry-error' : 'entry-no-error'
       const levelClass = `level-${level}`
-      let formatted = formatContent(line)
+      const formatted = formatContent(line)
 
       html += `<div class="log-line-simple ${entryClass}"><span class="level ${levelClass}">${formatted}</span></div>`
     })
@@ -57,7 +57,7 @@ export function parseLog(raw: string, showLineNumbers: boolean = true): string {
   }
   if (currentGroup) groups.push(currentGroup)
 
-  groups.forEach((group) => {
+  groups.forEach(group => {
     if (group.level === 'info' || group.level === 'debug') {
       group.lines.forEach((line, idx) => {
         const lineIndex = group.start + idx
@@ -65,7 +65,7 @@ export function parseLog(raw: string, showLineNumbers: boolean = true): string {
         const level = getLevel(line)
         const levelClass = `level-${level}`
         const entryClass = level === 'error' ? 'entry-error' : 'entry-no-error'
-        let formatted = formatContent(line)
+        const formatted = formatContent(line)
         html += `<tr class="log-row ${entryClass}" id="L${lineNumber}">
           <td class="line-num">${lineNumber}</td>
           <td class="line-content"><span class="level ${levelClass}">${formatted}</span></td>
@@ -80,7 +80,7 @@ export function parseLog(raw: string, showLineNumbers: boolean = true): string {
         const lineNumber = lineIndex + 1
         const isFirst = idx === 0
         const levelClass = `level-${group.level}`
-        let formatted = formatContent(line)
+        const formatted = formatContent(line)
 
         if (isFirst) {
           html += `<tr class="log-row ${rowClass} ${bgClass}" id="L${lineNumber}">
@@ -102,22 +102,38 @@ export function parseLog(raw: string, showLineNumbers: boolean = true): string {
 
 // 已知屎山：Minecraft 颜色代码映射硬编码，修改时需同步更新 CSS 类
 function formatContent(text: string): string {
-  let out = text.replace(/&/g, '&amp;')
+  let out = text
+    .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;')
 
-  out = out.replace(/&lt;mark&gt;/gi, '<mark>')
-    .replace(/&lt;\/mark&gt;/gi, '</mark>')
+  out = out.replace(/&lt;mark&gt;/gi, '<mark>').replace(/&lt;\/mark&gt;/gi, '</mark>')
 
   const styleMap: Record<string, string> = {
-    '0': 'format-black', '1': 'format-darkblue', '2': 'format-darkgreen', '3': 'format-darkaqua',
-    '4': 'format-darkred', '5': 'format-darkpurple', '6': 'format-gold', '7': 'format-gray',
-    '8': 'format-darkgray', '9': 'format-blue', 'a': 'format-green', 'b': 'format-aqua',
-    'c': 'format-red', 'd': 'format-lightpurple', 'e': 'format-yellow', 'f': 'format-white',
-    'k': 'format-obfuscated', 'l': 'format-bold', 'm': 'format-strike', 'n': 'format-underline',
-    'o': 'format-italic', 'r': 'format-reset'
+    '0': 'format-black',
+    '1': 'format-darkblue',
+    '2': 'format-darkgreen',
+    '3': 'format-darkaqua',
+    '4': 'format-darkred',
+    '5': 'format-darkpurple',
+    '6': 'format-gold',
+    '7': 'format-gray',
+    '8': 'format-darkgray',
+    '9': 'format-blue',
+    a: 'format-green',
+    b: 'format-aqua',
+    c: 'format-red',
+    d: 'format-lightpurple',
+    e: 'format-yellow',
+    f: 'format-white',
+    k: 'format-obfuscated',
+    l: 'format-bold',
+    m: 'format-strike',
+    n: 'format-underline',
+    o: 'format-italic',
+    r: 'format-reset'
   }
 
   out = out.replace(/§([0-9a-fk-or])/gi, (match, code) => {
@@ -132,7 +148,9 @@ function formatContent(text: string): string {
     out = out.replace(
       /^(\s*)(at\s+)([^(]+)(\(([^)]+)\))?/,
       (_match, indent, atKeyword, className, _paren, location) => {
-        const locationHtml = location ? `<span class="level-stack-location">(${location})</span>` : ''
+        const locationHtml = location
+          ? `<span class="level-stack-location">(${location})</span>`
+          : ''
         return `${indent}<span class="level-stack-frame">${atKeyword}<span class="level-stack-class">${className}</span>${locationHtml}</span>`
       }
     )
@@ -150,15 +168,9 @@ function formatContent(text: string): string {
     )
   }
 
-  out = out.replace(
-    /(\[[^\]]*\/INFO\])/g,
-    '<span class="level-info-prefix">$1</span>'
-  )
+  out = out.replace(/(\[[^\]]*\/INFO\])/g, '<span class="level-info-prefix">$1</span>')
 
-  out = out.replace(
-    /(\[\d{1,2}:\d{2}:\d{2}\])/g,
-    '<span class="level-timestamp">$1</span>'
-  )
+  out = out.replace(/(\[\d{1,2}:\d{2}:\d{2}\])/g, '<span class="level-timestamp">$1</span>')
 
   return out
 }

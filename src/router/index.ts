@@ -51,18 +51,18 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _, next) => {
-  const template = to.meta.title as string || getCurrentPageTemplate(to.name?.toString());
+  const template = (to.meta.title as string) || getCurrentPageTemplate(to.name?.toString())
 
   if (template === 'log' && to.params.id) {
-    setPageTitle(template, { id: to.params.id as string });
+    setPageTitle(template, { id: to.params.id as string })
   } else if (template === 'tutorialArticle' && to.params.id) {
     // 警告：教程标题显示"加载中..."，实际标题应在 TutorialArticleView 中设置
-    setPageTitle(template, { title: '加载中...' });
+    setPageTitle(template, { title: '加载中...' })
   } else {
-    setPageTitle(template);
+    setPageTitle(template)
   }
 
-  next();
-});
+  next()
+})
 
 export default router

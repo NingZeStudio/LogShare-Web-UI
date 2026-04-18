@@ -3,20 +3,18 @@ import { useRoute } from 'vue-router'
 import { apiClient, getApiUrl } from '@/lib/ApiClient'
 import { parseLog } from '@/lib/logParser'
 import MarkdownIt from 'markdown-it'
-import {
-  saveAIAnalysisRecord
-} from '@/lib/localStorage'
+import { saveAIAnalysisRecord } from '@/lib/localStorage'
 import { setPageTitle } from '@/lib/pageTitle'
 import { t } from '@/lib/i18n'
 
-let md: any = null;
+let md: any = null
 
 const initializeMarkdownParser = async () => {
   md = new MarkdownIt({
     html: false,
     linkify: true
-  });
-};
+  })
+}
 
 export const useLogView = () => {
   const route = useRoute()
@@ -52,7 +50,7 @@ export const useLogView = () => {
     }
 
     if (!md) {
-      await initializeMarkdownParser();
+      await initializeMarkdownParser()
     }
 
     try {
@@ -74,12 +72,13 @@ export const useLogView = () => {
         saveAIAnalysisRecord(id, data.analysis)
         cachedAllRecords = null
       } else {
-        aiResult.value = t('analysis_failed') + ": " + (data.analysis || t('unknown_error'))
+        aiResult.value = t('analysis_failed') + ': ' + (data.analysis || t('unknown_error'))
       }
     } catch (e: any) {
       console.error(e)
-      const msg = e.response?.data?.analysis || e.response?.data?.error || e.message || t('unknown_error')
-      aiResult.value = t('analysis_failed') + ": " + msg
+      const msg =
+        e.response?.data?.analysis || e.response?.data?.error || e.message || t('unknown_error')
+      aiResult.value = t('analysis_failed') + ': ' + msg
     } finally {
       analyzing.value = false
     }
@@ -96,7 +95,9 @@ export const useLogView = () => {
       }
     }
 
-    aiAnalysisHistory.value = cachedAllRecords ? cachedAllRecords.filter((record: any) => record.logId === id) : []
+    aiAnalysisHistory.value = cachedAllRecords
+      ? cachedAllRecords.filter((record: any) => record.logId === id)
+      : []
   }
 
   // Function to toggle history
@@ -125,7 +126,8 @@ export const useLogView = () => {
       let rawText = typeof rawRes.data === 'string' ? rawRes.data : JSON.stringify(rawRes.data)
 
       // Check log size, truncate if too large to prevent performance issues
-      if (rawText.length > 1000000) { // Limit to 1MB
+      if (rawText.length > 1000000) {
+        // Limit to 1MB
         rawText = rawText.substring(0, 1000000) + '\n\n[日志过长，已截断...]'
       }
 
@@ -141,7 +143,7 @@ export const useLogView = () => {
         setPageTitle('log', { id: id })
       }
     } catch (e: any) {
-      console.error("Failed to load log:", e)
+      console.error('Failed to load log:', e)
       error.value = e.response?.data?.error || t('log_not_found')
     } finally {
       loading.value = false
@@ -195,10 +197,11 @@ export const useLogView = () => {
     let shareMessage = '我遇到了一个问题，'
 
     if (log.value && log.value.analysis && log.value.analysis.information) {
-      const softwareInfo = log.value.analysis.information.find((info: any) =>
-        info.label.toLowerCase().includes('software') ||
-        info.label.toLowerCase().includes('version') ||
-        info.label.toLowerCase().includes('server')
+      const softwareInfo = log.value.analysis.information.find(
+        (info: any) =>
+          info.label.toLowerCase().includes('software') ||
+          info.label.toLowerCase().includes('version') ||
+          info.label.toLowerCase().includes('server')
       )
 
       if (softwareInfo) {
@@ -287,7 +290,10 @@ export const useLogView = () => {
 
     lines.forEach((line, index) => {
       const lowerLine = line.toLowerCase()
-      const searchTerms = searchTerm.value.toLowerCase().split(/\s+/).filter(term => term.length > 0)
+      const searchTerms = searchTerm.value
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(term => term.length > 0)
 
       if (searchTerms.length > 0 && searchTerms.every(term => lowerLine.includes(term))) {
         results.push(index)

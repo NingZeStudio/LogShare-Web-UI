@@ -29,9 +29,9 @@ export const apiEndpoints = [
     ],
     successResponse: {
       success: true,
-      id: "8FlTowW",
-      url: "https://logshare.cn/8FlTowW",
-      raw: "https://api.logshare.cn/1/raw/8FlTowW"
+      id: '8FlTowW',
+      url: 'https://logshare.cn/8FlTowW',
+      raw: 'https://api.logshare.cn/1/raw/8FlTowW'
     },
     errorResponse: {
       success: false,

@@ -16,23 +16,26 @@ onMounted(() => {
   }
 })
 
-const tutorials: Record<string, {
-  title: string
-  author: string
-  content: {
-    sections: Array<{
-      title?: string
-      type: string
-      content?: string
-      steps?: string[]
-      note?: string
-      code?: { lang: string; code: string }
-      image?: { src: string; alt: string; caption: string }
-      images?: Array<{ src: string; alt: string; caption: string }>
-      conclusion?: string
-    }>
+const tutorials: Record<
+  string,
+  {
+    title: string
+    author: string
+    content: {
+      sections: Array<{
+        title?: string
+        type: string
+        content?: string
+        steps?: string[]
+        note?: string
+        code?: { lang: string; code: string }
+        image?: { src: string; alt: string; caption: string }
+        images?: Array<{ src: string; alt: string; caption: string }>
+        conclusion?: string
+      }>
+    }
   }
-}> = {
+> = {
   'mobileglues-setup': {
     title: 'Android 端 Minecraft 渲染器配置教程 - MobileGlues',
     author: '用户提供内容',
@@ -40,7 +43,8 @@ const tutorials: Record<string, {
       sections: [
         {
           type: 'warning',
-          content: 'MobileGlues（常简称为 MG 渲染器）是目前 Android 平台上性能表现最优、设备兼容性最佳的 OpenGL 转 OpenGL ES 兼容层方案。需要特别注意的是，该渲染器仅支持 Minecraft 1.17 及以上版本，低版本游戏无法正常运行。'
+          content:
+            'MobileGlues（常简称为 MG 渲染器）是目前 Android 平台上性能表现最优、设备兼容性最佳的 OpenGL 转 OpenGL ES 兼容层方案。需要特别注意的是，该渲染器仅支持 Minecraft 1.17 及以上版本，低版本游戏无法正常运行。'
         },
         {
           type: 'section',
@@ -51,7 +55,7 @@ const tutorials: Record<string, {
             '下载完成后，在系统提示时完成安装授权。'
           ],
           image: {
-            src: 'https://cdn.zeinklab.com/myfile/images/e3ec6c3b38127fb6.jpg',
+            src: 'https://fastly.jsdelivr.net/gh/qitry/Blog-Static-Resource@main/images/e3ec6c3b38127fb6.jpg',
             alt: 'MobileGlues 下载页面示意',
             caption: 'MobileGlues 下载页面示意'
           }
@@ -66,7 +70,7 @@ const tutorials: Record<string, {
             '在设置菜单中找到"全局渲染器"选项，点击展开下拉列表，继续向下滚动浏览可用渲染器，直至找到 MobileGlues 并点击选中。'
           ],
           image: {
-            src: 'https://cdn.zeinklab.com/myfile/images/d295ee43784912b8.jpg',
+            src: 'https://fastly.jsdelivr.net/gh/qitry/Blog-Static-Resource@main/images/d295ee43784912b8.jpg',
             alt: 'ZL2 渲染器设置界面',
             caption: 'ZL2 渲染器设置界面'
           },
@@ -84,12 +88,12 @@ const tutorials: Record<string, {
           ],
           images: [
             {
-              src: 'https://cdn.zeinklab.com/myfile/images/94df78d76b436a51.jpg',
+              src: 'https://fastly.jsdelivr.net/gh/qitry/Blog-Static-Resource@main/images/94df78d76b436a51.jpg',
               alt: 'FCL 设置入口位置',
               caption: 'FCL 设置入口位置'
             },
             {
-              src: 'https://cdn.zeinklab.com/myfile/images/cf06c5fe5ef92300.jpg',
+              src: 'https://fastly.jsdelivr.net/gh/qitry/Blog-Static-Resource@main/images/cf06c5fe5ef92300.jpg',
               alt: 'FCL 渲染器选择界面',
               caption: 'FCL 渲染器选择界面'
             }
@@ -105,7 +109,8 @@ const tutorials: Record<string, {
       sections: [
         {
           type: 'warning',
-          content: '本教程适用于 Minecraft Java 版服务器管理员，涵盖 Spigot、Paper、Fabric 等主流服务端。在分析日志前，请确保您已获取完整的日志文件，而非仅最后几行内容。'
+          content:
+            '本教程适用于 Minecraft Java 版服务器管理员，涵盖 Spigot、Paper、Fabric 等主流服务端。在分析日志前，请确保您已获取完整的日志文件，而非仅最后几行内容。'
         },
         {
           type: 'section',
@@ -148,7 +153,114 @@ const tutorials: Record<string, {
             'AI 分析功能会提供详细的问题诊断和解决方案建议。',
             '分析完成后可生成分享链接，便于向他人求助或存档记录。'
           ],
-          conclusion: '通过 LogShare 的智能分析，即使是新手也能快速定位服务器问题并获得专业级的解决方案建议。'
+          conclusion:
+            '通过 LogShare 的智能分析，即使是新手也能快速定位服务器问题并获得专业级的解决方案建议。'
+        }
+      ]
+    }
+  },
+  'ask-questions-effectively': {
+    title: '如何有效地提问求助指南',
+    author: '社区经验总结',
+    content: {
+      sections: [
+        {
+          type: 'warning',
+          content:
+            '在游戏社区或技术群组中提问时，清晰、准确的问题描述能大大提高获得帮助的概率。本教程将教你如何成为一名优秀的提问者，以及如何正确地对待解答者的帮助。'
+        },
+        {
+          type: 'section',
+          title: '一、准备工作：收集必要信息',
+          note: '在向他人求助前，请确保你已收集到足够的信息。解答者不是算命先生，他们只能根据你提供的信息来诊断问题。',
+          steps: [
+            '获取完整的日志文件：使用 LogShare.CN 或类似工具上传日志，获取分享链接。',
+            '记录问题出现的具体场景：包括游戏版本、使用的启动器、安装的插件或模组列表。',
+            '描述问题发生前的操作：你做了什么导致问题出现？是安装了新插件、修改了配置文件，还是其他操作？',
+            '截图或录屏：如果问题涉及界面显示错误或性能问题，提供截图或短视频会更有帮助。'
+          ],
+          conclusion: '记住：信息越详细，解答者就能越快找到问题所在。'
+        },
+        {
+          type: 'section',
+          title: '二、如何描述问题',
+          note: '一个清晰的问题描述应该包含"发生了什么"、"应该发生什么"以及"你尝试过什么"。',
+          steps: [
+            '明确的问题标题：不要用"求助"、"救命"等模糊的标题，应该用"服务器启动时报错 OutOfMemoryError"这样的具体描述。',
+            '完整的错误信息：不要只说"报错了"，要粘贴完整的错误堆栈或错误代码。',
+            '系统环境信息：包括操作系统、Java 版本、游戏版本、启动器版本等。',
+            '你尝试过的解决方案：说明你已经尝试了哪些方法（重启、重装、更换配置等），这样解答者就不用重复推荐了。'
+          ],
+          code: {
+            lang: 'text',
+            code: `❌ 错示范例：
+"我的服务器挂了，谁来帮我看看？"
+
+✅ 正确示范：
+"服务器启动时崩溃，已上传日志链接：https://logshare.cn/xxx
+错误信息：java.lang.OutOfMemoryError: Java heap space
+尝试过的方案：已将 -Xmx 增加到 8G，问题依然存在
+系统环境：Ubuntu 22.04, Java 17, Paper 1.20.1"`
+          }
+        },
+        {
+          type: 'section',
+          title: '三、如何获取和分享日志',
+          note: '日志是诊断问题的最重要依据，没有日志的求助往往很难得到有效回应。',
+          steps: [
+            '服务器日志位置：logs/latest.log（最新日志）或 logs/日期.log.gz（历史日志）',
+            '使用 LogShare.CN 上传：访问首页，点击"选择文件"上传日志文件。',
+            '复制分享链接：上传后会自动生成分享链接，将这个链接发送给解答者。',
+            '客户端日志：如果是客户端问题，日志通常在 .minecraft/logs/ 目录下。'
+          ],
+          conclusion: '不要只贴几行日志，完整的日志文件才能包含所有关键信息。'
+        },
+        {
+          type: 'section',
+          title: '四、理解解答者的立场',
+          note: '社区中的解答者通常是志愿者，他们用自己的时间和专业知识帮助你，但他们也有自己的工作和生活。',
+          steps: [
+            '解答者不会算命：他们需要你提供的信息才能分析问题，信息不足时无法给出准确答案。',
+            '解答者也有局限性：他们可能没遇到过你的问题，或者你的问题超出了他们的知识范围。',
+            '解答者可能很忙：每个人都有自己的生活，不能指望他们随时随地秒回你的问题。',
+            '解答者不是客服：社区成员没有义务为你服务，他们的帮助是基于热情和善意。'
+          ]
+        },
+        {
+          type: 'section',
+          title: '五、正确的心态',
+          note: '保持良好的心态和礼貌，这不仅是基本的社交礼仪，也能让你更容易获得帮助。',
+          steps: [
+            '帮你是情分，不帮是本分：不要因为没人回应就心生不满，这是社区的正常现象。',
+            '不要道德绑架：不要用"我都等了这么久为什么没人理我"或"你们不是号称热心助人吗"这样的言语。',
+            '做好冷场的准备：有些问题可能确实没人能解决，或者没人有时间，这是你需要接受的。',
+            '保持耐心和礼貌：感谢每一位愿意回答你问题的人，即使他们的答案没有直接解决问题。'
+          ],
+          conclusion: '尊重他人，也是尊重自己。良好的社区氛围需要每个人的共同努力。'
+        },
+        {
+          type: 'section',
+          title: '六、提问之后',
+          note: '提问不是结束，良好的互动能让问题更快解决。',
+          steps: [
+            '及时反馈：如果解答者的方案有效，请及时告知，这不仅是对帮助者的尊重，也能让其他遇到类似问题的人受益。',
+            '提供补充信息：如果解答者要求更多信息，请尽快提供，不要让对话中断。',
+            '分享最终解决方案：问题解决后，可以在群组或论坛分享你的解决过程，帮助后来者。',
+            '感谢帮助者：一句简单的"谢谢"能让帮助者感到温暖，激励他们继续帮助他人。'
+          ]
+        },
+        {
+          type: 'section',
+          title: '七、常见错误示例',
+          note: '避免这些常见的提问错误，能大大提高你获得帮助的机会。',
+          steps: [
+            '信息不足：只说"报错了"但不提供任何错误信息或日志。',
+            '态度恶劣：因为没有立即得到回应就发脾气或使用侮辱性语言。',
+            '重复提问：在多个地方同时发相同的问题，且不说"已在他处提问"。',
+            '拒绝提供信息：当解答者要求更多细节时，以"隐私"等理由拒绝。',
+            '不做功课：问题在文档或搜索引擎中很容易找到答案，却不先自己查证。'
+          ],
+          conclusion: '避免这些错误，你的求助之路会更加顺畅。'
         }
       ]
     }
@@ -160,7 +272,8 @@ const tutorials: Record<string, {
       sections: [
         {
           type: 'warning',
-          content: '本教程面向开发者，需要基本的编程知识。LogShare API 采用 RESTful 设计，所有请求和响应均使用 JSON 格式（除/raw 端点外）。建议在生产环境使用前先进行测试。'
+          content:
+            '本教程面向开发者，需要基本的编程知识。LogShare API 采用 RESTful 设计，所有请求和响应均使用 JSON 格式（除/raw 端点外）。建议在生产环境使用前先进行测试。'
         },
         {
           type: 'section',
@@ -337,7 +450,10 @@ const tutorial = computed(() => tutorials[tutorialId.value])
 
 // 格式化步骤文本，将 URL 转换为链接
 const formatStep = (step: string) => {
-  return step.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline break-all">$1</a>')
+  return step.replace(
+    /(https?:\/\/[^\s]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline break-all">$1</a>'
+  )
 }
 </script>
 
@@ -361,11 +477,7 @@ const formatStep = (step: string) => {
         本文由 <span class="text-primary font-medium">{{ tutorial.author }}</span> 生成
       </div>
 
-      <div
-        v-for="(section, index) in tutorial.content.sections"
-        :key="index"
-        class="space-y-3"
-      >
+      <div v-for="(section, index) in tutorial.content.sections" :key="index" class="space-y-3">
         <!-- 警告/提示框 -->
         <div
           v-if="section.type === 'warning'"
@@ -378,27 +490,27 @@ const formatStep = (step: string) => {
 
         <!-- 普通章节 -->
         <template v-else-if="section.type === 'section'">
-          <h2 class="text-base font-semibold pt-2 border-t border-border first:pt-0 first:border-t-0">
+          <h2
+            class="text-base font-semibold pt-2 border-t border-border first:pt-0 first:border-t-0"
+          >
             {{ section.title }}
           </h2>
 
           <!-- 说明注释 -->
-          <div
-            v-if="section.note"
-            class="bg-muted p-2 rounded text-xs text-muted-foreground"
-          >
+          <div v-if="section.note" class="bg-muted p-2 rounded text-xs text-muted-foreground">
             <strong>说明：</strong>{{ section.note }}
           </div>
 
           <!-- 代码块 -->
-          <div
-            v-if="section.code"
-            class="my-3 rounded-lg overflow-hidden border border-border"
-          >
-            <div class="bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground border-b border-border flex items-center justify-between">
+          <div v-if="section.code" class="my-3 rounded-lg overflow-hidden border border-border">
+            <div
+              class="bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground border-b border-border flex items-center justify-between"
+            >
               <span>{{ section.code.lang }}</span>
             </div>
-            <pre class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"><code>{{ section.code.code }}</code></pre>
+            <pre
+              class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+            ><code>{{ section.code.code }}</code></pre>
           </div>
 
           <!-- 步骤段落 -->
@@ -411,10 +523,7 @@ const formatStep = (step: string) => {
           </div>
 
           <!-- 单张图片 -->
-          <figure
-            v-if="section.image"
-            class="my-3"
-          >
+          <figure v-if="section.image" class="my-3">
             <img
               :src="section.image.src"
               :alt="section.image.alt"
@@ -426,11 +535,7 @@ const formatStep = (step: string) => {
           </figure>
 
           <!-- 多张图片 -->
-          <figure
-            v-for="(img, imgIndex) in section.images || []"
-            :key="imgIndex"
-            class="my-3"
-          >
+          <figure v-for="(img, imgIndex) in section.images || []" :key="imgIndex" class="my-3">
             <img
               :src="img.src"
               :alt="img.alt"
@@ -442,10 +547,7 @@ const formatStep = (step: string) => {
           </figure>
 
           <!-- 结论 -->
-          <p
-            v-if="section.conclusion"
-            class="text-sm leading-relaxed"
-          >
+          <p v-if="section.conclusion" class="text-sm leading-relaxed">
             {{ section.conclusion }}
           </p>
         </template>

@@ -58,18 +58,18 @@ const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
   <div class="flex items-center gap-1">
     <!-- 主题设置按钮（汉堡菜单旁边） -->
     <button
-      @click="isThemeSettingsOpen = true"
       class="lg:hidden p-2 rounded-md hover:bg-muted/50 transition-colors"
       aria-label="主题设置"
+      @click="isThemeSettingsOpen = true"
     >
       <Palette class="h-5 w-5" />
     </button>
 
     <!-- 汉堡菜单按钮 -->
     <button
-      @click="toggleNav"
       class="lg:hidden p-2 rounded-md hover:bg-muted/50 transition-colors"
       aria-label="菜单"
+      @click="toggleNav"
     >
       <Menu v-if="!isOpen" class="h-5 w-5" />
       <X v-else class="h-5 w-5" />
@@ -92,8 +92,8 @@ const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
           <!-- 教程与文档（二级菜单） -->
           <div class="relative">
             <button
-              @click="toggleDocs"
               class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+              @click="toggleDocs"
             >
               <span class="flex items-center gap-2">
                 <BookOpen class="h-4 w-4" />
@@ -117,15 +117,15 @@ const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
               <div v-if="docsOpen" class="ml-4 mt-1 space-y-1 border-l-2 border-border pl-3">
                 <RouterLink
                   to="/tutorials"
-                  @click="closeNav"
                   class="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
+                  @click="closeNav"
                 >
                   教程中心
                 </RouterLink>
                 <RouterLink
                   to="/api-docs"
-                  @click="closeNav"
                   class="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
+                  @click="closeNav"
                 >
                   API 文档
                 </RouterLink>
@@ -136,8 +136,8 @@ const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
           <!-- 语言切换（二级菜单） -->
           <div class="relative">
             <button
-              @click="toggleLang"
               class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+              @click="toggleLang"
             >
               <span class="flex items-center gap-2">
                 <Languages class="h-4 w-4" />
@@ -160,16 +160,16 @@ const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
             >
               <div v-if="langOpen" class="ml-4 mt-1 space-y-1 border-l-2 border-border pl-3">
                 <button
-                  @click="switchLanguage('zh-CN')"
                   class="block w-full text-left px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
                   :class="{ 'text-foreground font-medium': currentLang === 'zh-CN' }"
+                  @click="switchLanguage('zh-CN')"
                 >
                   简体中文
                 </button>
                 <button
-                  @click="switchLanguage('zh-TW')"
                   class="block w-full text-left px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
                   :class="{ 'text-foreground font-medium': currentLang === 'zh-TW' }"
+                  @click="switchLanguage('zh-TW')"
                 >
                   繁體中文
                 </button>
@@ -180,8 +180,8 @@ const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
           <!-- 开源地址（二级菜单） -->
           <div class="relative">
             <button
-              @click="toggleOpenSource"
               class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+              @click="toggleOpenSource"
             >
               <span class="flex items-center gap-2">
                 <Github class="h-4 w-4" />
@@ -226,8 +226,8 @@ const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
           <!-- 赞助支持 -->
           <RouterLink
             to="/sponsor"
-            @click="closeNav"
             class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+            @click="closeNav"
           >
             <Heart class="h-4 w-4" />
             赞助支持

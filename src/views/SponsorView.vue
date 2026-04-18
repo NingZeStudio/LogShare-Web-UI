@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Heart, QrCode, DollarSign } from 'lucide-vue-next'
-import { sponsors, sponsorConfig, getTotalAmount, getSponsorCount, getPlatformIcon, getPlatformColor } from '@/data/sponsors'
+import {
+  sponsors,
+  sponsorConfig,
+  getTotalAmount,
+  getSponsorCount,
+  getPlatformIcon,
+  getPlatformColor
+} from '@/data/sponsors'
 import { t } from '@/lib/i18n'
 import { setPageTitle } from '@/lib/pageTitle'
 
@@ -76,7 +83,9 @@ const sortedSponsors = computed(() => {
     <!-- 赞助方式 -->
     <div class="grid md:grid-cols-2 gap-4 mb-6">
       <!-- 支付宝 -->
-      <div class="group block bg-card border border-border rounded-lg p-4 hover:border-primary/50 hover:shadow-md transition-all">
+      <div
+        class="group block bg-card border border-border rounded-lg p-4 hover:border-primary/50 hover:shadow-md transition-all"
+      >
         <div class="flex items-center gap-3 mb-4">
           <div class="p-2 bg-blue-500/10 rounded-md">
             <QrCode class="h-4 w-4 text-blue-500" />
@@ -84,12 +93,19 @@ const sortedSponsors = computed(() => {
           <h2 class="text-base font-semibold">{{ t('sponsor_alipay') }}</h2>
         </div>
 
-        <div class="bg-muted/50 rounded-md flex items-center justify-center mb-3 overflow-hidden min-h-[240px] border">
+        <div
+          class="bg-muted/50 rounded-md flex items-center justify-center mb-3 overflow-hidden min-h-[240px] border"
+        >
           <img
             :src="sponsorConfig.alipayQrCode"
             alt="支付宝"
             class="max-w-full h-auto object-contain p-4"
-            @error="(e) => { const target = e.target as HTMLImageElement; if (target) target.style.display = 'none' }"
+            @error="
+              e => {
+                const target = e.target as HTMLImageElement
+                if (target) target.style.display = 'none'
+              }
+            "
           />
         </div>
         <p class="text-sm text-center text-muted-foreground">
@@ -98,7 +114,9 @@ const sortedSponsors = computed(() => {
       </div>
 
       <!-- 微信 -->
-      <div class="group block bg-card border border-border rounded-lg p-4 hover:border-primary/50 hover:shadow-md transition-all">
+      <div
+        class="group block bg-card border border-border rounded-lg p-4 hover:border-primary/50 hover:shadow-md transition-all"
+      >
         <div class="flex items-center gap-3 mb-4">
           <div class="p-2 bg-green-500/10 rounded-md">
             <QrCode class="h-4 w-4 text-green-500" />
@@ -106,12 +124,19 @@ const sortedSponsors = computed(() => {
           <h2 class="text-base font-semibold">{{ t('sponsor_wechat') }}</h2>
         </div>
 
-        <div class="bg-muted/50 rounded-md flex items-center justify-center mb-3 overflow-hidden min-h-[240px] border">
+        <div
+          class="bg-muted/50 rounded-md flex items-center justify-center mb-3 overflow-hidden min-h-[240px] border"
+        >
           <img
             :src="sponsorConfig.wechatQrCode"
             alt="微信"
             class="max-w-full h-auto object-contain p-4"
-            @error="(e) => { const target = e.target as HTMLImageElement; if (target) target.style.display = 'none' }"
+            @error="
+              e => {
+                const target = e.target as HTMLImageElement
+                if (target) target.style.display = 'none'
+              }
+            "
           />
         </div>
         <p class="text-sm text-center text-muted-foreground">
@@ -146,15 +171,24 @@ const sortedSponsors = computed(() => {
           class="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
         >
           <!-- 头像/图标 -->
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/25 to-primary/10 flex items-center justify-center shrink-0 border">
-            <span class="text-sm font-bold text-primary">{{ sponsor.name.charAt(0).toUpperCase() }}</span>
+          <div
+            class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/25 to-primary/10 flex items-center justify-center shrink-0 border"
+          >
+            <span class="text-sm font-bold text-primary">{{
+              sponsor.name.charAt(0).toUpperCase()
+            }}</span>
           </div>
 
           <!-- 信息 -->
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1">
               <span class="font-medium">{{ sponsor.name }}</span>
-              <span :class="['text-xs px-2 py-0.5 rounded-full font-medium', getPlatformColor(sponsor.platform)]">
+              <span
+                :class="[
+                  'text-xs px-2 py-0.5 rounded-full font-medium',
+                  getPlatformColor(sponsor.platform)
+                ]"
+              >
                 {{ getPlatformIcon(sponsor.platform) }}
               </span>
             </div>
@@ -181,7 +215,9 @@ const sortedSponsors = computed(() => {
     </div>
 
     <!-- 底部感谢 -->
-    <div class="mt-6 p-4 bg-muted/30 rounded-lg border border-border text-center text-sm text-muted-foreground">
+    <div
+      class="mt-6 p-4 bg-muted/30 rounded-lg border border-border text-center text-sm text-muted-foreground"
+    >
       <div class="flex items-center justify-center gap-2 mb-1">
         <Heart class="h-4 w-4 text-red-500" />
         <span class="font-medium">{{ t('sponsor_footer_thanks') }}</span>

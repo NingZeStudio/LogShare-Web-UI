@@ -73,7 +73,8 @@
     --foreground: 222.2 84% 4.9%;
 
     --font-mono: Fira Code, Maple Mono, Cascadia Code, SF Mono, Monaco, Consolas, monospace;
-    --font-sans: Fira Code, PingFang SC, Microsoft YaHei, Noto Sans CJK SC, Source Han Sans SC, sans-serif;
+    --font-sans:
+      Fira Code, PingFang SC, Microsoft YaHei, Noto Sans CJK SC, Source Han Sans SC, sans-serif;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -148,7 +149,7 @@
     --radius-full: 9999px;
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
@@ -157,7 +158,10 @@
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
   }
-  code, pre, kbd, samp {
+  code,
+  pre,
+  kbd,
+  samp {
     font-family: var(--font-mono);
   }
 }

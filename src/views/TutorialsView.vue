@@ -4,6 +4,13 @@ import { t } from '@/lib/i18n'
 
 const tutorials = [
   {
+    id: 'ask-questions-effectively',
+    title: '如何有效地提问求助指南',
+    description: '学会正确的提问方法，提高获得帮助的概率，建立良好的社区关系',
+    category: '社区指南',
+    author: '社区经验总结'
+  },
+  {
     id: 'mobileglues-setup',
     title: '关于 FoldCraftLauncher 和 ZalithLauncher2 使用 MobileGlues 渲染器',
     description: '在 Android 设备上配置 MobileGlues 渲染器，提升 Minecraft 游戏性能和兼容性',
@@ -62,7 +69,9 @@ const tutorials = [
               </span>
             </div>
           </div>
-          <ChevronRight class="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
+          <ChevronRight
+            class="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0"
+          />
         </div>
       </RouterLink>
     </div>

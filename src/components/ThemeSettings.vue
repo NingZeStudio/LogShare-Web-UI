@@ -1,15 +1,24 @@
 <template>
   <Teleport to="body">
     <Transition name="fade" appear>
-      <div v-if="open" class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm" @click.self="close">
-        <div class="fixed inset-y-0 right-0 w-[300px] sm:w-[400px] bg-card border-l shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300 z-[101]">
+      <div
+        v-if="open"
+        class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
+        @click.self="close"
+      >
+        <div
+          class="fixed inset-y-0 right-0 w-[300px] sm:w-[400px] bg-card border-l shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300 z-[101]"
+        >
           <div class="p-6">
             <div class="flex items-center justify-between mb-6">
               <div class="flex items-center gap-2 font-semibold">
                 <Palette class="h-5 w-5" />
                 <span>主题设置</span>
               </div>
-              <button @click="close" class="p-2 rounded-full bg-secondary/80 hover:bg-secondary transition-colors">
+              <button
+                class="p-2 rounded-full bg-secondary/80 hover:bg-secondary transition-colors"
+                @click="close"
+              >
                 <X class="h-5 w-5" />
               </button>
             </div>
@@ -21,13 +30,16 @@
                   <button
                     v-for="theme in themes"
                     :key="theme.id"
-                    @click="setTheme(theme.id)"
                     class="relative flex flex-col items-center gap-2 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
                     :class="currentTheme === theme.id ? 'border-primary bg-muted' : 'border-border'"
+                    @click="setTheme(theme.id)"
                   >
                     <div
                       class="h-8 w-8 rounded-full shadow-sm"
-                      :class="[theme.color, currentTheme === theme.id ? 'ring-2 ring-primary ring-offset-2' : '']"
+                      :class="[
+                        theme.color,
+                        currentTheme === theme.id ? 'ring-2 ring-primary ring-offset-2' : ''
+                      ]"
                     />
                     <span class="text-xs font-medium">{{ theme.name }}</span>
                   </button>
@@ -39,13 +51,15 @@
                 <div class="relative">
                   <select
                     v-model="currentFont"
-                    @change="setFont(currentFont)"
                     class="w-full appearance-none bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                    @change="setFont(currentFont)"
                   >
                     <option value="maple_mono">{{ t('font_maple_mono') }}</option>
                     <option value="fira_code">{{ t('font_fira_code') }}</option>
                   </select>
-                  <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <ChevronDown
+                    class="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
+                  />
                 </div>
               </div>
 
@@ -53,23 +67,35 @@
                 <h4 class="text-sm font-medium text-muted-foreground">显示模式</h4>
                 <div class="flex gap-2">
                   <button
-                    @click="setDisplayMode('light')"
                     class="flex-1 py-2 px-3 rounded-md border-2 transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium"
-                    :class="displayMode === 'light' ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:border-primary/50'"
+                    :class="
+                      displayMode === 'light'
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border hover:border-primary/50'
+                    "
+                    @click="setDisplayMode('light')"
                   >
                     <Sun class="h-4 w-4" />
                   </button>
                   <button
-                    @click="setDisplayMode('dark')"
                     class="flex-1 py-2 px-3 rounded-md border-2 transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium"
-                    :class="displayMode === 'dark' ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:border-primary/50'"
+                    :class="
+                      displayMode === 'dark'
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border hover:border-primary/50'
+                    "
+                    @click="setDisplayMode('dark')"
                   >
                     <Moon class="h-4 w-4" />
                   </button>
                   <button
-                    @click="setDisplayMode('system')"
                     class="flex-1 py-2 px-3 rounded-md border-2 transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium"
-                    :class="displayMode === 'system' ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:border-primary/50'"
+                    :class="
+                      displayMode === 'system'
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border hover:border-primary/50'
+                    "
+                    @click="setDisplayMode('system')"
                   >
                     <Monitor class="h-4 w-4" />
                   </button>
@@ -78,8 +104,8 @@
 
               <div class="pt-4 border-t">
                 <button
-                  @click="resetSettings"
                   class="w-full py-2 px-3 rounded-md border border-destructive text-destructive hover:bg-destructive/10 transition-colors text-sm font-medium"
+                  @click="resetSettings"
                 >
                   重置主题设置
                 </button>
@@ -98,7 +124,7 @@ import { Palette, Sun, Moon, Monitor, X, ChevronDown } from 'lucide-vue-next'
 import { t } from '@/lib/i18n'
 import { LOCAL_STORAGE_KEYS } from '@/lib/localStorage'
 
-const props = defineProps({
+defineProps({
   open: {
     type: Boolean,
     default: false
@@ -159,7 +185,10 @@ const resetSettings = () => {
 const applyTheme = (themeId: string) => {
   const isDark = document.documentElement.classList.contains('dark')
 
-  const themeColors: Record<string, { primary: string; accent: string; primaryDark?: string; accentDark?: string }> = {
+  const themeColors: Record<
+    string,
+    { primary: string; accent: string; primaryDark?: string; accentDark?: string }
+  > = {
     ink: {
       primary: '0 0% 20%',
       accent: '0 0% 90%',
@@ -207,7 +236,9 @@ const applyTheme = (themeId: string) => {
 }
 
 const applyDisplayMode = (mode: 'light' | 'dark' | 'system') => {
-  const isDark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  const isDark =
+    mode === 'dark' ||
+    (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
   if (isDark) {
     document.documentElement.classList.add('dark')
@@ -237,7 +268,11 @@ const applyFont = (fontId: string) => {
 
 onMounted(() => {
   const savedTheme = localStorage.getItem('theme_color')
-  const savedDisplayMode = localStorage.getItem('display_mode') as 'light' | 'dark' | 'system' | null
+  const savedDisplayMode = localStorage.getItem('display_mode') as
+    | 'light'
+    | 'dark'
+    | 'system'
+    | null
   const savedFont = localStorage.getItem(LOCAL_STORAGE_KEYS.FONT_FAMILY)
 
   if (savedTheme) currentTheme.value = savedTheme
