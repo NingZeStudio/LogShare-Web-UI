@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Heart, QrCode, DollarSign } from 'lucide-vue-next'
+import { Heart, QrCode, DollarSign, Pin } from 'lucide-vue-next'
 import {
   sponsors,
   sponsorConfig,
@@ -18,7 +18,11 @@ const totalAmount = computed(() => getTotalAmount())
 const sponsorCount = computed(() => getSponsorCount())
 
 const sortedSponsors = computed(() => {
-  return [...sponsors].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  return [...sponsors].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1
+    if (!a.pinned && b.pinned) return 1
+    return new Date(b.date).getTime() - new Date(a.date).getTime()
+  })
 })
 </script>
 
@@ -191,6 +195,10 @@ const sortedSponsors = computed(() => {
               >
                 {{ getPlatformIcon(sponsor.platform) }}
               </span>
+              <span v-if="sponsor.pinned" class="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-500 flex items-center gap-1">
+                <Pin class="h-3 w-3" />
+                置顶
+              </span>
             </div>
             <p v-if="sponsor.message" class="text-sm text-muted-foreground truncate">
               {{ sponsor.message }}
@@ -212,6 +220,13 @@ const sortedSponsors = computed(() => {
         <Heart class="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
         <p class="text-sm text-muted-foreground">{{ t('sponsor_no_sponsors') }}</p>
       </div>
+    </div>
+
+    <!-- 底部声明 -->
+    <div
+      class="mt-6 p-4 bg-amber-500/5 rounded-lg border border-amber-500/20 text-center text-sm text-foreground"
+    >
+      <p class="font-medium">项目捐助全部用于服务器运营，我们绝无私吞捐助的情况出现。</p>
     </div>
 
     <!-- 底部感谢 -->

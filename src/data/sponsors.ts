@@ -7,6 +7,7 @@ export interface Sponsor {
   date: string
   message?: string
   platform: 'alipay' | 'wechat' | 'afdian' | 'anonymous'
+  pinned?: boolean
 }
 
 export interface SponsorConfig {
@@ -31,6 +32,16 @@ export const sponsorConfig: SponsorConfig = {
 
 export const sponsors: Sponsor[] = [
   {
+    id: 4,
+    name: 'Swung 0x48',
+    amount: 1000,
+    currency: 'CNY',
+    date: '2026-04-26',
+    platform: 'wechat',
+    message: 'MobileGlues开发者',
+    pinned: true
+  },
+  {
     id: 1,
     name: 'ksgf452',
     amount: 40,
@@ -54,6 +65,31 @@ export const sponsors: Sponsor[] = [
     date: '2026-03-22',
     platform: 'wechat',
     message: 'Bilibili UP 主 UID: 504274118'
+  },
+  {
+    id: 5,
+    name: '菜花',
+    amount: 10,
+    currency: 'CNY',
+    date: '2026-04-26',
+    platform: 'wechat'
+  },
+  {
+    id: 6,
+    name: '懵逼的兔子',
+    amount: 5,
+    currency: 'CNY',
+    date: '2026-04-26',
+    platform: 'wechat'
+  },
+  {
+    id: 7,
+    name: '我的世界良心君',
+    amount: 5,
+    currency: 'CNY',
+    date: '2026-04-26',
+    platform: 'wechat',
+    message: 'Baidu博主'
   }
 ]
 

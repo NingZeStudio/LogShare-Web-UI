@@ -12,20 +12,10 @@ export interface AnnouncementConfig {
 }
 
 export const announcementConfig: AnnouncementConfig = {
-  id: '20250418_ddos',
+  id: '20250426_sponsor_swung',
   title: '最新公告',
-  content: `4月17日到18日，我们被DDoS攻击了，服务瘫了将近23小时。
-
-说实话，我们不知道是谁、也不知道为什么。我们只是个很小的项目，服务器配置也很差，扛不住这种攻击，只能硬撑。我们也没能力去追查或者反击，除了忍着，真的什么都做不了。
-
-但我想说：如果你对我们有意见，能不能直接找我们？哪怕骂我一顿也行。别拿服务撒气，上面还有很多普通用户在用。算我求你们了。`,
+  content: '感谢所有对Lemwood旗下镜像、工具站、LogShare项目的捐助',
   links: [
-    {
-      label: '加入官方 QQ 群',
-      url: 'https://qm.qq.com/q/RNnWR2HhOS',
-      icon: 'MessageCircle',
-      color: 'blue'
-    },
     {
       label: '赞助支持我们',
       url: '/sponsor',
@@ -33,7 +23,7 @@ export const announcementConfig: AnnouncementConfig = {
       color: 'red'
     }
   ],
-  importantText: '算我求你们了'
+  importantText: '感谢来自MobileGlues开发者Swung 0x48的1000元人民币赞助支持！！\n感谢Bilibili UP主 ConfectionaryQwQ 对本项目的大力宣传支持'
 }
 
 export interface LogUpdateConfig {
