@@ -116,7 +116,20 @@ defineExpose({
                 </div>
               </div>
 
-              <div class="mt-5 flex items-center justify-between border-t border-border/60 pt-4">
+              <div v-if="announcementConfig.links?.length" class="mt-4 flex flex-wrap gap-2">
+                <a
+                  v-for="(link, index) in announcementConfig.links"
+                  :key="index"
+                  :href="link.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-primary/10 text-primary hover:bg-primary/20"
+                >
+                  {{ link.label }}
+                </a>
+              </div>
+
+              <div class="mt-4 flex items-center justify-between border-t border-border/60 pt-4">
                 <p class="text-xs text-muted-foreground">
                   {{ t('announcement_footer') }}
                 </p>

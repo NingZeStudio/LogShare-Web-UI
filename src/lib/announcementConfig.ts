@@ -12,10 +12,16 @@ export interface AnnouncementConfig {
 }
 
 export const announcementConfig: AnnouncementConfig = {
-  id: '20250426_sponsor_swung',
+  id: '20250428_qq_group_piLauncher',
   title: '最新公告',
-  content: '感谢所有对Lemwood旗下镜像、工具站、LogShare项目的捐助',
+  content: 'LogShare官方用户群来了！欢迎PiLauncher接入本项目，目前ZalithLauncher2、FoldCraftLauncher和PiLauncher均已接入本项目。',
   links: [
+    {
+      label: '加入官方QQ群',
+      url: 'https://qm.qq.com/q/FOGt99aayY',
+      icon: 'Users',
+      color: 'blue'
+    },
     {
       label: '赞助支持我们',
       url: '/sponsor',
