@@ -168,7 +168,7 @@ onMounted(() => {
           <span>v1.5.0</span>
           <span class="hidden sm:inline">|</span>
           <a
-            href="https://qm.qq.com/q/RNnWR2HhOS"
+            href="https://qm.qq.com/q/FOGt99aayY"
             target="_blank"
             rel="noopener noreferrer"
             class="hover:text-primary transition-colors"

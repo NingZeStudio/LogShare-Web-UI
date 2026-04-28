@@ -85,7 +85,7 @@ const tutorials = [
         </RouterLink>
         <span class="text-muted-foreground">|</span>
         <a
-          href="https://qm.qq.com/q/XoXSt8askA"
+          href="https://qm.qq.com/q/FOGt99aayY"
           target="_blank"
           rel="noopener noreferrer"
           class="text-primary hover:underline"
