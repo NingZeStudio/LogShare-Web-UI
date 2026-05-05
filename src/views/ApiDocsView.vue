@@ -22,14 +22,15 @@ const endpoints = [
     methodType: 'post',
     path: '/1/log',
     title: t('paste_log'),
-    description: '提交新的日志数据进行分析，生成分享链接和分析结果。',
+    description: '提交新的日志数据进行分析，生成分享链接和分析结果。支持纯文本或 JSON 格式，支持 gzip/deflate/br 压缩。',
+    contentType: 'text/plain 或 application/json',
     params: [
-      { name: 'content', type: 'string', required: true, desc: '日志内容字符串（必需）' },
+      { name: 'content', type: 'string', required: true, desc: '日志内容字符串（JSON 模式必需）' },
       {
         name: 'metadata',
-        type: 'array',
+        type: 'object',
         required: false,
-        desc: '元数据数组，包含 key、value、label、visible 字段'
+        desc: '元数据对象，格式 { "key": "value" }'
       },
       { name: 'source', type: 'string', required: false, desc: '来源标识（最长 64 字符）' }
     ],
@@ -39,10 +40,12 @@ const endpoints = [
         example: `{
     "success": true,
     "message": "Log submitted successfully",
-    "id": "abc1234",
-    "url": "http://localhost:9300/abc1234",
-    "raw": "http://localhost:9300/1/raw/abc1234",
-    "token": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
+    "data": {
+        "id": "abc123",
+        "url": "https://logshare.cn/abc123",
+        "raw": "https://api.logshare.cn/1/raw/abc123",
+        "token": "token_xxxxx"
+    }
 }`
       },
       error: {
@@ -53,21 +56,29 @@ const endpoints = [
       }
     },
     examples: {
-      js: `const response = await fetch('https://api.logshare.cn/1/log', {
+      js: `// JSON 模式
+const response = await fetch('https://api.logshare.cn/1/log', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
         content: "[Server thread/INFO]: Starting minecraft server",
-        metadata: [{ key: "version", value: "1.20.1", label: "服务器版本" }],
+        metadata: { "version": "1.20.1" },
         source: "web-upload"
     })
 });
 const data = await response.json();
-console.log(data);`,
+console.log(data);
+
+// 纯文本模式
+const response = await fetch('https://api.logshare.cn/1/log', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: logContent
+});`,
       php: `<?php
 $data = [
     'content' => "[Server thread/INFO]: Starting minecraft server",
-    'metadata' => [['key' => 'version', 'value' => '1.20.1']],
+    'metadata' => ['version' => '1.20.1'],
     'source' => 'web-upload'
 ];
 $ch = curl_init('https://api.logshare.cn/1/log');
@@ -78,13 +89,72 @@ $response = curl_exec($ch);
 $result = json_decode($response, true);
 curl_close($ch);
 print_r($result);`,
-      curl: `curl -X POST https://api.logshare.cn/1/log \\
+      curl: `# JSON 模式
+curl -X POST https://api.logshare.cn/1/log \\
   -H "Content-Type: application/json" \\
   -d '{
     "content": "[Server thread/INFO]: Starting minecraft server",
-    "metadata": [{"key": "version", "value": "1.20.1"}],
+    "metadata": {"version": "1.20.1"},
     "source": "cli-upload"
-  }'`
+  }'
+
+# 纯文本模式
+curl -X POST https://api.logshare.cn/1/log \\
+  -H "Content-Type: text/plain" \\
+  -d @server.log`
+    }
+  },
+  {
+    method: 'POST',
+    methodType: 'post',
+    path: '/1/analyse',
+    title: '分析日志（本地 Codex）',
+    description: '提交日志内容进行本地分析，不会存储到数据库。返回分析结果包括服务器类型、版本和问题检测。',
+    contentType: 'text/plain 或 application/json',
+    params: [
+      { name: 'content', type: 'string', required: true, desc: '日志原始内容' }
+    ],
+    response: {
+      success: {
+        code: 200,
+        example: `{
+    "success": true,
+    "data": {
+        "id": "log-id",
+        "name": "Minecraft",
+        "type": "ServerLog",
+        "entries": [...],
+        "insights": [...]
+    }
+}`
+      },
+      error: {
+        example: `{
+    "success": false,
+    "error": "分析失败"
+}`
+      }
+    },
+    examples: {
+      js: `const response = await fetch('https://api.logshare.cn/1/analyse', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: logContent
+});
+const data = await response.json();
+console.log(data);`,
+      php: `<?php
+$ch = curl_init('https://api.logshare.cn/1/analyse');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $logContent);
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: text/plain']);
+$response = curl_exec($ch);
+$result = json_decode($response, true);
+curl_close($ch);
+print_r($result);`,
+      curl: `curl -X POST https://api.logshare.cn/1/analyse \\
+  -H "Content-Type: text/plain" \\
+  -d @server.log`
     }
   },
   {
@@ -144,17 +214,21 @@ curl https://api.logshare.cn/1/raw/abc1234,def5678`
       success: {
         code: 200,
         example: `{
-    "name": "Vanilla Server Log",
-    "type": "minecraft",
-    "software": "vanilla",
-    "version": "1.20.1",
-    "insights": [
-        {
-            "type": "version",
-            "value": "1.20.1",
-            "label": "Minecraft Version"
-        }
-    ]
+    "success": true,
+    "data": {
+        "id": "log-id",
+        "name": "Minecraft",
+        "type": "ServerLog",
+        "insights": [
+            {
+                "message": "错误描述",
+                "level": "ERROR",
+                "counter": 1,
+                "tags": ["error", "crash"],
+                "entry": {...}
+            }
+        ]
+    }
 }`
       }
     },
@@ -246,57 +320,6 @@ curl -X DELETE https://api.logshare.cn/1/delete/abc1234,def5678 \\
     }
   },
   {
-    method: 'POST',
-    methodType: 'post',
-    path: '/1/bulk/log/delete',
-    title: '批量删除日志',
-    description: '使用 JSON 请求体批量删除多个日志。最多一次删除 256 个日志。',
-    params: [
-      { name: 'logs', type: 'array', required: true, desc: '日志数组，每个元素包含 id 和 token' }
-    ],
-    response: {
-      success: {
-        code: 200,
-        example: `{
-    "success": true,
-    "results": {
-        "abc1234": { "success": true },
-        "def5678": { "success": false, "error": "Invalid token.", "code": 403 }
-    }
-}`
-      }
-    },
-    examples: {
-      js: `const response = await fetch('https://api.logshare.cn/1/bulk/log/delete', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify([
-        { id: "abc1234", token: "token1" },
-        { id: "def5678", token: "token2" }
-    ])
-});
-const data = await response.json();`,
-      php: `<?php
-$logs = [
-    ['id' => 'abc1234', 'token' => 'token1'],
-    ['id' => 'def5678', 'token' => 'token2']
-];
-$ch = curl_init('https://api.logshare.cn/1/bulk/log/delete');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($logs));
-curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-$response = curl_exec($ch);
-$data = json_decode($response, true);
-curl_close($ch);`,
-      curl: `curl -X POST https://api.logshare.cn/1/bulk/log/delete \\
-  -H "Content-Type: application/json" \\
-  -d '[
-    {"id": "abc1234", "token": "token1"},
-    {"id": "def5678", "token": "token2"}
-  ]'`
-    }
-  },
-  {
     method: 'GET',
     methodType: 'get',
     path: '/1/limits',
@@ -307,9 +330,12 @@ curl_close($ch);`,
       success: {
         code: 200,
         example: `{
-    "storageTime": 7776000,
-    "maxLength": 10485760,
-    "maxLines": 25000
+    "success": true,
+    "data": {
+        "storageTime": 2592000,
+        "maxLength": 1048576,
+        "maxLines": 50000
+    }
 }`
       }
     },
@@ -335,22 +361,24 @@ print_r($data);`,
         code: 200,
         example: `{
     "success": true,
-    "filters": [
-        { "type": "trim", "data": null },
-        { "type": "limit-bytes", "data": { "limit": 10485760 } },
-        { "type": "limit-lines", "data": { "limit": 25000 } },
-        {
-            "type": "regex",
-            "data": {
-                "patterns": [
-                    { "pattern": "IPv4", "replacement": "**.**.**.**" },
-                    { "pattern": "IPv6", "replacement": "****:****:****:****:****:****:****:****" },
-                    { "pattern": "Username", "replacement": "********" },
-                    { "pattern": "AccessToken", "replacement": "********" }
-                ]
+    "data": {
+        "filters": [
+            { "type": "trim", "data": null },
+            { "type": "limit-bytes", "data": { "limit": 1048576 } },
+            { "type": "limit-lines", "data": { "limit": 50000 } },
+            {
+                "type": "regex",
+                "data": {
+                    "patterns": [
+                        { "pattern": "IPv4", "replacement": "**.**.**.**" },
+                        { "pattern": "IPv6", "replacement": "****:****:****:****:****:****:****:****" },
+                        { "pattern": "Username", "replacement": "********" },
+                        { "pattern": "AccessToken", "replacement": "********" }
+                    ]
+                }
             }
-        }
-    ]
+        ]
+    }
 }`
       }
     },
@@ -389,6 +417,167 @@ $data = json_decode(file_get_contents('https://api.logshare.cn/1/errors/rate'), 
 print_r($data);`,
       curl: `curl https://api.logshare.cn/1/errors/rate`
     }
+  },
+  {
+    method: 'GET',
+    methodType: 'get',
+    path: '/1/ai/{id}',
+    title: 'AI 分析已存储日志 🔵',
+    description: '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出，首次请求流式生成，5 分钟内相同请求直接返回缓存结果。',
+    isSSE: true,
+    params: [{ name: 'id', type: 'string', required: true, desc: '日志 ID' }],
+    response: {
+      success: {
+        code: 200,
+        example: `// SSE 流式数据（逐块返回）
+data: {"choices":[{"delta":{"content":"{\"summary\":\"服务器启动失败..."}}]}
+
+// 流结束后完整结果
+{
+    "success": true,
+    "message": "AI analysis completed.",
+    "data": {
+        "analysis": {
+            "summary": "问题摘要",
+            "severity": "high",
+            "issues": [
+                {
+                    "type": "问题类型",
+                    "description": "问题描述",
+                    "suggestion": "解决建议"
+                }
+            ],
+            "recommendations": ["总体建议1", "总体建议2"]
+        },
+        "cached": false
+    }
+}
+
+// 缓存命中（5 分钟内）
+{
+    "success": true,
+    "message": "AI analysis completed (from cache).",
+    "data": {
+        "analysis": { ... },
+        "cached": true
+    }
+}`
+      },
+      error: {
+        example: `{
+    "success": false,
+    "error": "Log not found."
+}`
+      }
+    },
+    examples: {
+      js: `// SSE 流式方式（推荐）
+const response = await fetch('https://api.logshare.cn/1/ai/abc1234');
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
+let fullJson = '';
+
+while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    
+    const text = decoder.decode(value);
+    const lines = text.split('\\n');
+    for (const line of lines) {
+        if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data.trim() === '[DONE]') continue;
+            const chunk = JSON.parse(data);
+            const content = chunk.choices?.[0]?.delta?.content;
+            if (content) fullJson += content;
+        }
+    }
+}
+const analysis = JSON.parse(fullJson);
+console.log(analysis);`,
+      php: `<?php
+// PHP 不支持 SSE 客户端流式读取，建议使用 curl 直接获取
+$ch = curl_init('https://api.logshare.cn/1/ai/abc1234');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$response = curl_exec($ch);
+$data = json_decode($response, true);
+curl_close($ch);
+print_r($data);`,
+      curl: `# SSE 流式方式
+curl -N https://api.logshare.cn/1/ai/abc1234
+
+# 或直接等待完整结果
+curl https://api.logshare.cn/1/ai/abc1234`
+    }
+  },
+  {
+    method: 'POST',
+    methodType: 'post',
+    path: '/1/ai/analyse',
+    title: 'AI 分析日志内容 🔵',
+    description: '直接提交日志内容，使用 AI 分析，不存储到数据库。SSE 流式输出，基于内容哈希缓存，相同内容 5 分钟内直接返回缓存结果。',
+    isSSE: true,
+    contentType: 'text/plain 或 application/json',
+    params: [
+      { name: 'content', type: 'string', required: true, desc: '日志原始内容' }
+    ],
+    response: {
+      success: {
+        code: 200,
+        example: `// SSE 流式数据（逐块返回）
+data: {"choices":[{"delta":{"content":"{\"summary\":\"服务器启动失败..."}}]}
+
+// 流结束后完整结果
+{
+    "success": true,
+    "message": "AI analysis completed.",
+    "data": {
+        "analysis": {
+            "summary": "问题摘要",
+            "severity": "high",
+            "issues": [...],
+            "recommendations": [...]
+        },
+        "cached": false
+    }
+}`
+      }
+    },
+    examples: {
+      js: `const response = await fetch('https://api.logshare.cn/1/ai/analyse', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        content: "[Server thread/ERROR]: Could not bind to port 25565..."
+    })
+});
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
+let fullJson = '';
+
+while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const text = decoder.decode(value);
+    // 解析 SSE 数据...
+}
+const analysis = JSON.parse(fullJson);`,
+      php: `<?php
+$data = ['content' => "[Server thread/ERROR]: Could not bind to port 25565..."];
+$ch = curl_init('https://api.logshare.cn/1/ai/analyse');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+$response = curl_exec($ch);
+$result = json_decode($response, true);
+curl_close($ch);
+print_r($result);`,
+      curl: `curl -X POST https://api.logshare.cn/1/ai/analyse \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "content": "[Server thread/ERROR]: Could not bind to port 25565..."
+  }'`
+    }
   }
 ]
 
@@ -399,6 +588,14 @@ const methodTypeClass = (type: string) => {
     delete: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
   }
   return classes[type] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+}
+
+const hasContentType = (endpoint: any) => {
+  return endpoint.contentType !== undefined
+}
+
+const isSSEEndpoint = (endpoint: any) => {
+  return endpoint.isSSE === true
 }
 </script>
 
@@ -507,7 +704,7 @@ const methodTypeClass = (type: string) => {
         </div>
       </section>
 
-      <section class="space-y-4">
+       <section class="space-y-4">
         <h2 class="text-lg font-semibold">可用端点</h2>
         <div class="rounded-lg border border-border overflow-hidden">
           <table class="w-full text-sm">
@@ -530,6 +727,15 @@ const methodTypeClass = (type: string) => {
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
                 <td class="p-3">
+                  <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('post')"
+                    >POST</span
+                  >
+                </td>
+                <td class="p-3 font-mono text-xs">/1/analyse</td>
+                <td class="p-3 text-muted-foreground">分析日志（本地 Codex）</td>
+              </tr>
+              <tr class="border-t border-border hover:bg-muted/30 transition-colors">
+                <td class="p-3">
                   <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('get')"
                     >GET</span
                   >
@@ -544,7 +750,7 @@ const methodTypeClass = (type: string) => {
                   >
                 </td>
                 <td class="p-3 font-mono text-xs">/1/insights/{id}</td>
-                <td class="p-3 text-muted-foreground">获取日志洞察</td>
+                <td class="p-3 text-muted-foreground">获取日志分析结果</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
                 <td class="p-3">
@@ -555,16 +761,7 @@ const methodTypeClass = (type: string) => {
                   >
                 </td>
                 <td class="p-3 font-mono text-xs">/1/delete/{id}</td>
-                <td class="p-3 text-muted-foreground">删除日志（需 Token）</td>
-              </tr>
-              <tr class="border-t border-border hover:bg-muted/30 transition-colors">
-                <td class="p-3">
-                  <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('post')"
-                    >POST</span
-                  >
-                </td>
-                <td class="p-3 font-mono text-xs">/1/bulk/log/delete</td>
-                <td class="p-3 text-muted-foreground">批量删除日志</td>
+                <td class="p-3 text-muted-foreground">删除日志</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
                 <td class="p-3">
@@ -590,8 +787,17 @@ const methodTypeClass = (type: string) => {
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/1/errors/rate</td>
-                <td class="p-3 text-muted-foreground">速率限制错误</td>
+                <td class="p-3 font-mono text-xs">/1/ai/{id}</td>
+                <td class="p-3 text-muted-foreground">AI 分析已存储日志（SSE 流式输出）</td>
+              </tr>
+              <tr class="border-t border-border hover:bg-muted/30 transition-colors">
+                <td class="p-3">
+                  <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('post')"
+                    >POST</span
+                  >
+                </td>
+                <td class="p-3 font-mono text-xs">/1/ai/analyse</td>
+                <td class="p-3 text-muted-foreground">AI 分析日志内容（SSE 流式输出）</td>
               </tr>
             </tbody>
           </table>
@@ -632,6 +838,17 @@ const methodTypeClass = (type: string) => {
         <p class="text-sm text-muted-foreground">
           {{ endpoint.description }}
         </p>
+
+        <!-- SSE 提示 -->
+        <p v-if="isSSEEndpoint(endpoint)" class="text-sm text-blue-500">
+          该接口为 SSE 流式输出
+        </p>
+
+        <!-- Content-Type 提示 -->
+        <div v-if="hasContentType(endpoint)" class="flex items-center gap-2 text-xs text-muted-foreground">
+          <span class="font-medium">Content-Type:</span>
+          <code class="bg-muted px-1.5 py-0.5 rounded">{{ endpoint.contentType }}</code>
+        </div>
 
         <!-- 请求头 -->
         <div v-if="endpoint.headers && endpoint.headers.length > 0" class="space-y-2">
@@ -790,11 +1007,11 @@ const methodTypeClass = (type: string) => {
     <!-- SDKs -->
     <div v-if="activeTab === 'sdks'" class="space-y-6">
       <p class="text-sm text-muted-foreground">
-        我们为您提供了开箱即用的本地 SDK，您可以直接下载并集成到您的项目中。
+        我们为您提供了开箱即用的本地 SDK，支持 SSE 流式 AI 分析，您可以直接下载并集成到您的项目中。
       </p>
       <div class="grid gap-4 sm:grid-cols-2">
         <a
-          href="/sdk/mclogs-php-sdk.zip"
+          href="/sdk/logshare-php-sdk.zip"
           download
           class="group block p-5 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all"
         >
@@ -807,19 +1024,20 @@ const methodTypeClass = (type: string) => {
                 >PHP</span
               >
               PHP SDK
+              <span class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold">v2.0.0</span>
             </div>
             <span
               class="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold"
-              >LOCAL</span
+              >SSE</span
             >
           </div>
           <p class="text-sm text-muted-foreground mb-4">
-            轻量级 cURL 封装，支持粘贴、读取及分析日志。
+            高性能 cURL 封装，支持 SSE 流式 AI 分析、批量上传、完整错误处理。PHP 7.4+
           </p>
           <div
             class="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all"
           >
-            点击下载 mclogs-php-sdk.zip
+            点击下载 logshare-php-sdk.zip
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="14"
@@ -839,7 +1057,7 @@ const methodTypeClass = (type: string) => {
           </div>
         </a>
         <a
-          href="/sdk/mclogs-js-sdk.zip"
+          href="/sdk/logshare-js-sdk.zip"
           download
           class="group block p-5 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all"
         >
@@ -852,19 +1070,112 @@ const methodTypeClass = (type: string) => {
                 >JS</span
               >
               JavaScript SDK
+              <span class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold">v2.0.0</span>
             </div>
             <span
               class="text-[10px] bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full font-bold"
-              >LOCAL</span
+              >SSE</span
             >
           </div>
           <p class="text-sm text-muted-foreground mb-4">
-            基于 Fetch API，适用于浏览器或 Node.js 环境。
+            基于 Fetch API + ReadableStream，支持浏览器和 Node.js 环境，SSE 流式解析。
           </p>
           <div
             class="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all"
           >
-            点击下载 mclogs-js-sdk.zip
+            点击下载 logshare-js-sdk.zip
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-download"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" x2="12" y1="15" y2="3" />
+            </svg>
+          </div>
+        </a>
+        <a
+          href="/sdk/logshare-java-sdk.zip"
+          download
+          class="group block p-5 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all"
+        >
+          <div class="flex items-center justify-between mb-3">
+            <div
+              class="font-semibold group-hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <span
+                class="w-8 h-8 rounded-md bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 text-xs font-bold"
+                >JAVA</span
+              >
+              Java SDK
+              <span class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold">v2.0.0</span>
+            </div>
+            <span
+              class="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full font-bold"
+              >SSE</span
+            >
+          </div>
+          <p class="text-sm text-muted-foreground mb-4">
+            基于 java.net.http.HttpClient，无第三方依赖，支持 SSE 流式 AI 分析。Java 11+
+          </p>
+          <div
+            class="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all"
+          >
+            点击下载 logshare-java-sdk.zip
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-download"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" x2="12" y1="15" y2="3" />
+            </svg>
+          </div>
+        </a>
+        <a
+          href="/sdk/logshare-dotnet-sdk.zip"
+          download
+          class="group block p-5 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all"
+        >
+          <div class="flex items-center justify-between mb-3">
+            <div
+              class="font-semibold group-hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <span
+                class="w-8 h-8 rounded-md bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 text-xs font-bold"
+                >.NET</span
+              >
+              C# / .NET SDK
+              <span class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold">v2.0.0</span>
+            </div>
+            <span
+              class="text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-full font-bold"
+              >SSE</span
+            >
+          </div>
+          <p class="text-sm text-muted-foreground mb-4">
+            基于 System.Net.Http.HttpClient，完整异步支持，SSE 流式解析。.NET 6+
+          </p>
+          <div
+            class="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all"
+          >
+            点击下载 logshare-dotnet-sdk.zip
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="14"
@@ -884,6 +1195,165 @@ const methodTypeClass = (type: string) => {
           </div>
         </a>
       </div>
+
+      <!-- 快速使用示例 -->
+      <section class="space-y-4 mt-6">
+        <h2 class="text-lg font-semibold">快速使用示例</h2>
+        
+        <div class="space-y-4">
+          <!-- PHP 示例 -->
+          <div class="rounded-lg border border-border overflow-hidden">
+            <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2">
+              <span class="w-5 h-5 rounded bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-[10px] font-bold">PHP</span>
+              PHP SDK 使用示例
+            </div>
+            <pre class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"><code>&lt;?php
+require_once 'mclogs.php';
+
+use LogShare\LogShareSDK;
+
+$sdk = new LogShareSDK([
+    'timeout' => 120  // AI 分析需要更长时间
+]);
+
+// 上传日志
+$result = $sdk->paste("[Server thread/INFO]: Starting minecraft server");
+$id = $result['data']['id'];
+
+// SSE 流式 AI 分析
+$analysis = $sdk->streamAiAnalysis(
+    $id,
+    function ($chunk) {
+        // 实时处理每个数据块
+        echo $chunk['choices'][0]['delta']['content'] ?? '';
+    },
+    function ($fullJson) {
+        // 分析完成
+        echo "\n分析完成！\n";
+    }
+);</code></pre>
+          </div>
+
+          <!-- JavaScript 示例 -->
+          <div class="rounded-lg border border-border overflow-hidden">
+            <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2">
+              <span class="w-5 h-5 rounded bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center text-yellow-600 dark:text-yellow-400 text-[10px] font-bold">JS</span>
+              JavaScript SDK 使用示例
+            </div>
+            <pre class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"><code>import { LogShareSDK } from './mclogs.js';
+
+const sdk = new LogShareSDK({ timeout: 120000 });
+
+// 上传日志
+const result = await sdk.paste('[Server thread/INFO]: Starting...');
+const id = result.data.id;
+
+// SSE 流式 AI 分析
+const analysis = await sdk.streamAiAnalysis(id, {
+    onChunk: (chunk) => {
+        // 实时处理每个数据块
+        const content = chunk.choices?.[0]?.delta?.content;
+        if (content) process.stdout.write(content);
+    },
+    onDone: (fullJson) => {
+        console.log('\n分析完成！');
+    },
+    onError: (error) => {
+        console.error('SSE 错误:', error);
+    }
+});</code></pre>
+          </div>
+
+          <!-- Java 示例 -->
+          <div class="rounded-lg border border-border overflow-hidden">
+            <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2">
+              <span class="w-5 h-5 rounded bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 text-[10px] font-bold">J</span>
+              Java SDK 使用示例
+            </div>
+            <pre class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"><code>import cn.logshare.sdk.LogShareSDK;
+import cn.logshare.sdk.LogShareException;
+import java.util.*;
+
+public class Example {
+    public static void main(String[] args) {
+        LogShareSDK sdk = new LogShareSDK();
+
+        try {
+            // 上传日志
+            Map&lt;String, Object&gt; result = sdk.paste("[Server thread/INFO]: Starting...");
+            Map&lt;String, Object&gt; data = (Map&lt;String, Object&gt;) result.get("data");
+            String id = (String) data.get("id");
+
+            // SSE 流式 AI 分析
+            Map&lt;String, Object&gt; analysis = sdk.streamAiAnalysis(
+                id,
+                chunk -> {
+                    // 实时处理每个数据块
+                    System.out.print(extractContent(chunk));
+                },
+                fullJson -> {
+                    System.out.println("\n分析完成！");
+                },
+                error -> {
+                    System.err.println("SSE 错误: " + error);
+                }
+            );
+        } catch (LogShareException e) {
+            System.err.println("错误: " + e.getMessage());
+        }
+    }
+}</code></pre>
+          </div>
+
+          <!-- .NET 示例 -->
+          <div class="rounded-lg border border-border overflow-hidden">
+            <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2">
+              <span class="w-5 h-5 rounded bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 text-[10px] font-bold">.NET</span>
+              C# SDK 使用示例
+            </div>
+            <pre class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"><code>using LogShare.CN.SDK;
+using System;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+class Program
+{
+    static async Task Main()
+    {
+        using var sdk = new LogShareSDK();
+
+        try
+        {
+            // 上传日志
+            var result = await sdk.PasteAsync("[Server thread/INFO]: Starting...");
+            var id = result.GetProperty("data").GetProperty("id").GetString();
+
+            // SSE 流式 AI 分析
+            var analysis = await sdk.StreamAiAnalysisAsync(
+                id,
+                onChunk: chunk => {
+                    // 实时处理每个数据块
+                    var content = chunk.GetProperty("choices")[0]
+                        .GetProperty("delta").GetProperty("content").GetString();
+                    Console.Write(content);
+                },
+                onDone: fullJson => {
+                    Console.WriteLine("\n分析完成！");
+                },
+                onError: error => {
+                    Console.Error.WriteLine($"SSE 错误: {error}");
+                }
+            );
+        }
+        catch (LogShareException ex)
+        {
+            Console.Error.WriteLine($"错误: {ex.Message}");
+        }
+    }
+}</code></pre>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- 限制 -->
@@ -900,15 +1370,15 @@ const methodTypeClass = (type: string) => {
           <li class="flex items-start gap-3">
             <span class="text-primary font-medium min-w-fit">{{ t('content_limit') }}：</span>
             <span class="text-muted-foreground"
-              >最大 <strong class="text-foreground">10 MiB</strong> 或
-              <strong class="text-foreground">25,000 行</strong></span
+              >最大 <strong class="text-foreground">1 MiB</strong> 或
+              <strong class="text-foreground">50,000 行</strong></span
             >
           </li>
           <li class="flex items-start gap-3">
             <span class="text-primary font-medium min-w-fit">{{ t('storage_time') }}：</span>
             <span class="text-muted-foreground"
               >日志在最后一次查看后至少保留
-              <strong class="text-foreground">90 天</strong>（7,776,000 秒）</span
+              <strong class="text-foreground">30 天</strong>（2,592,000 秒）</span
             >
           </li>
           <li class="flex items-start gap-3">
@@ -920,7 +1390,13 @@ const methodTypeClass = (type: string) => {
           <li class="flex items-start gap-3">
             <span class="text-primary font-medium min-w-fit">Content-Type：</span>
             <span class="text-muted-foreground"
-              ><code class="bg-muted px-1.5 py-0.5 rounded text-xs">application/json</code></span
+              ><code class="bg-muted px-1.5 py-0.5 rounded text-xs">text/plain</code> 或 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">application/json</code></span
+            >
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-primary font-medium min-w-fit">压缩支持：</span>
+            <span class="text-muted-foreground"
+              >支持 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">gzip</code>、<code class="bg-muted px-1.5 py-0.5 rounded text-xs">deflate</code>、<code class="bg-muted px-1.5 py-0.5 rounded text-xs">br</code> 压缩上传</span
             >
           </li>
         </ul>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Heart, QrCode, DollarSign, Pin } from 'lucide-vue-next'
+import { Heart, QrCode, DollarSign, Pin, Zap } from 'lucide-vue-next'
 import {
   sponsors,
   sponsorConfig,
@@ -145,6 +145,27 @@ const sortedSponsors = computed(() => {
         </div>
         <p class="text-sm text-center text-muted-foreground">
           {{ t('sponsor_scan_to_sponsor') }}
+        </p>
+      </div>
+
+      <!-- 爱发电 -->
+      <div
+        v-if="sponsorConfig.afdianLink"
+        class="md:col-span-2 group block bg-card border border-border rounded-lg p-4 hover:border-primary/50 hover:shadow-md transition-all"
+      >
+        <a
+          :href="sponsorConfig.afdianLink"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="relative flex items-center justify-center gap-3 w-full py-3 rounded-lg bg-black hover:bg-gray-900 text-white font-semibold transition-transform hover:scale-[1.02] overflow-hidden"
+        >
+          <span class="absolute inset-0 rounded-lg p-[2px] bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 opacity-80"></span>
+          <span class="absolute inset-[2px] rounded-md bg-black"></span>
+          <Zap class="h-5 w-5 relative z-10 text-white" />
+          <span class="relative z-10">{{ t('sponsor_afdian') }}</span>
+        </a>
+        <p class="text-sm text-center text-muted-foreground mt-3">
+          {{ t('sponsor_afdian_note') }}
         </p>
       </div>
     </div>

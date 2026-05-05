@@ -44,7 +44,7 @@ onMounted(() => {
         <!-- Logo -->
         <RouterLink to="/" class="flex items-center gap-2 font-bold text-xl">
           <span class="text-primary">LogShare.CN</span
-          ><sup class="text-xs text-muted-foreground">v1.5.0</sup>
+          ><sup class="text-xs text-muted-foreground">v1.5.1</sup>
         </RouterLink>
 
         <!-- 中间导航链接 -->
@@ -165,7 +165,7 @@ onMounted(() => {
         <div class="flex flex-wrap items-center justify-center gap-3">
           <span>&copy; 2026 LogShare.CN</span>
           <span class="hidden sm:inline">|</span>
-          <span>v1.5.0</span>
+          <span>v1.5.1</span>
           <span class="hidden sm:inline">|</span>
           <a
             href="https://qm.qq.com/q/FOGt99aayY"

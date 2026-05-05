@@ -307,7 +307,7 @@ const copyAllLinks = async () => {
       <div class="container mx-auto px-4 py-8">
         <div class="flex flex-col items-center text-center space-y-4 mb-8">
           <h1 class="text-4xl md:text-5xl font-bold tracking-tight">
-            LogShare.CN <small>v1.5.0</small>
+            LogShare.CN <small>v1.5.1</small>
           </h1>
 
           <p class="text-muted-foreground max-w-xl">
