@@ -90,6 +90,30 @@ export const sponsors: Sponsor[] = [
     date: '2026-04-26',
     platform: 'wechat',
     message: 'Baidu博主'
+  },
+  {
+    id: 9,
+    name: '苦瓜',
+    amount: 10,
+    currency: 'CNY',
+    date: '2026-05-02',
+    platform: 'wechat'
+  },
+  {
+    id: 10,
+    name: 'Janson',
+    amount: 10,
+    currency: 'CNY',
+    date: '2026-05-02',
+    platform: 'wechat'
+  },
+  {
+    id: 8,
+    name: '马铃薯_potato',
+    amount: 1,
+    currency: 'CNY',
+    date: '2026-05-02',
+    platform: 'wechat'
   }
 ]
 
