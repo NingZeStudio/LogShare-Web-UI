@@ -20,9 +20,7 @@ import {
   Code,
   BookText,
   Trash2,
-  Sparkles,
-  RefreshCw,
-  Zap
+  RefreshCw
 } from 'lucide-vue-next'
 
 declare global {
@@ -56,6 +54,7 @@ const aiError = ref('')
 const aiStreamingContent = ref('')
 const aiIsStreaming = ref(false)
 const aiIsCached = ref(false)
+const showAiPanel = ref(false)
 
 const getSeverityText = (severity: string) => {
   switch (severity) {
@@ -97,7 +96,7 @@ const loadAiAnalysis = async () => {
 
   try {
     await apiClient.streamAiAnalysis(id, {
-      onChunk: (rawJson) => {
+      onChunk: rawJson => {
         aiIsStreaming.value = true
         aiStreamingContent.value = rawJson
         try {
@@ -115,7 +114,7 @@ const loadAiAnalysis = async () => {
         aiIsCached.value = cached
         aiLoading.value = false
       },
-      onError: (error) => {
+      onError: error => {
         aiError.value = error.error
         aiIsStreaming.value = false
         aiLoading.value = false
@@ -359,6 +358,13 @@ const scrollToProblems = () => {
     problemsSection.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 }
+
+const openAiPanel = () => {
+  showAiPanel.value = true
+  if (!aiAnalysis.value && !aiLoading.value && !aiError.value) {
+    loadAiAnalysis()
+  }
+}
 </script>
 
 <template>
@@ -388,19 +394,6 @@ const scrollToProblems = () => {
             <code class="bg-muted px-2 py-0.5 rounded text-xs">{{ log.id }}</code>
           </p>
         </div>
-        <button
-          :class="
-            isCopySuccess
-              ? 'bg-green-500 text-white hover:bg-green-600'
-              : 'bg-primary text-primary-foreground hover:bg-primary/90'
-          "
-          class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium flex-shrink-0"
-          :title="t('share')"
-          @click="copyShareMessage"
-        >
-          <Share2 class="h-5 w-5" />
-          <span>{{ isCopySuccess ? t('copied') : t('share') }}</span>
-        </button>
       </div>
 
       <!-- 信息卡片区域 -->
@@ -474,137 +467,6 @@ const scrollToProblems = () => {
         </div>
       </div>
 
-      <!-- AI 智能分析 -->
-      <div v-if="!isFullscreen" class="px-4 mt-4">
-        <div class="relative bg-gradient-to-br from-card to-card/80 border border-border/60 rounded-xl overflow-hidden shadow-sm">
-          <div class="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-cyan-500/5 pointer-events-none"></div>
-
-          <div class="relative p-4">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="font-semibold flex items-center gap-2">
-                <Sparkles class="h-4 w-4 text-purple-500" />
-                {{ t('ai_analysis') }}
-              </h2>
-              <span v-if="aiIsCached" class="text-xs text-blue-500">
-                {{ t('ai_cached_result') }}
-              </span>
-            </div>
-
-            <!-- Loading -->
-            <div v-if="aiLoading && !aiIsStreaming" class="flex items-center gap-3 py-4">
-              <div class="animate-spin rounded-full h-5 w-5 border-2 border-primary/20 border-t-primary"></div>
-              <p class="text-sm text-muted-foreground">{{ t('ai_analyzing') }}</p>
-            </div>
-
-            <!-- Streaming State -->
-            <div v-else-if="aiIsStreaming" class="space-y-4">
-              <div class="flex items-center gap-2 py-2">
-                <div class="flex gap-1">
-                  <div class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></div>
-                  <div class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" style="animation-delay: 200ms"></div>
-                  <div class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" style="animation-delay: 400ms"></div>
-                </div>
-                <p class="text-sm text-muted-foreground">{{ t('ai_analyzing_streaming') }}</p>
-              </div>
-
-              <template v-if="aiAnalysis">
-                <div class="space-y-4">
-                  <div>
-                    <p class="text-sm font-medium mb-1">{{ t('ai_analysis_summary') }}</p>
-                    <p class="text-sm text-muted-foreground leading-relaxed">{{ aiAnalysis.summary }}</p>
-                    <span v-if="aiAnalysis.severity" :class="['text-xs font-medium', getSeverityTextColor(aiAnalysis.severity)]">
-                      {{ getSeverityText(aiAnalysis.severity) }}
-                    </span>
-                  </div>
-
-                  <div v-if="aiAnalysis.issues?.length">
-                    <p class="text-sm font-medium mb-3">{{ t('ai_analysis_issues') }}</p>
-                    <div class="space-y-5">
-                      <div v-for="(issue, idx) in aiAnalysis.issues" :key="idx">
-                        <p class="text-sm font-semibold text-red-500">{{ issue.type }}</p>
-                        <p class="text-sm text-muted-foreground mt-1">{{ issue.description }}</p>
-                        <p v-if="issue.suggestion" class="text-sm text-green-500 mt-1">
-                          <span class="font-medium">{{ t('ai_suggestion') }}:</span> {{ issue.suggestion }}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div v-if="aiAnalysis.recommendations?.length">
-                    <p class="text-sm font-medium mb-2">{{ t('ai_analysis_recommendations') }}</p>
-                    <ul class="space-y-1.5">
-                      <li v-for="(rec, idx) in aiAnalysis.recommendations" :key="idx" class="text-sm text-muted-foreground">
-                        {{ rec }}
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </template>
-            </div>
-
-            <!-- Error -->
-            <div v-else-if="aiError" class="py-4 text-center">
-              <p class="text-sm text-red-500">{{ aiError }}</p>
-              <button
-                class="mt-3 px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all inline-flex items-center gap-2"
-                @click="loadAiAnalysis"
-              >
-                <RefreshCw class="h-3.5 w-3.5" />
-                {{ t('ai_analysis_retry') }}
-              </button>
-            </div>
-
-            <!-- Idle: trigger button -->
-            <div v-else-if="!aiAnalysis" class="py-2">
-              <button
-                @click="loadAiAnalysis"
-                class="relative w-full py-3.5 rounded-lg bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 hover:from-purple-500 hover:via-pink-500 hover:to-cyan-500 text-white font-medium transition-all hover:scale-[1.01] active:scale-[0.99] overflow-hidden group shadow-md hover:shadow-lg"
-              >
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                <span class="relative z-10 flex items-center justify-center gap-2.5">
-                  <Zap class="h-4 w-4 text-white/90" />
-                  <span class="font-semibold tracking-wide">{{ t('ai_analysis_button') }}</span>
-                  <Sparkles class="h-4 w-4 text-white/90" />
-                </span>
-              </button>
-            </div>
-
-            <!-- Result -->
-            <div v-else-if="aiAnalysis" class="space-y-4">
-              <div>
-                <p class="text-sm font-medium mb-1">{{ t('ai_analysis_summary') }}</p>
-                <p class="text-sm text-muted-foreground leading-relaxed">{{ aiAnalysis.summary }}</p>
-                <span v-if="aiAnalysis.severity" :class="['text-xs font-medium', getSeverityTextColor(aiAnalysis.severity)]">
-                  {{ getSeverityText(aiAnalysis.severity) }}
-                </span>
-              </div>
-
-              <div v-if="aiAnalysis.issues?.length">
-                <p class="text-sm font-medium mb-3">{{ t('ai_analysis_issues') }}</p>
-                <div class="space-y-5">
-                  <div v-for="(issue, idx) in aiAnalysis.issues" :key="idx">
-                    <p class="text-sm font-semibold text-red-500">{{ issue.type }}</p>
-                    <p class="text-sm text-muted-foreground mt-1">{{ issue.description }}</p>
-                    <p v-if="issue.suggestion" class="text-sm text-green-500 mt-1">
-                      <span class="font-medium">{{ t('ai_suggestion') }}:</span> {{ issue.suggestion }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="aiAnalysis.recommendations?.length">
-                <p class="text-sm font-medium mb-2">{{ t('ai_analysis_recommendations') }}</p>
-                <ul class="space-y-1.5">
-                  <li v-for="(rec, idx) in aiAnalysis.recommendations" :key="idx" class="text-sm text-muted-foreground">
-                    {{ rec }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- 日志查看器 -->
       <div :class="isFullscreen ? 'flex-1 flex flex-col min-h-0' : ''">
         <!-- 工具栏 -->
@@ -642,6 +504,25 @@ const scrollToProblems = () => {
                 <span class="hidden sm:inline">{{
                   wrapLines ? t('wrap_lines_on') : t('wrap_lines_off')
                 }}</span>
+              </button>
+              <button
+                class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-pink-300/50 bg-gradient-to-r from-pink-200 to-blue-200 text-slate-700 font-medium text-sm hover:from-pink-100 hover:to-blue-100 transition-all"
+                @click="openAiPanel"
+              >
+                <span>LogAnalysis智能分析</span>
+              </button>
+              <button
+                :class="
+                  isCopySuccess
+                    ? 'bg-green-500 text-white hover:bg-green-600'
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                "
+                class="hidden sm:inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium"
+                :title="t('share')"
+                @click="copyShareMessage"
+              >
+                <Share2 class="h-5 w-5" />
+                <span>{{ isCopySuccess ? t('copied') : t('share') }}</span>
               </button>
             </div>
 
@@ -709,6 +590,29 @@ const scrollToProblems = () => {
                 <span class="hidden sm:inline">{{ t('exit_fullscreen') }}</span>
               </button>
             </div>
+          </div>
+
+          <!-- 移动端专用行：LogAnalysis和分享按钮，靠右对齐 -->
+          <div class="flex items-center gap-1 justify-end p-2 border-b border-muted sm:hidden">
+            <button
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-pink-300/50 bg-gradient-to-r from-pink-200 to-blue-200 text-slate-700 font-medium text-sm hover:from-pink-100 hover:to-blue-100 transition-all"
+              @click="openAiPanel"
+            >
+              <span>LogAnalysis智能分析</span>
+            </button>
+            <button
+              :class="
+                isCopySuccess
+                  ? 'bg-green-500 text-white hover:bg-green-600'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+              "
+              class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium"
+              :title="t('share')"
+              @click="copyShareMessage"
+            >
+              <Share2 class="h-5 w-5" />
+              <span>{{ isCopySuccess ? t('copied') : t('share') }}</span>
+            </button>
           </div>
 
           <!-- 搜索栏：搜索框 + 结果导航 -->
@@ -809,6 +713,183 @@ const scrollToProblems = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI 分析面板 -->
+  <div v-if="showAiPanel" class="fixed inset-0 z-50">
+    <!-- 遮罩层 -->
+    <div
+      class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+      @click="showAiPanel = false"
+    ></div>
+
+    <!-- 面板 -->
+    <div
+      class="relative h-full w-full md:w-3/4 bg-background border-r border-border shadow-2xl flex flex-col"
+    >
+      <!-- 头部 -->
+      <div class="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
+        <h2 class="font-semibold flex items-center gap-2">
+          {{ t('ai_analysis') }}
+          <span v-if="aiIsCached" class="text-xs text-blue-500 font-normal">
+            {{ t('ai_cached_result') }}
+          </span>
+        </h2>
+        <button
+          class="p-2 rounded-md hover:bg-secondary transition-colors"
+          @click="showAiPanel = false"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- 内容区 -->
+      <div class="flex-1 overflow-y-auto p-4">
+        <!-- Loading -->
+        <div
+          v-if="aiLoading && !aiIsStreaming"
+          class="flex flex-col items-center justify-center min-h-[300px]"
+        >
+          <div class="relative w-16 h-16">
+            <div
+              class="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin"
+            ></div>
+            <div
+              class="absolute inset-2 rounded-full border-4 border-transparent border-b-primary animate-spin-reverse"
+            ></div>
+          </div>
+          <p class="mt-6 text-sm text-muted-foreground">{{ t('ai_analyzing') }}</p>
+        </div>
+
+        <!-- Streaming State -->
+        <div v-else-if="aiIsStreaming" class="space-y-4">
+          <div class="flex items-center gap-2 py-2">
+            <div class="flex gap-1">
+              <div class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></div>
+              <div
+                class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse"
+                style="animation-delay: 200ms"
+              ></div>
+              <div
+                class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"
+                style="animation-delay: 400ms"
+              ></div>
+            </div>
+            <p class="text-sm text-muted-foreground">{{ t('ai_analyzing_streaming') }}</p>
+          </div>
+
+          <template v-if="aiAnalysis">
+            <div class="space-y-4">
+              <div>
+                <p class="text-sm font-medium mb-1">{{ t('ai_analysis_summary') }}</p>
+                <p class="text-sm text-muted-foreground leading-relaxed">
+                  {{ aiAnalysis.summary }}
+                </p>
+                <span
+                  v-if="aiAnalysis.severity"
+                  :class="['text-xs font-medium', getSeverityTextColor(aiAnalysis.severity)]"
+                >
+                  {{ getSeverityText(aiAnalysis.severity) }}
+                </span>
+              </div>
+
+              <div v-if="aiAnalysis.issues?.length">
+                <p class="text-sm font-medium mb-3">{{ t('ai_analysis_issues') }}</p>
+                <div class="space-y-5">
+                  <div v-for="(issue, idx) in aiAnalysis.issues" :key="idx">
+                    <p class="text-sm font-semibold text-red-500">{{ issue.type }}</p>
+                    <p class="text-sm text-muted-foreground mt-1">{{ issue.description }}</p>
+                    <p v-if="issue.suggestion" class="text-sm text-green-500 mt-1">
+                      <span class="font-medium">{{ t('ai_suggestion') }}:</span>
+                      {{ issue.suggestion }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="aiAnalysis.recommendations?.length">
+                <p class="text-sm font-medium mb-2">{{ t('ai_analysis_recommendations') }}</p>
+                <ul class="space-y-1.5">
+                  <li
+                    v-for="(rec, idx) in aiAnalysis.recommendations"
+                    :key="idx"
+                    class="text-sm text-muted-foreground"
+                  >
+                    {{ rec }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Error -->
+        <div v-else-if="aiError" class="py-12 text-center">
+          <p class="text-sm text-red-500">{{ aiError }}</p>
+          <button
+            class="mt-4 px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all inline-flex items-center gap-2"
+            @click="loadAiAnalysis"
+          >
+            <RefreshCw class="h-3.5 w-3.5" />
+            {{ t('ai_analysis_retry') }}
+          </button>
+        </div>
+
+        <!-- Result -->
+        <div v-else-if="aiAnalysis" class="space-y-4">
+          <div>
+            <p class="text-sm font-medium mb-1">{{ t('ai_analysis_summary') }}</p>
+            <p class="text-sm text-muted-foreground leading-relaxed">{{ aiAnalysis.summary }}</p>
+            <span
+              v-if="aiAnalysis.severity"
+              :class="['text-xs font-medium', getSeverityTextColor(aiAnalysis.severity)]"
+            >
+              {{ getSeverityText(aiAnalysis.severity) }}
+            </span>
+          </div>
+
+          <div v-if="aiAnalysis.issues?.length">
+            <p class="text-sm font-medium mb-3">{{ t('ai_analysis_issues') }}</p>
+            <div class="space-y-5">
+              <div v-for="(issue, idx) in aiAnalysis.issues" :key="idx">
+                <p class="text-sm font-semibold text-red-500">{{ issue.type }}</p>
+                <p class="text-sm text-muted-foreground mt-1">{{ issue.description }}</p>
+                <p v-if="issue.suggestion" class="text-sm text-green-500 mt-1">
+                  <span class="font-medium">{{ t('ai_suggestion') }}:</span>
+                  {{ issue.suggestion }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="aiAnalysis.recommendations?.length">
+            <p class="text-sm font-medium mb-2">{{ t('ai_analysis_recommendations') }}</p>
+            <ul class="space-y-1.5">
+              <li
+                v-for="(rec, idx) in aiAnalysis.recommendations"
+                :key="idx"
+                class="text-sm text-muted-foreground"
+              >
+                {{ rec }}
+              </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -1035,5 +1116,18 @@ mark {
 
 .animation-delay-400 {
   animation-delay: 400ms;
+}
+
+.animate-spin-reverse {
+  animation: spin-reverse 1s linear infinite;
+}
+
+@keyframes spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
 }
 </style>

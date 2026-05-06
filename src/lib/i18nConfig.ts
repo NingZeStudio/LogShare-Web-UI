@@ -196,7 +196,7 @@ export const zhCN = {
   support_methods: '支持方式',
   total_amount: '总金额',
 
-  ai_analysis: 'AI 智能分析',
+  ai_analysis: 'LogAnalysis自研日志智能分析系统',
   ai_analysis_button: '开始 AI 分析',
   ai_analysis_summary: '分析摘要',
   ai_analysis_severity: '严重程度',
@@ -220,7 +220,7 @@ export const zhCN = {
   ai_error_unknown: '未知错误',
   ai_cached_result: '缓存结果（5 分钟内有效）',
   ai_stream_complete: '分析完成',
-  ai_suggestion: '解决建议',
+  ai_suggestion: '解决建议'
 }
 
 export const zhTW = {
@@ -420,7 +420,7 @@ export const zhTW = {
   support_methods: '支持方式',
   total_amount: '總金額',
 
-  ai_analysis: 'AI 智能分析',
+  ai_analysis: 'LogAnalysis自研日志智能分析系统',
   ai_analysis_button: '開始 AI 分析',
   ai_analysis_summary: '分析摘要',
   ai_analysis_severity: '嚴重程度',
@@ -444,7 +444,7 @@ export const zhTW = {
   ai_error_unknown: '未知錯誤',
   ai_cached_result: '緩存結果（5 分鐘內有效）',
   ai_stream_complete: '分析完成',
-  ai_suggestion: '解決建議',
+  ai_suggestion: '解決建議'
 }
 
 export type LanguagePack = typeof zhCN | typeof zhTW
