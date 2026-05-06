@@ -159,7 +159,9 @@ const sortedSponsors = computed(() => {
           rel="noopener noreferrer"
           class="relative flex items-center justify-center gap-3 w-full py-3 rounded-lg bg-black hover:bg-gray-900 text-white font-semibold transition-transform hover:scale-[1.02] overflow-hidden"
         >
-          <span class="absolute inset-0 rounded-lg p-[2px] bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 opacity-80"></span>
+          <span
+            class="absolute inset-0 rounded-lg p-[2px] bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 opacity-80"
+          ></span>
           <span class="absolute inset-[2px] rounded-md bg-black"></span>
           <Zap class="h-5 w-5 relative z-10 text-white" />
           <span class="relative z-10">{{ t('sponsor_afdian') }}</span>
@@ -216,7 +218,10 @@ const sortedSponsors = computed(() => {
               >
                 {{ getPlatformIcon(sponsor.platform) }}
               </span>
-              <span v-if="sponsor.pinned" class="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-500 flex items-center gap-1">
+              <span
+                v-if="sponsor.pinned"
+                class="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-500 flex items-center gap-1"
+              >
                 <Pin class="h-3 w-3" />
                 置顶
               </span>

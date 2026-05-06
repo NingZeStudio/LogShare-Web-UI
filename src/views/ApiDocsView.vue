@@ -22,7 +22,8 @@ const endpoints = [
     methodType: 'post',
     path: '/1/log',
     title: t('paste_log'),
-    description: '提交新的日志数据进行分析，生成分享链接和分析结果。支持纯文本或 JSON 格式，支持 gzip/deflate/br 压缩。',
+    description:
+      '提交新的日志数据进行分析，生成分享链接和分析结果。支持纯文本或 JSON 格式，支持 gzip/deflate/br 压缩。',
     contentType: 'text/plain 或 application/json',
     params: [
       { name: 'content', type: 'string', required: true, desc: '日志内容字符串（JSON 模式必需）' },
@@ -109,11 +110,10 @@ curl -X POST https://api.logshare.cn/1/log \\
     methodType: 'post',
     path: '/1/analyse',
     title: '分析日志（本地 Codex）',
-    description: '提交日志内容进行本地分析，不会存储到数据库。返回分析结果包括服务器类型、版本和问题检测。',
+    description:
+      '提交日志内容进行本地分析，不会存储到数据库。返回分析结果包括服务器类型、版本和问题检测。',
     contentType: 'text/plain 或 application/json',
-    params: [
-      { name: 'content', type: 'string', required: true, desc: '日志原始内容' }
-    ],
+    params: [{ name: 'content', type: 'string', required: true, desc: '日志原始内容' }],
     response: {
       success: {
         code: 200,
@@ -423,7 +423,8 @@ print_r($data);`,
     methodType: 'get',
     path: '/1/ai/{id}',
     title: 'AI 分析已存储日志 🔵',
-    description: '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出，首次请求流式生成，5 分钟内相同请求直接返回缓存结果。',
+    description:
+      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出，首次请求流式生成，5 分钟内相同请求直接返回缓存结果。',
     isSSE: true,
     params: [{ name: 'id', type: 'string', required: true, desc: '日志 ID' }],
     response: {
@@ -515,12 +516,11 @@ curl https://api.logshare.cn/1/ai/abc1234`
     methodType: 'post',
     path: '/1/ai/analyse',
     title: 'AI 分析日志内容 🔵',
-    description: '直接提交日志内容，使用 AI 分析，不存储到数据库。SSE 流式输出，基于内容哈希缓存，相同内容 5 分钟内直接返回缓存结果。',
+    description:
+      '直接提交日志内容，使用 AI 分析，不存储到数据库。SSE 流式输出，基于内容哈希缓存，相同内容 5 分钟内直接返回缓存结果。',
     isSSE: true,
     contentType: 'text/plain 或 application/json',
-    params: [
-      { name: 'content', type: 'string', required: true, desc: '日志原始内容' }
-    ],
+    params: [{ name: 'content', type: 'string', required: true, desc: '日志原始内容' }],
     response: {
       success: {
         code: 200,
@@ -704,7 +704,7 @@ const isSSEEndpoint = (endpoint: any) => {
         </div>
       </section>
 
-       <section class="space-y-4">
+      <section class="space-y-4">
         <h2 class="text-lg font-semibold">可用端点</h2>
         <div class="rounded-lg border border-border overflow-hidden">
           <table class="w-full text-sm">
@@ -840,12 +840,13 @@ const isSSEEndpoint = (endpoint: any) => {
         </p>
 
         <!-- SSE 提示 -->
-        <p v-if="isSSEEndpoint(endpoint)" class="text-sm text-blue-500">
-          该接口为 SSE 流式输出
-        </p>
+        <p v-if="isSSEEndpoint(endpoint)" class="text-sm text-blue-500">该接口为 SSE 流式输出</p>
 
         <!-- Content-Type 提示 -->
-        <div v-if="hasContentType(endpoint)" class="flex items-center gap-2 text-xs text-muted-foreground">
+        <div
+          v-if="hasContentType(endpoint)"
+          class="flex items-center gap-2 text-xs text-muted-foreground"
+        >
           <span class="font-medium">Content-Type:</span>
           <code class="bg-muted px-1.5 py-0.5 rounded">{{ endpoint.contentType }}</code>
         </div>
@@ -1024,7 +1025,10 @@ const isSSEEndpoint = (endpoint: any) => {
                 >PHP</span
               >
               PHP SDK
-              <span class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold">v2.0.0</span>
+              <span
+                class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold"
+                >v2.0.0</span
+              >
             </div>
             <span
               class="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold"
@@ -1070,7 +1074,10 @@ const isSSEEndpoint = (endpoint: any) => {
                 >JS</span
               >
               JavaScript SDK
-              <span class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold">v2.0.0</span>
+              <span
+                class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold"
+                >v2.0.0</span
+              >
             </div>
             <span
               class="text-[10px] bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full font-bold"
@@ -1116,7 +1123,10 @@ const isSSEEndpoint = (endpoint: any) => {
                 >JAVA</span
               >
               Java SDK
-              <span class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold">v2.0.0</span>
+              <span
+                class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold"
+                >v2.0.0</span
+              >
             </div>
             <span
               class="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full font-bold"
@@ -1162,7 +1172,10 @@ const isSSEEndpoint = (endpoint: any) => {
                 >.NET</span
               >
               C# / .NET SDK
-              <span class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold">v2.0.0</span>
+              <span
+                class="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold"
+                >v2.0.0</span
+              >
             </div>
             <span
               class="text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-full font-bold"
@@ -1199,15 +1212,22 @@ const isSSEEndpoint = (endpoint: any) => {
       <!-- 快速使用示例 -->
       <section class="space-y-4 mt-6">
         <h2 class="text-lg font-semibold">快速使用示例</h2>
-        
+
         <div class="space-y-4">
           <!-- PHP 示例 -->
           <div class="rounded-lg border border-border overflow-hidden">
-            <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2">
-              <span class="w-5 h-5 rounded bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-[10px] font-bold">PHP</span>
+            <div
+              class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2"
+            >
+              <span
+                class="w-5 h-5 rounded bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-[10px] font-bold"
+                >PHP</span
+              >
               PHP SDK 使用示例
             </div>
-            <pre class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"><code>&lt;?php
+            <pre
+              class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+            ><code>&lt;?php
 require_once 'mclogs.php';
 
 use LogShare\LogShareSDK;
@@ -1236,11 +1256,18 @@ $analysis = $sdk->streamAiAnalysis(
 
           <!-- JavaScript 示例 -->
           <div class="rounded-lg border border-border overflow-hidden">
-            <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2">
-              <span class="w-5 h-5 rounded bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center text-yellow-600 dark:text-yellow-400 text-[10px] font-bold">JS</span>
+            <div
+              class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2"
+            >
+              <span
+                class="w-5 h-5 rounded bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center text-yellow-600 dark:text-yellow-400 text-[10px] font-bold"
+                >JS</span
+              >
               JavaScript SDK 使用示例
             </div>
-            <pre class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"><code>import { LogShareSDK } from './mclogs.js';
+            <pre
+              class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+            ><code>import { LogShareSDK } from './mclogs.js';
 
 const sdk = new LogShareSDK({ timeout: 120000 });
 
@@ -1266,11 +1293,18 @@ const analysis = await sdk.streamAiAnalysis(id, {
 
           <!-- Java 示例 -->
           <div class="rounded-lg border border-border overflow-hidden">
-            <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2">
-              <span class="w-5 h-5 rounded bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 text-[10px] font-bold">J</span>
+            <div
+              class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2"
+            >
+              <span
+                class="w-5 h-5 rounded bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 text-[10px] font-bold"
+                >J</span
+              >
               Java SDK 使用示例
             </div>
-            <pre class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"><code>import cn.logshare.sdk.LogShareSDK;
+            <pre
+              class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+            ><code>import cn.logshare.sdk.LogShareSDK;
 import cn.logshare.sdk.LogShareException;
 import java.util.*;
 
@@ -1307,11 +1341,18 @@ public class Example {
 
           <!-- .NET 示例 -->
           <div class="rounded-lg border border-border overflow-hidden">
-            <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2">
-              <span class="w-5 h-5 rounded bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 text-[10px] font-bold">.NET</span>
+            <div
+              class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2"
+            >
+              <span
+                class="w-5 h-5 rounded bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 text-[10px] font-bold"
+                >.NET</span
+              >
               C# SDK 使用示例
             </div>
-            <pre class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"><code>using LogShare.CN.SDK;
+            <pre
+              class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+            ><code>using LogShare.CN.SDK;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -1390,13 +1431,17 @@ class Program
           <li class="flex items-start gap-3">
             <span class="text-primary font-medium min-w-fit">Content-Type：</span>
             <span class="text-muted-foreground"
-              ><code class="bg-muted px-1.5 py-0.5 rounded text-xs">text/plain</code> 或 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">application/json</code></span
+              ><code class="bg-muted px-1.5 py-0.5 rounded text-xs">text/plain</code> 或
+              <code class="bg-muted px-1.5 py-0.5 rounded text-xs">application/json</code></span
             >
           </li>
           <li class="flex items-start gap-3">
             <span class="text-primary font-medium min-w-fit">压缩支持：</span>
             <span class="text-muted-foreground"
-              >支持 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">gzip</code>、<code class="bg-muted px-1.5 py-0.5 rounded text-xs">deflate</code>、<code class="bg-muted px-1.5 py-0.5 rounded text-xs">br</code> 压缩上传</span
+              >支持 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">gzip</code>、<code
+                class="bg-muted px-1.5 py-0.5 rounded text-xs"
+                >deflate</code
+              >、<code class="bg-muted px-1.5 py-0.5 rounded text-xs">br</code> 压缩上传</span
             >
           </li>
         </ul>

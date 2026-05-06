@@ -50,7 +50,7 @@ const showLogUpdate = (logId: string) => {
 
 const currentLogUpdateConfig = computed(() => {
   if (!currentLogUpdate.value) return null
-  return logUpdateConfigs.find((config) => config.logId === currentLogUpdate.value)
+  return logUpdateConfigs.find(config => config.logId === currentLogUpdate.value)
 })
 
 defineExpose({
@@ -107,10 +107,7 @@ defineExpose({
                   <p class="whitespace-pre-line leading-relaxed">
                     {{ announcementConfig.content }}
                   </p>
-                  <p
-                    v-if="announcementConfig.importantText"
-                    class="mt-3 font-bold text-red-500"
-                  >
+                  <p v-if="announcementConfig.importantText" class="mt-3 font-bold text-red-500">
                     {{ announcementConfig.importantText }}
                   </p>
                 </div>
@@ -136,7 +133,10 @@ defineExpose({
               </div>
             </div>
 
-            <div v-else-if="currentView === 'log-update' && currentLogUpdateConfig" class="p-5 sm:p-6">
+            <div
+              v-else-if="currentView === 'log-update' && currentLogUpdateConfig"
+              class="p-5 sm:p-6"
+            >
               <div class="flex items-start justify-between mb-4">
                 <div class="flex items-center gap-2">
                   <div class="w-1 h-6 bg-amber-500 rounded-full"></div>
@@ -159,8 +159,8 @@ defineExpose({
 
               <RouterLink
                 :to="`/${currentLogUpdate}`"
-                @click="closeDialog"
                 class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 rounded-lg transition-colors text-sm font-medium w-full"
+                @click="closeDialog"
               >
                 查看日志
               </RouterLink>
