@@ -12,14 +12,15 @@ export interface AnnouncementConfig {
 }
 
 export const announcementConfig: AnnouncementConfig = {
-  id: '20250428_qq_group_piLauncher',
-  title: '最新公告',
-  content: 'LogShare官方用户群来了！欢迎PiLauncher接入本项目，目前ZalithLauncher2、FoldCraftLauncher和PiLauncher均已接入本项目。',
+  id: '20250506_loganalysis_minimax_m2.5',
+  title: '全新LogAnalysis智能分析系统上线',
+  content:
+    '基于MiniMax M2.5模型的全新LogAnalysis智能分析系统现已上线！网页版可直接在日志详情界面体验，同时提供两种API端点：通过日志ID分析（GET /1/ai/{id}）或POST不落盘分析（POST /1/ai/analyse），助力快速定位日志问题。',
   links: [
     {
-      label: '加入官方QQ群',
-      url: 'https://qm.qq.com/q/FOGt99aayY',
-      icon: 'Users',
+      label: 'API文档',
+      url: '/api-docs',
+      icon: 'FileCode',
       color: 'blue'
     },
     {
@@ -28,8 +29,7 @@ export const announcementConfig: AnnouncementConfig = {
       icon: 'Heart',
       color: 'red'
     }
-  ],
-  importantText: '感谢来自MobileGlues开发者Swung 0x48的1000元人民币赞助支持！！\n感谢Bilibili UP主 ConfectionaryQwQ 对本项目的大力宣传支持'
+  ]
 }
 
 export interface LogUpdateConfig {
@@ -59,7 +59,9 @@ export function getLogUpdateShownKey(logId: string): string {
 export function hasSeenAnnouncement(): boolean {
   const lastSeen = localStorage.getItem(localStorageKeys.lastAnnouncementId)
   const currentId = announcementConfig.id
-  return lastSeen === currentId && localStorage.getItem(localStorageKeys.announcementShown) === 'true'
+  return (
+    lastSeen === currentId && localStorage.getItem(localStorageKeys.announcementShown) === 'true'
+  )
 }
 
 export function markAnnouncementAsSeen(): void {
