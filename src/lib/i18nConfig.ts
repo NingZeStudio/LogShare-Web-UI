@@ -190,6 +190,9 @@ export const zhCN = {
   need_help: '需要帮助？',
   view_api_docs: '查看 API 文档',
   join_qq_group_link: '加入官方 QQ 群',
+  log_help_card_title: '看不懂日志分析结果？',
+  log_help_card_desc:
+    '如果你看不懂本界面在说什么，或通过 LogAnalysis 功能仍未解决问题，可以加入官方 QQ 群获取帮助。',
 
   sponsor_count: '赞助人数',
   thanks_message: '感谢',
@@ -414,6 +417,9 @@ export const zhTW = {
   need_help: '需要幫助？',
   view_api_docs: '查看 API 文件',
   join_qq_group_link: '加入官方 QQ 群',
+  log_help_card_title: '看不懂日誌分析結果？',
+  log_help_card_desc:
+    '如果你看不懂本界面在說什麼，或通過 LogAnalysis 功能仍未解決問題，可以加入官方 QQ 群獲取幫助。',
 
   sponsor_count: '贊助人數',
   thanks_message: '感謝',

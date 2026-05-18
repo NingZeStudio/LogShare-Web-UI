@@ -157,14 +157,14 @@ const sortedSponsors = computed(() => {
           :href="sponsorConfig.afdianLink"
           target="_blank"
           rel="noopener noreferrer"
-          class="relative flex items-center justify-center gap-3 w-full py-3 rounded-lg bg-black hover:bg-gray-900 text-white font-semibold transition-transform hover:scale-[1.02] overflow-hidden"
+          class="afdian-rainbow-ring relative flex w-full rounded-lg p-[2px] text-white font-semibold transition-transform hover:scale-[1.02] overflow-hidden"
         >
           <span
-            class="absolute inset-0 rounded-lg p-[2px] bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 opacity-80"
-          ></span>
-          <span class="absolute inset-[2px] rounded-md bg-black"></span>
-          <Zap class="h-5 w-5 relative z-10 text-white" />
-          <span class="relative z-10">{{ t('sponsor_afdian') }}</span>
+            class="flex w-full items-center justify-center gap-3 rounded-[calc(var(--radius-xl)-2px)] bg-black py-3 transition-colors hover:bg-gray-900"
+          >
+            <Zap class="h-5 w-5 text-white" />
+            <span>{{ t('sponsor_afdian') }}</span>
+          </span>
         </a>
         <p class="text-sm text-center text-muted-foreground mt-3">
           {{ t('sponsor_afdian_note') }}
@@ -267,3 +267,27 @@ const sortedSponsors = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.afdian-rainbow-ring {
+  background: linear-gradient(90deg, #ec4899, #a855f7, #06b6d4, #22c55e, #f59e0b, #ec4899);
+  background-size: 300% 100%;
+  animation: afdian-rainbow-flow 4s linear infinite;
+}
+
+@keyframes afdian-rainbow-flow {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 300% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .afdian-rainbow-ring {
+    animation: none;
+  }
+}
+</style>

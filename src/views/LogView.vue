@@ -10,7 +10,6 @@ import {
   WrapText,
   Search,
   Download,
-  Share2,
   Maximize2,
   ChevronLeft,
   ChevronRight,
@@ -19,6 +18,8 @@ import {
   ArrowUp,
   Code,
   BookText,
+  Users,
+  SquareArrowOutUpRight,
   Trash2,
   RefreshCw
 } from 'lucide-vue-next'
@@ -467,6 +468,33 @@ const openAiPanel = () => {
         </div>
       </div>
 
+      <!-- 帮助提示 -->
+      <div v-if="!isFullscreen" class="px-4 my-4">
+        <div
+          class="bg-card border border-border rounded-lg p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div class="flex items-start gap-3">
+            <div class="p-2 bg-primary/10 rounded-md shrink-0">
+              <Users class="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h2 class="text-base font-semibold">{{ t('log_help_card_title') }}</h2>
+              <p class="text-sm text-muted-foreground mt-1">
+                {{ t('log_help_card_desc') }}
+              </p>
+            </div>
+          </div>
+          <a
+            href="https://qm.qq.com/q/FOGt99aayY"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 shrink-0"
+          >
+            {{ t('join_qq_group_link') }}
+          </a>
+        </div>
+      </div>
+
       <!-- 日志查看器 -->
       <div :class="isFullscreen ? 'flex-1 flex flex-col min-h-0' : ''">
         <!-- 工具栏 -->
@@ -506,23 +534,27 @@ const openAiPanel = () => {
                 }}</span>
               </button>
               <button
-                class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-pink-300/50 bg-gradient-to-r from-pink-200 to-blue-200 text-slate-700 font-medium text-sm hover:from-pink-100 hover:to-blue-100 transition-all"
-                @click="openAiPanel"
-              >
-                <span>LogAnalysis智能分析</span>
-              </button>
-              <button
                 :class="
                   isCopySuccess
                     ? 'bg-green-500 text-white hover:bg-green-600'
-                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    : 'border border-pink-300/50 bg-gradient-to-r from-pink-200 to-blue-200 text-slate-700 hover:from-pink-100 hover:to-blue-100'
                 "
-                class="hidden sm:inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium"
+                class="hidden sm:inline-flex items-center gap-1.5 text-sm rounded-md transition-all px-4 py-2 font-medium"
                 :title="t('share')"
                 @click="copyShareMessage"
               >
-                <Share2 class="h-5 w-5" />
+                <SquareArrowOutUpRight class="h-3.5 w-3.5 -translate-y-px" />
                 <span>{{ isCopySuccess ? t('copied') : t('share') }}</span>
+              </button>
+              <button
+                class="log-analysis-rainbow-ring hidden sm:inline-flex rounded-lg p-[2px] text-white font-semibold text-sm transition-transform hover:scale-[1.02] overflow-hidden"
+                @click="openAiPanel"
+              >
+                <span
+                  class="flex w-full items-center justify-center gap-2 rounded-[calc(var(--radius-xl)-2px)] bg-black px-4 py-2 transition-colors hover:bg-gray-900"
+                >
+                  LogAnalysis智能分析
+                </span>
               </button>
             </div>
 
@@ -592,26 +624,30 @@ const openAiPanel = () => {
             </div>
           </div>
 
-          <!-- 移动端专用行：LogAnalysis和分享按钮，靠右对齐 -->
+          <!-- 移动端专用行：分享和LogAnalysis按钮，靠右对齐 -->
           <div class="flex items-center gap-1 justify-end p-2 border-b border-muted sm:hidden">
-            <button
-              class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-pink-300/50 bg-gradient-to-r from-pink-200 to-blue-200 text-slate-700 font-medium text-sm hover:from-pink-100 hover:to-blue-100 transition-all"
-              @click="openAiPanel"
-            >
-              <span>LogAnalysis智能分析</span>
-            </button>
             <button
               :class="
                 isCopySuccess
                   ? 'bg-green-500 text-white hover:bg-green-600'
-                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  : 'border border-pink-300/50 bg-gradient-to-r from-pink-200 to-blue-200 text-slate-700 hover:from-pink-100 hover:to-blue-100'
               "
-              class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium"
+              class="inline-flex items-center gap-1.5 text-sm rounded-md transition-all px-4 py-2 font-medium"
               :title="t('share')"
               @click="copyShareMessage"
             >
-              <Share2 class="h-5 w-5" />
+              <SquareArrowOutUpRight class="h-3.5 w-3.5 -translate-y-px" />
               <span>{{ isCopySuccess ? t('copied') : t('share') }}</span>
+            </button>
+            <button
+              class="log-analysis-rainbow-ring inline-flex rounded-lg p-[2px] text-white font-semibold text-sm transition-transform hover:scale-[1.02] overflow-hidden"
+              @click="openAiPanel"
+            >
+              <span
+                class="flex w-full items-center justify-center gap-2 rounded-[calc(var(--radius-xl)-2px)] bg-black px-4 py-2 transition-colors hover:bg-gray-900"
+              >
+                LogAnalysis智能分析
+              </span>
             </button>
           </div>
 
@@ -933,6 +969,28 @@ const openAiPanel = () => {
 </template>
 
 <style>
+.log-analysis-rainbow-ring {
+  background: linear-gradient(90deg, #ec4899, #a855f7, #06b6d4, #22c55e, #f59e0b, #ec4899);
+  background-size: 300% 100%;
+  animation: log-analysis-rainbow-flow 4s linear infinite;
+}
+
+@keyframes log-analysis-rainbow-flow {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 300% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .log-analysis-rainbow-ring {
+    animation: none;
+  }
+}
+
 .log-content table {
   width: 100%;
   border-collapse: collapse;
