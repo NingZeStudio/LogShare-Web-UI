@@ -214,7 +214,7 @@ function customBuildReportPlugin(): Plugin {
           '提示：使用 ' +
           colors.reset +
           colors.yellow +
-          'yarn preview' +
+          'npm run preview' +
           colors.reset +
           colors.dim +
           ' 预览构建结果' +

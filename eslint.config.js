@@ -11,14 +11,10 @@ export default [
     ignores: [
       'node_modules/**',
       'dist/**',
-      '.pnp.cjs',
-      '.yarn/**',
       '*.min.js',
       '*.min.css',
       'public/**',
-      'package-lock.json',
-      'pnpm-lock.yaml',
-      'yarn.lock'
+      'package-lock.json'
     ]
   },
   eslint.configs.recommended,

@@ -6,22 +6,22 @@ LogShare.CN 前端项目 - Minecraft/Hytale 日志分享与分析平台，基于
 
 ## Package Manager
 
-使用 pnpm 进行依赖管理（项目包含 pnpm-lock.yaml）
+使用 npm 进行依赖管理（项目包含 package-lock.json）
 
 ## Essential Commands
 
 ### Development
 
 ```bash
-pnpm run dev          # 启动开发服务器 (vite)
-pnpm run build        # 构建生产版本 (vue-tsc -b && vite build)
-pnpm run preview      # 预览构建结果 (vite preview)
+npm run dev           # 启动开发服务器 (vite)
+npm run build         # 构建生产版本 (vue-tsc -b && vite build)
+npm run preview       # 预览构建结果 (vite preview)
 ```
 
 ### Type Checking
 
 ```bash
-vue-tsc -b            # TypeScript 类型检查（build 命令会自动执行）
+npx vue-tsc -b        # TypeScript 类型检查（build 命令会自动执行）
 ```
 
 ## Architecture Notes
@@ -104,8 +104,8 @@ API 基础地址硬编码在 `src/lib/ApiClient.ts:4`，当前为 `https://api.l
 建议添加代码质量工具以提高代码一致性：
 
 ```bash
-pnpm add -D eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-vue
-pnpm add -D prettier eslint-config-prettier eslint-plugin-prettier
+npm install -D eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-vue
+npm install -D prettier eslint-config-prettier eslint-plugin-prettier
 ```
 
 ## Development Gotchas

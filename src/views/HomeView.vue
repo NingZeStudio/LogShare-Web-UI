@@ -24,6 +24,7 @@ const error = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const router = useRouter()
 const isDragging = ref(false)
+const showHomeBannerAd = ref(true)
 
 const notifications = ref<{ id: number; type: 'success' | 'error'; message: string }[]>([])
 let notificationId = 0
@@ -313,6 +314,26 @@ const copyAllLinks = async () => {
           <p class="text-muted-foreground max-w-xl">
             {{ t('home_subtitle') }}
           </p>
+        </div>
+
+        <div v-if="showHomeBannerAd" class="relative max-w-4xl mx-auto mb-5">
+          <div class="overflow-hidden rounded-lg border bg-card/80 backdrop-blur-xl shadow-sm">
+            <img
+              src="/img/home-banner-ad.webp"
+              alt="广告"
+              class="h-auto w-full"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <button
+            type="button"
+            class="absolute -right-2 -top-2 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-background hover:text-foreground"
+            aria-label="关闭广告"
+            @click="showHomeBannerAd = false"
+          >
+            <X class="h-4 w-4" />
+          </button>
         </div>
 
         <div class="max-w-4xl mx-auto pb-4">
