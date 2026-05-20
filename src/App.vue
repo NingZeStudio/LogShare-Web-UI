@@ -189,6 +189,17 @@ onMounted(() => {
             {{ t('team_homepage') }}
           </a>
         </div>
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <span>{{ t('friend_links') }}:</span>
+          <a
+            href="https://www.nexusmc.cn"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hover:text-primary hover:underline transition-colors"
+          >
+            NexusMC
+          </a>
+        </div>
       </div>
     </footer>
 

@@ -18,6 +18,7 @@ export const zhCN = {
   total: '总数',
   results: '结果',
   no_results: '未找到结果',
+  friend_links: '友情链接',
 
   home_title: 'LogShare.CN',
   home_subtitle: '轻松粘贴或上传您的 Minecraft/Hytale 日志以进行分享和分析。',
@@ -246,6 +247,7 @@ export const zhTW = {
   total: '總數',
   results: '結果',
   no_results: '未找到結果',
+  friend_links: '友情連結',
 
   home_title: 'LogShare.CN',
   home_subtitle: '輕鬆貼上或上傳您的 Minecraft/Hytale 記錄以進行分享和分析。',
