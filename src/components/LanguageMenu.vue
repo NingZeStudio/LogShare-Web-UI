@@ -2,6 +2,10 @@
 import { ref } from 'vue'
 import { Languages, ChevronDown } from 'lucide-vue-next'
 
+defineProps({
+  compact: { type: Boolean, default: false }
+})
+
 const showMenu = ref(false)
 const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
 
@@ -20,13 +24,15 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
 <template>
   <div class="relative">
     <button
-      class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
+      class="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
       aria-label="切换语言"
       @click="toggleMenu"
     >
       <Languages class="h-4 w-4" />
-      <span>语言</span>
-      <ChevronDown class="h-3.5 w-3.5" />
+      <template v-if="!compact">
+        <span class="ml-1.5 text-sm">{{ currentLang === 'zh-CN' ? '简体' : '繁體' }}</span>
+        <ChevronDown class="h-3.5 w-3.5 ml-0.5" />
+      </template>
     </button>
 
     <Transition
@@ -58,7 +64,6 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
       </div>
     </Transition>
 
-    <!-- 点击外部关闭 -->
     <Transition
       enter-active-class="transition-opacity duration-150"
       enter-from-class="opacity-0"

@@ -603,7 +603,7 @@ const isSSEEndpoint = (endpoint: any) => {
   <div class="container mx-auto px-3 py-6 max-w-4xl">
     <!-- 页面标题 -->
     <header class="mb-8">
-      <h1 class="text-2xl font-bold mb-2">
+      <h1 class="text-3xl font-bold mb-2">
         {{ t('api_docs') }}
       </h1>
       <p class="text-sm text-muted-foreground leading-relaxed">

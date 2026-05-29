@@ -1,49 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Menu, X, ChevronRight, Palette, Languages, Heart, Github, BookOpen } from 'lucide-vue-next'
-import ThemeSettings from '@/components/ThemeSettings.vue'
+import { useRoute } from 'vue-router'
+import { Menu, X, Heart, BookOpen, FileText, Github, Languages } from 'lucide-vue-next'
 
+const route = useRoute()
 const isOpen = ref(false)
-const docsOpen = ref(false)
-const langOpen = ref(false)
-const openSourceOpen = ref(false)
-const isThemeSettingsOpen = ref(false)
+const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
 
 const toggleNav = () => {
   isOpen.value = !isOpen.value
-  if (isOpen.value) {
-    docsOpen.value = false
-    langOpen.value = false
-    openSourceOpen.value = false
-  }
 }
 
 const closeNav = () => {
   isOpen.value = false
-}
-
-const toggleDocs = () => {
-  docsOpen.value = !docsOpen.value
-  if (docsOpen.value) {
-    langOpen.value = false
-    openSourceOpen.value = false
-  }
-}
-
-const toggleLang = () => {
-  langOpen.value = !langOpen.value
-  if (langOpen.value) {
-    docsOpen.value = false
-    openSourceOpen.value = false
-  }
-}
-
-const toggleOpenSource = () => {
-  openSourceOpen.value = !openSourceOpen.value
-  if (openSourceOpen.value) {
-    docsOpen.value = false
-    langOpen.value = false
-  }
 }
 
 const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
@@ -51,23 +20,17 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
   window.location.reload()
 }
 
-const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
+const navLinks = [
+  { name: '赞助支持', path: '/sponsor', icon: Heart },
+  { name: '教程中心', path: '/tutorials', icon: BookOpen },
+  { name: 'API 文档', path: '/api-docs', icon: FileText }
+]
 </script>
 
 <template>
-  <div class="flex items-center gap-1">
-    <!-- 主题设置按钮（汉堡菜单旁边） -->
+  <div class="relative md:hidden">
     <button
-      class="lg:hidden p-2 rounded-md hover:bg-muted/50 transition-colors"
-      aria-label="主题设置"
-      @click="isThemeSettingsOpen = true"
-    >
-      <Palette class="h-5 w-5" />
-    </button>
-
-    <!-- 汉堡菜单按钮 -->
-    <button
-      class="lg:hidden p-2 rounded-md hover:bg-muted/50 transition-colors"
+      class="rounded-md p-2 transition-colors hover:bg-accent"
       aria-label="菜单"
       @click="toggleNav"
     >
@@ -75,178 +38,102 @@ const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
       <X v-else class="h-5 w-5" />
     </button>
 
-    <!-- 移动端菜单面板 -->
     <Transition
       enter-active-class="transition-all duration-200"
-      enter-from-class="opacity-0 translate-y-2"
-      enter-to-class="opacity-100 translate-y-0"
+      enter-from-class="translate-y-2 opacity-0"
+      enter-to-class="translate-y-0 opacity-100"
       leave-active-class="transition-all duration-150"
-      leave-from-class="opacity-100 translate-y-0"
-      leave-to-class="opacity-0 translate-y-2"
+      leave-from-class="translate-y-0 opacity-100"
+      leave-to-class="translate-y-2 opacity-0"
     >
       <div
         v-if="isOpen"
-        class="absolute right-0 top-full mt-2 w-72 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50"
+        class="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border bg-card shadow-lg"
       >
-        <div class="p-2 space-y-1">
-          <!-- 教程与文档（二级菜单） -->
-          <div class="relative">
-            <button
-              class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
-              @click="toggleDocs"
-            >
-              <span class="flex items-center gap-2">
-                <BookOpen class="h-4 w-4" />
-                教程与文档
-              </span>
-              <ChevronRight
-                class="h-4 w-4 transition-transform"
-                :class="{ 'rotate-90': docsOpen }"
-              />
-            </button>
-
-            <!-- 二级菜单内容 -->
-            <Transition
-              enter-active-class="transition-all duration-200"
-              enter-from-class="max-h-0 opacity-0"
-              enter-to-class="max-h-32 opacity-100"
-              leave-active-class="transition-all duration-150"
-              leave-from-class="max-h-32 opacity-100"
-              leave-to-class="max-h-0 opacity-0"
-            >
-              <div v-if="docsOpen" class="ml-4 mt-1 space-y-1 border-l-2 border-border pl-3">
-                <RouterLink
-                  to="/tutorials"
-                  class="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-                  @click="closeNav"
-                >
-                  教程中心
-                </RouterLink>
-                <RouterLink
-                  to="/api-docs"
-                  class="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-                  @click="closeNav"
-                >
-                  API 文档
-                </RouterLink>
-              </div>
-            </Transition>
-          </div>
-
-          <!-- 语言切换（二级菜单） -->
-          <div class="relative">
-            <button
-              class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
-              @click="toggleLang"
-            >
-              <span class="flex items-center gap-2">
-                <Languages class="h-4 w-4" />
-                选择语言
-              </span>
-              <ChevronRight
-                class="h-4 w-4 transition-transform"
-                :class="{ 'rotate-90': langOpen }"
-              />
-            </button>
-
-            <!-- 二级菜单内容 -->
-            <Transition
-              enter-active-class="transition-all duration-200"
-              enter-from-class="max-h-0 opacity-0"
-              enter-to-class="max-h-32 opacity-100"
-              leave-active-class="transition-all duration-150"
-              leave-from-class="max-h-32 opacity-100"
-              leave-to-class="max-h-0 opacity-0"
-            >
-              <div v-if="langOpen" class="ml-4 mt-1 space-y-1 border-l-2 border-border pl-3">
-                <button
-                  class="block w-full text-left px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-                  :class="{ 'text-foreground font-medium': currentLang === 'zh-CN' }"
-                  @click="switchLanguage('zh-CN')"
-                >
-                  简体中文
-                </button>
-                <button
-                  class="block w-full text-left px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-                  :class="{ 'text-foreground font-medium': currentLang === 'zh-TW' }"
-                  @click="switchLanguage('zh-TW')"
-                >
-                  繁體中文
-                </button>
-              </div>
-            </Transition>
-          </div>
-
-          <!-- 开源地址（二级菜单） -->
-          <div class="relative">
-            <button
-              class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
-              @click="toggleOpenSource"
-            >
-              <span class="flex items-center gap-2">
-                <Github class="h-4 w-4" />
-                开源地址
-              </span>
-              <ChevronRight
-                class="h-4 w-4 transition-transform"
-                :class="{ 'rotate-90': openSourceOpen }"
-              />
-            </button>
-
-            <!-- 二级菜单内容 -->
-            <Transition
-              enter-active-class="transition-all duration-200"
-              enter-from-class="max-h-0 opacity-0"
-              enter-to-class="max-h-40 opacity-100"
-              leave-active-class="transition-all duration-150"
-              leave-from-class="max-h-40 opacity-100"
-              leave-to-class="max-h-0 opacity-0"
-            >
-              <div v-if="openSourceOpen" class="ml-4 mt-1 space-y-1 border-l-2 border-border pl-3">
-                <a
-                  href="https://github.com/NingZeStudio/McLogs-Next-UI"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-                >
-                  前端开源地址
-                </a>
-                <a
-                  href="https://github.com/NingZeStudio/LogShare-V1"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-                >
-                  后端开源地址
-                </a>
-              </div>
-            </Transition>
-          </div>
-
-          <!-- 赞助支持 -->
+        <div class="space-y-0.5 p-1.5">
           <RouterLink
-            to="/sponsor"
-            class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+            v-for="link in navLinks"
+            :key="link.path"
+            :to="link.path"
+            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
+            :class="
+              route.path === link.path || (link.path !== '/' && route.path.startsWith(link.path))
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
+            "
             @click="closeNav"
           >
-            <Heart class="h-4 w-4" />
-            赞助支持
+            <component :is="link.icon" class="h-4 w-4" />
+            {{ link.name }}
           </RouterLink>
 
-          <!-- 团队主页 -->
+          <div class="border-t my-1" />
+
+          <div class="px-3 py-2 space-y-1.5">
+            <div class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Languages class="h-3.5 w-3.5" />
+              语言
+            </div>
+            <div class="flex gap-1">
+              <button
+                class="flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors"
+                :class="
+                  currentLang === 'zh-CN'
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-accent/50'
+                "
+                @click="switchLanguage('zh-CN')"
+              >
+                简体中文
+              </button>
+              <button
+                class="flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors"
+                :class="
+                  currentLang === 'zh-TW'
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-accent/50'
+                "
+                @click="switchLanguage('zh-TW')"
+              >
+                繁體中文
+              </button>
+            </div>
+          </div>
+
+          <div class="border-t my-1" />
+
           <a
             href="https://github.com/NingZeStudio/"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-accent-foreground"
+            @click="closeNav"
           >
             <Github class="h-4 w-4" />
             团队主页
+          </a>
+          <a
+            href="https://github.com/NingZeStudio/McLogs-Next-UI"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-accent-foreground"
+            @click="closeNav"
+          >
+            <Github class="h-4 w-4" />
+            前端开源
+          </a>
+          <a
+            href="https://github.com/NingZeStudio/LogShare-V1"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-accent-foreground"
+            @click="closeNav"
+          >
+            <Github class="h-4 w-4" />
+            后端开源
           </a>
         </div>
       </div>
     </Transition>
   </div>
-
-  <ThemeSettings v-model:open="isThemeSettingsOpen" />
 </template>

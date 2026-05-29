@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, provide } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
-import { X, Palette, Heart, ChevronDown, Github } from 'lucide-vue-next'
+import { Heart, BookOpen, FileText, Github, Palette, Sun, Moon, X } from 'lucide-vue-next'
 import PwaUpdateToast from '@/components/PwaUpdateToast.vue'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt.vue'
 import AnnouncementDialog from '@/components/AnnouncementDialog.vue'
@@ -11,12 +11,19 @@ import LanguageMenu from '@/components/LanguageMenu.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 import { t } from '@/lib/i18n'
 
-const showEasterEgg = ref(false)
+const route = useRoute()
+const isDark = ref(false)
 const isThemeSettingsOpen = ref(false)
-const showOpenSourceMenu = ref(false)
+const showEasterEgg = ref(false)
 const announcementDialogRef = ref<InstanceType<typeof AnnouncementDialog> | null>(null)
 
 provide('announcementDialog', announcementDialogRef)
+
+const navLinks = [
+  { name: () => t('sponsor'), path: '/sponsor', icon: Heart },
+  { name: () => t('tutorials'), path: '/tutorials', icon: BookOpen },
+  { name: () => t('api_docs'), path: '/api-docs', icon: FileText }
+]
 
 const easterEggImages = [
   'https://fastly.jsdelivr.net/gh/qitry/Blog-Static-Resource@main/images/974d9feef5429ded.jpeg',
@@ -28,10 +35,22 @@ const closeEasterEgg = () => {
   showEasterEgg.value = false
 }
 
+const toggleDark = () => {
+  isDark.value = !isDark.value
+  document.documentElement.classList.toggle('dark', isDark.value)
+  localStorage.setItem('display_mode', isDark.value ? 'dark' : 'light')
+}
+
 onMounted(() => {
-  const route = useRoute()
   const template = getCurrentPageTemplate(route.name?.toString())
   setPageTitle(template)
+
+  const stored = localStorage.getItem('display_mode')
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  isDark.value = stored === 'dark' || (!stored && prefersDark)
+  if (isDark.value) {
+    document.documentElement.classList.add('dark')
+  }
 })
 </script>
 
@@ -39,118 +58,78 @@ onMounted(() => {
   <div
     class="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased transition-colors duration-500"
   >
-    <header class="border-b bg-card/80 sticky top-0 z-40 w-full backdrop-blur-xl shadow-sm">
-      <div class="w-full px-4 h-16 flex items-center justify-between">
-        <!-- Logo -->
-        <RouterLink to="/" class="flex items-center gap-2 font-bold text-xl">
-          <span class="text-primary">LogShare.CN</span
-          ><sup class="text-xs text-muted-foreground">v1.5.1</sup>
+    <header
+      class="sticky top-3 z-30 mx-auto w-[calc(100%-2rem)] max-w-6xl rounded-xl border bg-background/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60"
+    >
+      <div class="flex h-14 items-center gap-2 px-3 lg:h-[60px] lg:gap-3 lg:px-5">
+        <RouterLink to="/" class="flex shrink-0 items-center gap-2 font-semibold">
+          <img src="/img/favicon.ico" alt="LogShare.CN" class="h-7 w-7 rounded object-cover" />
+          <span class="inline"
+            >LogShare.CN<sup class="text-xs text-muted-foreground ml-0.5">v1.5.1</sup></span
+          >
         </RouterLink>
 
-        <!-- 中间导航链接 -->
-        <nav class="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+        <nav class="ml-4 hidden items-center gap-0.5 md:flex">
           <RouterLink
-            to="/sponsor"
-            class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
+            v-for="link in navLinks"
+            :key="link.path"
+            :to="link.path"
+            class="rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+            :class="
+              route.path === link.path || (link.path !== '/' && route.path.startsWith(link.path))
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground'
+            "
           >
-            <Heart class="h-4 w-4" />
-            {{ t('sponsor') }}
+            <component :is="link.icon" class="inline h-4 w-4 mr-1 -mt-0.5" />
+            {{ link.name() }}
           </RouterLink>
-
-          <RouterLink
-            to="/tutorials"
-            class="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-          >
-            {{ t('tutorials') }}
-          </RouterLink>
-          <RouterLink
-            to="/api-docs"
-            class="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-          >
-            {{ t('api_docs') }}
-          </RouterLink>
-
-          <!-- 团队主页 -->
-          <a
-            href="https://github.com/NingZeStudio/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-          >
-            <Github class="h-4 w-4" />
-            {{ t('team_homepage') }}
-          </a>
-
-          <!-- 开源地址二级菜单 -->
-          <div
-            class="relative"
-            @mouseenter="showOpenSourceMenu = true"
-            @mouseleave="showOpenSourceMenu = false"
-          >
-            <button
-              class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-            >
-              <Github class="h-4 w-4" />
-              {{ t('open_source') }}
-              <ChevronDown
-                class="h-3.5 w-3.5 transition-transform"
-                :class="{ 'rotate-180': showOpenSourceMenu }"
-              />
-            </button>
-
-            <!-- 二级菜单下拉 -->
-            <Transition
-              enter-active-class="transition-all duration-200"
-              enter-from-class="opacity-0 translate-y-1"
-              enter-to-class="opacity-100 translate-y-0"
-              leave-active-class="transition-all duration-150"
-              leave-from-class="opacity-100 translate-y-0"
-              leave-to-class="opacity-0 translate-y-1"
-            >
-              <div
-                v-show="showOpenSourceMenu"
-                class="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50"
-              >
-                <a
-                  href="https://github.com/NingZeStudio/McLogs-Next-UI"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-                >
-                  <span class="font-medium">{{ t('frontend_repo') }}</span>
-                </a>
-                <a
-                  href="https://github.com/NingZeStudio/LogShare-V1"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors border-t border-border"
-                >
-                  <span class="font-medium">{{ t('backend_repo') }}</span>
-                </a>
-              </div>
-            </Transition>
-          </div>
         </nav>
 
-        <!-- 右侧工具按钮 -->
-        <div class="hidden lg:flex items-center gap-1 ml-auto">
-          <button
-            class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-            aria-label="主题设置"
-            @click="isThemeSettingsOpen = true"
-          >
-            <Palette class="h-4 w-4" />
-            {{ t('theme') }}
-          </button>
-          <LanguageMenu />
-        </div>
+        <div class="flex-1" />
 
-        <!-- 移动端菜单 -->
+        <button
+          class="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          aria-label="切换深色模式"
+          @click="toggleDark"
+        >
+          <Sun v-if="!isDark" class="h-4 w-4" />
+          <Moon v-else class="h-4 w-4" />
+        </button>
+
+        <button
+          class="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          @click="isThemeSettingsOpen = true"
+          aria-label="主题设置"
+        >
+          <Palette class="h-4 w-4" />
+        </button>
+
+        <button
+          class="hidden md:inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          aria-label="主题设置"
+          @click="isThemeSettingsOpen = true"
+        >
+          <Palette class="h-4 w-4" />
+        </button>
+
+        <LanguageMenu compact class="hidden md:flex" />
+
+        <a
+          href="https://github.com/NingZeStudio/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hidden md:inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          aria-label="GitHub"
+        >
+          <Github class="h-4 w-4" />
+        </a>
+
         <MobileNav />
       </div>
     </header>
 
-    <main class="flex-1">
+    <main class="flex-1 pt-2 lg:pt-4">
       <RouterView v-slot="{ Component }">
         <Transition name="fade" mode="out-in" appear>
           <component :is="Component" />
@@ -238,11 +217,8 @@ onMounted(() => {
     </div>
 
     <ThemeSettings v-model:open="isThemeSettingsOpen" />
-
     <PwaUpdateToast />
-
     <PwaInstallPrompt />
-
     <AnnouncementDialog ref="announcementDialogRef" />
   </div>
 </template>

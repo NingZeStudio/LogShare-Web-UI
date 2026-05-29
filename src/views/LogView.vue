@@ -389,7 +389,7 @@ const openAiPanel = () => {
       <!-- 标题栏 -->
       <div v-if="!isFullscreen" class="flex items-start justify-between gap-4 px-4 py-3">
         <div class="min-w-0 flex-1">
-          <h1 class="text-2xl font-bold break-all">{{ log.title }}</h1>
+          <h1 class="text-3xl font-bold break-all">{{ log.title }}</h1>
           <p class="text-sm text-muted-foreground mt-1">
             {{ t('log_type') }}:
             <code class="bg-muted px-2 py-0.5 rounded text-xs">{{ log.id }}</code>
