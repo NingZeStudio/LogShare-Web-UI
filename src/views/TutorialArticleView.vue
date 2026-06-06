@@ -50,7 +50,7 @@ const tutorials: Record<
           type: 'section',
           title: '一、准备工作：下载并安装 MobileGlues',
           steps: [
-            '使用浏览器（推荐使用 Chrome 或 Edge 以获得最佳兼容性）访问下载镜像站：https://mirror.lemwood.icu',
+            '使用浏览器（推荐使用 Chrome 或 Edge 以获得最佳兼容性）访问下载镜像站：https://miawa.cn',
             '进入页面后，向下滚动浏览资源列表，找到 MobileGlues 项目条目，点击"下载最新版"按钮获取安装包。',
             '下载完成后，在系统提示时完成安装授权。'
           ],

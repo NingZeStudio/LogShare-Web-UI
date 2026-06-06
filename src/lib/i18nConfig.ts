@@ -182,7 +182,7 @@ export const zhCN = {
   font_family: '字体',
   font_maple_mono: 'Maple Mono',
   font_fira_code: 'Fira Code',
-  join_qq_group: '加入群聊【logshare&柠枺镜像用户交流群】',
+  join_qq_group: '加入群聊【『甲』柠泽工作室答疑解惑群(所有)】',
   easter_egg_title: '私货',
   easter_egg_hint: '这些是给最细心的探索者的特别奖励~',
 
@@ -193,7 +193,7 @@ export const zhCN = {
   join_qq_group_link: '加入官方 QQ 群',
   log_help_card_title: '看不懂日志分析结果？',
   log_help_card_desc:
-    '如果你看不懂本界面在说什么，或通过 LogAnalysis 功能仍未解决问题，可以加入官方 QQ 群获取帮助。',
+    '先点击左侧「复制分享」按钮复制链接，再加入官方 QQ 群，将链接粘贴到群里，等待管理员为你解答。',
 
   sponsor_count: '赞助人数',
   thanks_message: '感谢',
@@ -410,7 +410,7 @@ export const zhTW = {
   font_family: '字體',
   font_maple_mono: 'Maple Mono',
   font_fira_code: 'Fira Code',
-  join_qq_group: '加入群聊【logshare&柠枺鏡像用戶交流群】',
+  join_qq_group: '加入群聊【『甲』檸澤工作室答疑解惑群(所有)】',
   easter_egg_title: '私貨',
   easter_egg_hint: '這些是給最細心的探索者的特別獎勵~',
 
@@ -421,7 +421,7 @@ export const zhTW = {
   join_qq_group_link: '加入官方 QQ 群',
   log_help_card_title: '看不懂日誌分析結果？',
   log_help_card_desc:
-    '如果你看不懂本界面在說什麼，或通過 LogAnalysis 功能仍未解決問題，可以加入官方 QQ 群獲取幫助。',
+    '先點擊左側「複製分享」按鈕複製連結，再加入官方 QQ 群，將連結貼到群裡，等待管理員為你解答。',
 
   sponsor_count: '贊助人數',
   thanks_message: '感謝',

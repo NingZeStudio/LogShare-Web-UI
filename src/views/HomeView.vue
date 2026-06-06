@@ -16,7 +16,6 @@ import {
   BookText,
   Upload
 } from 'lucide-vue-next'
-import DotBackground from '@/components/ui/DotBackground.vue'
 
 const content = ref('')
 const loading = ref(false)
@@ -297,100 +296,33 @@ const copyAllLinks = async () => {
 </script>
 
 <template>
-  <div class="relative min-h-screen bg-transparent">
-    <!-- 交互式网格点状背景 -->
-    <DotBackground />
+  <div class="flex flex-col flex-1 min-h-0 bg-transparent">
+    <div class="flex flex-col flex-1 min-h-0">
+        <div
+          class="flex flex-col flex-1 min-h-0 bg-card/80 backdrop-blur-xl text-card-foreground shadow-sm overflow-hidden"
+          @dragover="handleDragOver"
+          @dragleave="handleDragLeave"
+          @drop="handleDrop"
+        >
+          <input
+            ref="fileInput"
+            type="file"
+            class="hidden"
+            accept=".txt,.log,.yml,.yaml,.json,.xml,.cfg,.conf,.properties,.toml,.zip,.bin"
+            @change="onFileSelected"
+          />
 
-    <!-- 内容区域 - 在 canvas 之上 -->
-    <div class="relative z-10">
-      <div class="container mx-auto px-4 py-8">
-        <div class="flex flex-col items-center text-center space-y-4 mb-8">
-          <h1 class="text-3xl font-bold tracking-tight">
-            LogShare.CN <small>v1.5.1</small>
-          </h1>
-
-          <p class="text-muted-foreground max-w-xl">
-            {{ t('home_subtitle') }}
-          </p>
-        </div>
-
-        <div class="max-w-4xl mx-auto pb-4">
           <div
-            class="rounded-xl border bg-card/80 backdrop-blur-xl text-card-foreground shadow-sm overflow-hidden"
-            @dragover="handleDragOver"
-            @dragleave="handleDragLeave"
-            @drop="handleDrop"
+            v-show="isDragging"
+            class="absolute inset-0 bg-primary/5 border-2 border-dashed border-primary rounded-lg flex items-center justify-center z-10 pointer-events-none"
           >
-            <div class="flex items-center justify-between px-4 py-3 border-b bg-muted/50">
-              <div class="flex items-center gap-2">
-                <div class="flex gap-1.5">
-                  <div class="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
-                  <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
-                  <div class="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
-                </div>
-                <span class="text-sm text-muted-foreground ml-2">
-                  {{
-                    extractedFiles.length > 0
-                      ? t('files_count').replace('{count}', extractedFiles.length.toString())
-                      : t('paste_log')
-                  }}
-                </span>
-              </div>
-              <div class="flex items-center gap-2">
-                <input
-                  ref="fileInput"
-                  type="file"
-                  class="hidden"
-                  accept=".txt,.log,.yml,.yaml,.json,.xml,.cfg,.conf,.properties,.toml,.zip,.bin"
-                  @change="onFileSelected"
-                />
-                <button
-                  class="inline-flex items-center gap-1.5 text-sm font-medium hover:text-primary transition-colors"
-                  @click="triggerFileSelect"
-                >
-                  <Archive class="h-4 w-4" />
-                  {{ t('select_file') }}
-                </button>
-                <button
-                  v-if="!extractedFiles.length"
-                  :disabled="loading || !content"
-                  class="inline-flex items-center gap-1.5 text-sm font-medium hover:text-primary transition-colors disabled:opacity-50"
-                  @click="save"
-                >
-                  <Upload class="h-4 w-4" />
-                  {{ loading ? t('saving') : t('save_log') }}
-                </button>
-                <button
-                  v-if="extractedFiles.length > 0 && uploadResults.length === 0"
-                  :disabled="loading || uploadProgress !== null"
-                  class="inline-flex items-center gap-1.5 text-sm font-medium bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
-                  @click="uploadAllFiles"
-                >
-                  <CheckCircle class="h-4 w-4" />
-                  {{ loading ? t('saving') : t('batch_upload') }}
-                </button>
-                <button
-                  v-if="extractedFiles.length > 0 && uploadResults.length > 0"
-                  class="inline-flex items-center gap-1.5 text-sm font-medium bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 transition-colors"
-                  @click="copyAllLinks"
-                >
-                  <Copy class="h-4 w-4" />
-                  {{ isCopySuccess ? t('copied') : t('copy_links') }}
-                </button>
-              </div>
+            <div class="text-center">
+              <Upload class="h-12 w-12 mx-auto text-primary mb-2" />
+              <p class="text-lg font-medium text-primary">{{ t('release_to_upload') }}</p>
             </div>
+          </div>
 
-            <div
-              v-show="isDragging"
-              class="absolute inset-0 bg-primary/5 border-2 border-dashed border-primary rounded-xl flex items-center justify-center z-10 pointer-events-none"
-            >
-              <div class="text-center">
-                <Upload class="h-12 w-12 mx-auto text-primary mb-2" />
-                <p class="text-lg font-medium text-primary">{{ t('release_to_upload') }}</p>
-              </div>
-            </div>
-
-            <div v-if="extractedFiles.length > 0" class="p-4">
+          <div v-if="extractedFiles.length > 0" class="flex-1 min-h-0 flex flex-col p-4">
               <div v-if="uploadProgress" class="mb-4 p-3 rounded-lg border bg-muted/50">
                 <div class="flex items-center gap-2 mb-2">
                   <Loader2 class="h-4 w-4 animate-spin text-primary" />
@@ -411,7 +343,7 @@ const copyAllLinks = async () => {
                 </div>
               </div>
 
-              <div class="space-y-2 max-h-[500px] overflow-y-auto">
+              <div class="space-y-2 flex-1 min-h-0 overflow-y-auto">
                 <div
                   v-for="file in extractedFiles"
                   :key="file.path"
@@ -474,50 +406,108 @@ const copyAllLinks = async () => {
                 <span>{{
                   t('files_count').replace('{count}', extractedFiles.length.toString())
                 }}</span>
-                <span v-if="uploadResults.length > 0">
-                  {{
-                    t('upload_success_count')
-                      .replace('{success}', uploadResults.filter(r => r.success).length.toString())
-                      .replace('{failed}', uploadResults.filter(r => !r.success).length.toString())
-                  }}
-                </span>
+                <div class="flex items-center gap-2">
+                  <span v-if="uploadResults.length > 0">
+                    {{
+                      t('upload_success_count')
+                        .replace('{success}', uploadResults.filter(r => r.success).length.toString())
+                        .replace('{failed}', uploadResults.filter(r => !r.success).length.toString())
+                    }}
+                  </span>
+                  <button
+                    v-if="uploadResults.length === 0"
+                    :disabled="loading || uploadProgress !== null"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    @click="uploadAllFiles"
+                  >
+                    <CheckCircle class="h-3.5 w-3.5" />
+                    {{ loading ? t('saving') : t('batch_upload') }}
+                  </button>
+                  <button
+                    v-if="uploadResults.length > 0"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-600 text-white text-xs font-medium hover:bg-green-700 transition-colors"
+                    @click="copyAllLinks"
+                  >
+                    <Copy class="h-3.5 w-3.5" />
+                    {{ isCopySuccess ? t('copied') : t('copy_links') }}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div v-else class="relative">
+            <div v-else class="relative flex flex-col flex-1 min-h-0">
               <textarea
                 v-model="content"
-                class="w-full h-[50vh] sm:h-[400px] md:h-[500px] p-4 bg-background text-foreground font-mono text-sm resize-none focus:outline-none"
+                class="flex-1 w-full p-4 bg-background text-foreground font-mono text-sm resize-none focus:outline-none"
                 :placeholder="t('paste_here')"
               ></textarea>
 
               <div
-                v-if="!content"
-                class="absolute inset-0 flex items-center justify-center pointer-events-none"
+                class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
               >
-                <div class="text-center text-muted-foreground">
+                <div v-if="!content" class="text-center">
                   <div class="flex items-center justify-center gap-4 mb-4">
-                    <Archive class="h-12 w-12 opacity-50" />
-                    <FileText class="h-12 w-12 opacity-50" />
-                    <BookText class="h-12 w-12 opacity-50" />
+                    <Archive class="h-16 w-16 opacity-50 text-muted-foreground" />
+                    <FileText class="h-16 w-16 opacity-50 text-muted-foreground" />
+                    <BookText class="h-16 w-16 opacity-50 text-muted-foreground" />
                   </div>
-                  <p class="text-sm">{{ t('drag_drop_hint') }}</p>
-                  <p class="text-xs mt-1 text-muted-foreground">
+                  <p class="text-base text-muted-foreground">{{ t('drag_drop_hint') }}</p>
+                  <p class="text-sm mt-1 text-muted-foreground">
                     {{ t('supported_formats_hint') }}
                   </p>
+                  <div class="mt-6 pointer-events-auto flex items-center justify-center gap-4">
+                    <button
+                      class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
+                      @click="triggerFileSelect"
+                    >
+                      <Archive class="h-4 w-4" />
+                      {{ t('select_file') }}
+                    </button>
+                    <button
+                      disabled
+                      class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-muted text-muted-foreground font-medium text-sm opacity-50"
+                    >
+                      <Upload class="h-4 w-4" />
+                      {{ t('save_log') }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="content"
+                class="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none"
+              >
+                <div class="pointer-events-auto flex items-center gap-3">
+                  <button
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 backdrop-blur border shadow-sm text-foreground font-medium text-sm hover:bg-accent transition-colors"
+                    @click="triggerFileSelect"
+                  >
+                    <Archive class="h-4 w-4" />
+                    {{ t('select_file') }}
+                  </button>
+                  <button
+                    :disabled="loading"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-all shadow-sm disabled:opacity-50"
+                    :class="{ 'animate-pulse-save': !loading }"
+                    @click="save"
+                  >
+                    <Loader2 v-if="loading" class="h-4 w-4 animate-spin" />
+                    <Upload v-else class="h-4 w-4" />
+                    {{ loading ? t('saving') : t('save_log') }}
+                  </button>
                 </div>
               </div>
 
               <div
                 v-if="error"
-                class="absolute bottom-4 left-4 right-4 p-3 rounded-lg border border-destructive/50 bg-destructive/10 text-destructive text-sm"
+                class="absolute bottom-16 left-4 right-4 p-3 rounded-lg border border-destructive/50 bg-destructive/10 text-destructive text-sm"
               >
                 {{ error }}
               </div>
             </div>
           </div>
         </div>
-      </div>
     </div>
 
     <div class="fixed top-24 right-4 z-50 space-y-2">
@@ -543,7 +533,6 @@ const copyAllLinks = async () => {
         </div>
       </TransitionGroup>
     </div>
-  </div>
 </template>
 
 <style scoped>
@@ -560,5 +549,18 @@ const copyAllLinks = async () => {
 .notification-leave-to {
   opacity: 0;
   transform: translateX(100%);
+}
+
+@keyframes pulse-save {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px hsl(var(--primary) / 0);
+  }
+}
+
+.animate-pulse-save {
+  animation: pulse-save 2s ease-in-out infinite;
 }
 </style>

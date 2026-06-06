@@ -59,17 +59,16 @@ onMounted(() => {
     class="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased transition-colors duration-500"
   >
     <header
-      class="sticky top-3 z-30 mx-auto w-[calc(100%-2rem)] max-w-6xl rounded-xl border bg-background/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      class="z-30 mx-auto w-full max-w-6xl"
     >
-      <div class="flex h-14 items-center gap-2 px-3 lg:h-[60px] lg:gap-3 lg:px-5">
-        <RouterLink to="/" class="flex shrink-0 items-center gap-2 font-semibold">
-          <img src="/img/favicon.ico" alt="LogShare.CN" class="h-7 w-7 rounded object-cover" />
+      <div class="flex h-14 items-center gap-3 px-4">
+        <RouterLink to="/" class="flex shrink-0 items-center font-semibold">
           <span class="inline"
             >LogShare.CN<sup class="text-xs text-muted-foreground ml-0.5">v1.5.1</sup></span
           >
         </RouterLink>
 
-        <nav class="ml-4 hidden items-center gap-0.5 md:flex">
+        <nav class="ml-4 hidden items-center gap-1 md:flex">
           <RouterLink
             v-for="link in navLinks"
             :key="link.path"
@@ -105,14 +104,6 @@ onMounted(() => {
           <Palette class="h-4 w-4" />
         </button>
 
-        <button
-          class="hidden md:inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-          aria-label="主题设置"
-          @click="isThemeSettingsOpen = true"
-        >
-          <Palette class="h-4 w-4" />
-        </button>
-
         <LanguageMenu compact class="hidden md:flex" />
 
         <a
@@ -129,12 +120,8 @@ onMounted(() => {
       </div>
     </header>
 
-    <main class="flex-1 pt-2 lg:pt-4">
-      <RouterView v-slot="{ Component }">
-        <Transition name="fade" mode="out-in" appear>
-          <component :is="Component" />
-        </Transition>
-      </RouterView>
+    <main class="flex-1 flex flex-col">
+      <RouterView />
     </main>
 
     <footer class="border-t py-4 bg-muted/20">
@@ -145,28 +132,6 @@ onMounted(() => {
           <span>&copy; 2026 LogShare.CN</span>
           <span class="hidden sm:inline">|</span>
           <span>v1.5.1</span>
-          <span class="hidden sm:inline">|</span>
-          <a
-            href="https://qm.qq.com/q/FOGt99aayY"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="hover:text-primary transition-colors"
-          >
-            {{ t('join_qq_group') }}
-          </a>
-        </div>
-        <div class="flex items-center gap-3">
-          <RouterLink to="/sponsor" class="hover:underline transition-colors">{{
-            t('sponsor')
-          }}</RouterLink>
-          <a
-            href="https://github.com/NingZeStudio/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="hover:underline transition-colors"
-          >
-            {{ t('team_homepage') }}
-          </a>
         </div>
         <div class="flex flex-wrap items-center justify-center gap-2">
           <span>{{ t('friend_links') }}:</span>

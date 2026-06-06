@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiClient } from '@/lib/ApiClient'
 import { parseLog } from '@/lib/logParser'
@@ -18,8 +18,6 @@ import {
   ArrowUp,
   Code,
   BookText,
-  Users,
-  SquareArrowOutUpRight,
   Trash2,
   RefreshCw
 } from 'lucide-vue-next'
@@ -46,6 +44,10 @@ const isFullscreen = ref(false)
 const isCopySuccess = ref(false)
 const isDeleting = ref(false)
 const logToken = ref<string | null>(null)
+const logFontSize = ref(12)
+const isEditingFontSize = ref(false)
+const fontSizeInput = ref('12')
+const fontSizeInputEl = ref<HTMLInputElement | null>(null)
 const notifications = ref<{ id: number; type: 'success' | 'error'; message: string }[]>([])
 let notificationId = 0
 
@@ -143,8 +145,12 @@ const removeNotification = (id: number) => {
 
 onMounted(() => {
   loadLog()
-  // 尝试从 localStorage 获取 token
   logToken.value = localStorage.getItem(`log_token_${id}`)
+  const savedFontSize = localStorage.getItem('log_font_size')
+  if (savedFontSize) {
+    const val = parseInt(savedFontSize)
+    if (!isNaN(val) && val >= 8 && val <= 48) logFontSize.value = val
+  }
 })
 
 const loadLog = async () => {
@@ -352,6 +358,46 @@ const handleSearchInput = (event: KeyboardEvent) => {
 
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
+const increaseFontSize = () => {
+  if (logFontSize.value < 24) {
+    logFontSize.value += 2
+    saveFontSize()
+  }
+}
+
+const decreaseFontSize = () => {
+  if (logFontSize.value > 10) {
+    logFontSize.value -= 2
+    saveFontSize()
+  }
+}
+
+const startEditFontSize = async () => {
+  fontSizeInput.value = String(logFontSize.value)
+  isEditingFontSize.value = true
+  await nextTick()
+  fontSizeInputEl.value?.focus()
+  fontSizeInputEl.value?.select()
+}
+
+const applyFontSize = () => {
+  const val = parseInt(fontSizeInput.value)
+  if (!isNaN(val) && val >= 8 && val <= 48) {
+    logFontSize.value = val
+    saveFontSize()
+  }
+  isEditingFontSize.value = false
+}
+
+const handleFontSizeKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Enter') applyFontSize()
+  if (e.key === 'Escape') isEditingFontSize.value = false
+}
+
+const saveFontSize = () => {
+  localStorage.setItem('log_font_size', String(logFontSize.value))
+}
+
 const problemsSection = ref<HTMLElement | null>(null)
 
 const scrollToProblems = () => {
@@ -473,25 +519,33 @@ const openAiPanel = () => {
         <div
           class="bg-card border border-border rounded-lg p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
-          <div class="flex items-start gap-3">
-            <div class="p-2 bg-primary/10 rounded-md shrink-0">
-              <Users class="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <h2 class="text-base font-semibold">{{ t('log_help_card_title') }}</h2>
-              <p class="text-sm text-muted-foreground mt-1">
-                {{ t('log_help_card_desc') }}
-              </p>
-            </div>
+          <div class="flex-1">
+            <h2 class="text-base font-semibold">{{ t('log_help_card_title') }}</h2>
+            <p class="text-sm text-muted-foreground mt-1">
+              {{ t('log_help_card_desc') }}
+            </p>
           </div>
-          <a
-            href="https://qm.qq.com/q/FOGt99aayY"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 shrink-0"
-          >
-            {{ t('join_qq_group_link') }}
-          </a>
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              :class="
+                isCopySuccess
+                  ? 'bg-green-500 text-white hover:bg-green-600'
+                  : 'bg-primary/10 text-primary hover:bg-primary/20'
+              "
+              class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors shrink-0"
+              @click="copyShareMessage"
+            >
+              {{ isCopySuccess ? t('copied') : '复制分享' }}
+            </button>
+            <a
+              href="https://qm.qq.com/q/FOGt99aayY"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 shrink-0"
+            >
+              {{ t('join_qq_group_link') }}
+            </a>
+          </div>
         </div>
       </div>
 
@@ -532,19 +586,6 @@ const openAiPanel = () => {
                 <span class="hidden sm:inline">{{
                   wrapLines ? t('wrap_lines_on') : t('wrap_lines_off')
                 }}</span>
-              </button>
-              <button
-                :class="
-                  isCopySuccess
-                    ? 'bg-green-500 text-white hover:bg-green-600'
-                    : 'border border-pink-300/50 bg-gradient-to-r from-pink-200 to-blue-200 text-slate-700 hover:from-pink-100 hover:to-blue-100'
-                "
-                class="hidden sm:inline-flex items-center gap-1.5 text-sm rounded-md transition-all px-4 py-2 font-medium"
-                :title="t('share')"
-                @click="copyShareMessage"
-              >
-                <SquareArrowOutUpRight class="h-3.5 w-3.5 -translate-y-px" />
-                <span>{{ isCopySuccess ? t('copied') : t('share') }}</span>
               </button>
               <button
                 class="log-analysis-rainbow-ring hidden sm:inline-flex rounded-lg p-[2px] text-white font-semibold text-sm transition-transform hover:scale-[1.02] overflow-hidden"
@@ -621,24 +662,70 @@ const openAiPanel = () => {
                 </svg>
                 <span class="hidden sm:inline">{{ t('exit_fullscreen') }}</span>
               </button>
+              <div class="hidden sm:flex items-center gap-0.5 ml-1">
+                <button
+                  class="inline-flex items-center justify-center h-9 w-9 rounded-md text-sm font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-colors"
+                  :class="{ 'opacity-40': logFontSize <= 10 }"
+                  :disabled="logFontSize <= 10"
+                  @click="decreaseFontSize"
+                >−</button>
+                <input
+                  v-if="isEditingFontSize"
+                  ref="fontSizeInputEl"
+                  v-model="fontSizeInput"
+                  type="number"
+                  min="8"
+                  max="48"
+                  class="w-14 text-center text-sm font-mono bg-background border border-primary rounded px-1 py-0.5 focus:outline-none"
+                  @blur="applyFontSize"
+                  @keydown="handleFontSizeKeydown"
+                />
+                <button
+                  v-else
+                  class="w-10 text-center text-sm font-mono text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors cursor-pointer"
+                  @click="startEditFontSize"
+                >{{ logFontSize }}</button>
+                <button
+                  class="inline-flex items-center justify-center h-9 w-9 rounded-md text-sm font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-colors"
+                  :class="{ 'opacity-40': logFontSize >= 24 }"
+                  :disabled="logFontSize >= 24"
+                  @click="increaseFontSize"
+                >+</button>
+              </div>
             </div>
           </div>
 
-          <!-- 移动端专用行：分享和LogAnalysis按钮，靠右对齐 -->
-          <div class="flex items-center gap-1 justify-end p-2 border-b border-muted sm:hidden">
-            <button
-              :class="
-                isCopySuccess
-                  ? 'bg-green-500 text-white hover:bg-green-600'
-                  : 'border border-pink-300/50 bg-gradient-to-r from-pink-200 to-blue-200 text-slate-700 hover:from-pink-100 hover:to-blue-100'
-              "
-              class="inline-flex items-center gap-1.5 text-sm rounded-md transition-all px-4 py-2 font-medium"
-              :title="t('share')"
-              @click="copyShareMessage"
-            >
-              <SquareArrowOutUpRight class="h-3.5 w-3.5 -translate-y-px" />
-              <span>{{ isCopySuccess ? t('copied') : t('share') }}</span>
-            </button>
+          <!-- 移动端专用行：字体调节和LogAnalysis按钮 -->
+          <div class="flex items-center gap-1 justify-between p-2 border-b border-muted sm:hidden">
+            <div class="flex items-center gap-0.5">
+              <button
+                class="inline-flex items-center justify-center h-8 w-8 rounded-md text-sm font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-colors"
+                :class="{ 'opacity-40': logFontSize <= 10 }"
+                :disabled="logFontSize <= 10"
+                @click="decreaseFontSize"
+              >−</button>
+              <input
+                v-if="isEditingFontSize"
+                v-model="fontSizeInput"
+                type="number"
+                min="8"
+                max="48"
+                class="w-12 text-center text-sm font-mono bg-background border border-primary rounded px-1 py-0.5 focus:outline-none"
+                @blur="applyFontSize"
+                @keydown="handleFontSizeKeydown"
+              />
+              <button
+                v-else
+                class="w-8 text-center text-sm font-mono text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors cursor-pointer"
+                @click="startEditFontSize"
+              >{{ logFontSize }}</button>
+              <button
+                class="inline-flex items-center justify-center h-8 w-8 rounded-md text-sm font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-colors"
+                :class="{ 'opacity-40': logFontSize >= 24 }"
+                :disabled="logFontSize >= 24"
+                @click="increaseFontSize"
+              >+</button>
+            </div>
             <button
               class="log-analysis-rainbow-ring inline-flex rounded-lg p-[2px] text-white font-semibold text-sm transition-transform hover:scale-[1.02] overflow-hidden"
               @click="openAiPanel"
@@ -698,7 +785,8 @@ const openAiPanel = () => {
             class="bg-[#2a2a2a] py-2"
           >
             <div
-              class="log-content font-mono text-xs text-gray-100"
+              class="log-content font-mono text-gray-100"
+              :style="{ fontSize: logFontSize + 'px' }"
               :class="{
                 'show-errors-only': showErrorsOnly,
                 'log-wrap': wrapLines,
@@ -1108,8 +1196,6 @@ mark {
     color 0.3s ease;
   font-family: var(--font-mono);
   font-weight: 500;
-  font-size: 14px;
-  line-height: 1.3;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -1123,14 +1209,8 @@ mark {
 
 /* 移动端优化 - 更紧凑 */
 @media (max-width: 767px) {
-  .log-content {
-    font-size: 13px;
-    line-height: 1.25;
-  }
-
   .log-content .line-num {
     width: 35px;
-    font-size: 12px;
     padding-right: 6px;
     margin-right: 6px;
   }
@@ -1138,13 +1218,7 @@ mark {
 
 /* PC 端优化 - 更大字体，更紧凑行高 */
 @media (min-width: 1024px) {
-  .log-content {
-    font-size: 15px;
-    line-height: 1.2;
-  }
-
   .log-content .line-num {
-    font-size: inherit;
     width: 50px;
     padding-right: 10px;
     margin-right: 10px;
