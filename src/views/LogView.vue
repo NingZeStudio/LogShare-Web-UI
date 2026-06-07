@@ -1145,9 +1145,6 @@ mark {
 }
 
 .log-content {
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
   font-family: var(--font-mono);
   font-weight: 500;
   line-height: 1.15;
