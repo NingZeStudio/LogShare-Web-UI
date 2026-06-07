@@ -1,78 +1,40 @@
-# LogShare Web UI — Agent Guide
+# LogShare Web UI Agent Guide
 
-LogShare.CN 前端，Minecraft/Hytale 日志分享与分析平台。基于 Vue 3 + TypeScript + Vite 7 + Tailwind CSS 3。
+LogShare.CN 前端：Vue 3 + TypeScript + Vite 7 + Tailwind CSS 3，用 npm（`package-lock.json`，`packageManager: npm@11.12.1`）。
 
-## Essential Commands
+## Commands
 
-```bash
-npm run dev        # 开发服务器 (vite)
-npm run build      # 生产构建 (vue-tsc -b && vite build)
-npm run preview    # 预览构建产物 (vite preview)
-npm run lint       # ESLint 检查并自动修复 (.vue,.js,.ts,.tsx)
-npm run format     # Prettier 格式化全部文件
-```
+- `npm run dev` 启动 Vite 开发服务器。
+- `npm run build` 先执行 `vue-tsc -b` 再 `vite build`；这是唯一内置类型检查命令。
+- `npm run preview` 预览 `dist/`。
+- `npm run lint` 会对 `.vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts` 运行 ESLint 并自动修复。
+- `npm run format` 对全仓库运行 Prettier。
+- 没有测试框架或单测脚本；改动验证通常用 `npm run build`，需要风格检查时另跑 `npm run lint`。
 
-## Architecture
+## Entrypoints And Wiring
 
-### Entry Points
+- App 入口是 `src/main.ts`，注册 router 后挂载，并在 `load` 后注册 `/sw.js`。
+- 路由硬编码在 `src/router/index.ts` 且全部懒加载；新增/改名路由时同步检查 `src/App.vue` 导航、`src/components/MobileNav.vue` 移动端导航、`src/lib/pageTitle.ts` 标题模板/switch。
+- API 统一从 `src/lib/ApiClient.ts` 走，`baseURL` 硬编码为 `https://api.logshare.cn`；SSE AI 分析用 `streamAiAnalysis()` / `streamAiAnalyseByContent()`。
+- 后端接口说明在 `API.md`；不要凭端点名猜请求/响应。
+- i18n 是自定义实现，不是 vue-i18n：文案在 `src/lib/i18nConfig.ts`，运行时在 `src/lib/i18n.ts`，语言存在 localStorage `preferred_language`，切换组件当前通过刷新页面生效。
 
-- **App 入口**: `src/main.ts` — 创建 Vue 应用，注册 router，挂载；同时注册 Service Worker（PWA 更新通过 `BroadcastChannel('pwa-update')` 通信）
-- **路由**: `src/router/index.ts` — 所有路由懒加载（`import()`），硬编码，修改路由需同步更新 `App.vue` 中的导航链接和 `src/lib/pageTitle.ts` 中的 switch/templates
-- **API 客户端**: `src/lib/ApiClient.ts` — 基于 axios，硬编码 baseURL `https://api.logshare.cn:4`，包含 SSE 流式 AI 分析
-- **i18n**: `src/lib/i18n.ts` + `src/lib/i18nConfig.ts` — 自定义实现（非 vue-i18n），支持 zh-CN/ZH-TW，检测 localStorage `preferred_language` → navigator.language 回退
+## Gotchas
 
-### Directory Layout
+- `tsconfig.app.json` 开启 `strict`、`noUnusedLocals`、`noUnusedParameters`、`noUncheckedSideEffectImports`、`erasableSyntaxOnly`；不要用 TypeScript `enum`/`namespace`，类型导入用 `import type`。
+- ESLint 里的 unused/`any`/`vue/no-v-html` 多为 warn，但 `vue-tsc` 的 TS 错误会让 `npm run build` 失败；`build` 不会自动 lint。
+- Tailwind dark mode 是 `class` 策略；颜色来自 HSL CSS 变量（如 `hsl(var(--primary))`），字体通过 `--font-sans` / `--font-mono` 和自托管 woff2。
+- `src/lib/logParser.ts` 直接输出 HTML 字符串；Minecraft `§` 颜色码映射在 `formatContent()`，改映射时同步 CSS 类。
+- PWA 更新链路横跨 `public/sw.js`、`src/main.ts`、`src/components/PwaUpdateToast.vue`，通过 `BroadcastChannel('pwa-update')` 和 `pwa-update-available` 事件通知；改 SW 或缓存名要验证更新提示流程。
+- 公告内容和已读状态在 `src/lib/announcementConfig.ts`；修改 `announcementConfig.id` 会让用户重新看到公告。
 
-| 目录 | 用途 |
-|---|---|
-| `src/views/` | 页面组件 (7 个：Home, LogView, ApiDocs, Tutorials, TutorialArticle, Sponsor, NotFound) |
-| `src/components/` | 可复用组件（PwaUpdateToast, PwaInstallPrompt, ThemeSettings, LanguageMenu, MobileNav 等） |
-| `src/lib/` | 工具：logParser, pageTitle, ApiClient, i18n, i18nConfig |
-| `src/data/` | 静态数据（赞助商等） |
-| `src/assets/fonts/` | 自托管 Maple Mono / Fira Code woff2 |
-| `public/` | Service Worker `sw.js`, manifest |
+## Build And Deploy Notes
 
-## Conventions & Gotchas
+- `vite.config.ts` 有自定义构建报告插件，构建结束会扫描 `dist/` 并打印文件/ gzip 统计。
+- Vite 手动分包名包括 `markdown`、`vue-core`、`axios`、`ui-components`、`utils`、`vendor`，`chunkSizeWarningLimit` 是 500 KB。
+- `.cnb.yml` 在 `main` push 时把当前 HEAD force push 到 GitHub 镜像仓库 `NingZeStudio/McLogs-Next-UI`；不要把它当普通 CI 测试流水线。
 
-### TypeScript
-- Strict mode, `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`
-- **`erasableSyntaxOnly: true`** — 不能使用 `enum` / `namespace`；type-only import 必须用 `import type`（`tsconfig.app.json:15`）
-- 类型错误会导致构建失败（`build` 命令内含 `vue-tsc -b`）
+## Style
 
-### Linting & Formatting
-- ESLint 10 flat config（`eslint.config.js`）— 分 `*.ts/tsx` 和 `*.vue` 两套规则
-- Prettier（`.prettierrc`）: `semi: false`, `singleQuote: true`, `trailingComma: "none"`, `arrowParens: "avoid"`, `printWidth: 100`
-- `build` 前 **不会** 自动 lint，需手动运行 `npm run lint`
-
-### Tailwind
-- Dark mode: `class` 策略（手动切换 class="dark"）
-- 颜色系统：HSL CSS 变量 (如 `hsl(var(--primary))`)
-- `@tailwindcss/typography` 插件已配置
-
-### Log Parser
-- `src/lib/logParser.ts` — 解析逻辑和 Minecraft 颜色代码映射硬编码；扩展新日志格式需修改 `parseLog()` / `formatContent()`；颜色 CSS class 与 `formatContent()` 中 `styleMap` 同步
-
-### PWA
-- `public/sw.js` — 网络优先策略，缓存同源静态资源
-- `src/main.ts:13-58` — SW 注册 + 更新检测，通过 `BroadcastChannel('pwa-update')` 向 `PwaUpdateToast` 组件发 `UPDATE_AVAILABLE` 事件
-- 修改 SW 后需整条链路验证
-
-### Vite Build
-- 自定义构建报告插件（`vite.config.ts:74-226`）构建后输出详细文件统计
-- 代码分割策略：markdown, vue-core, axios, ui-components (radix-vue + lucide), utils (cva + clsx + tailwind-merge), vendor
-- `chunkSizeWarningLimit: 500` (KB) — `vite.config.ts:264`
-
-### CI
-- `.cnb.yml` — 当 push 时镜像同步到 GitHub
-
-### API
-后端 API 文档见 `API.md`。关键端点：
-- `POST /1/log` — 提交日志
-- `GET /1/raw/{id}` — 原始日志
-- `GET /1/insights/{id}` — 日志洞察
-- `GET /1/ai/{id}` — AI 分析（已弃用，用 SSE 流替代）
-- `DELETE /1/delete/{id}` — 删除（需 Token）
-- `GET /1/limits` — 限制信息
-- `GET /1/filters` — 过滤器配置
-
-> 项目无测试框架。
+- Prettier：无分号、单引号、行宽 100、2 空格、`trailingComma: none`、`arrowParens: avoid`、LF。
+- ESLint flat config 忽略 `public/**` 和 `package-lock.json`；不要期望 `public/sw.js` 被 lint 自动修复。

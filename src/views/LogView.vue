@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref, nextTick } from 'vue'
+import { computed, onMounted, ref, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { apiClient } from '@/lib/ApiClient'
+import { apiClient, type AiAnalysisResult, type AiError } from '@/lib/ApiClient'
 import { parseLog } from '@/lib/logParser'
 import { setPageTitle } from '@/lib/pageTitle'
 import { t } from '@/lib/i18n'
@@ -51,7 +51,7 @@ const fontSizeInputEl = ref<HTMLInputElement | null>(null)
 const notifications = ref<{ id: number; type: 'success' | 'error'; message: string }[]>([])
 let notificationId = 0
 
-const aiAnalysis = ref<any>(null)
+const aiAnalysis = ref<AiAnalysisResult | null>(null)
 const aiLoading = ref(false)
 const aiError = ref('')
 const aiStreamingContent = ref('')
@@ -59,33 +59,32 @@ const aiIsStreaming = ref(false)
 const aiIsCached = ref(false)
 const showAiPanel = ref(false)
 
-const getSeverityText = (severity: string) => {
-  switch (severity) {
-    case 'critical':
-      return t('ai_severity_critical')
-    case 'high':
-      return t('ai_severity_high')
-    case 'medium':
-      return t('ai_severity_medium')
-    case 'low':
-      return t('ai_severity_low')
-    default:
-      return severity
-  }
-}
+const aiIssueCount = computed(() => aiAnalysis.value?.issues?.length || 0)
+const aiRecommendationCount = computed(() => aiAnalysis.value?.recommendations?.length || 0)
+const aiStreamingLength = computed(() => aiStreamingContent.value.trim().length)
+const hasAiContent = computed(() => {
+  if (!aiAnalysis.value) return false
+  return Boolean(
+    aiAnalysis.value.summary ||
+      aiAnalysis.value.severity ||
+      aiAnalysis.value.issues?.length ||
+      aiAnalysis.value.recommendations?.length
+  )
+})
 
-const getSeverityTextColor = (severity: string) => {
-  switch (severity) {
-    case 'critical':
-      return 'text-red-600'
-    case 'high':
-      return 'text-red-500'
-    case 'medium':
-      return 'text-amber-500'
-    case 'low':
-      return 'text-blue-500'
+const mapAiErrorMessage = (error: AiError) => {
+  switch (error.type) {
+    case 'not_found':
+      return t('ai_error_not_found')
+    case 'rate_limit':
+      return t('ai_error_rate_limit')
+    case 'analysis_failed':
+    case 'parse_error':
+      return t('ai_error_parse')
+    case 'server_error':
+      return t('ai_error_server')
     default:
-      return 'text-muted-foreground'
+      return error.error || t('ai_error_unknown')
   }
 }
 
@@ -118,7 +117,7 @@ const loadAiAnalysis = async () => {
         aiLoading.value = false
       },
       onError: error => {
-        aiError.value = error.error
+        aiError.value = mapAiErrorMessage(error)
         aiIsStreaming.value = false
         aiLoading.value = false
       }
@@ -412,6 +411,10 @@ const openAiPanel = () => {
     loadAiAnalysis()
   }
 }
+
+const closeAiPanel = () => {
+  showAiPanel.value = false
+}
 </script>
 
 <template>
@@ -588,14 +591,10 @@ const openAiPanel = () => {
                 }}</span>
               </button>
               <button
-                class="log-analysis-rainbow-ring hidden sm:inline-flex rounded-lg p-[2px] text-white font-semibold text-sm transition-transform hover:scale-[1.02] overflow-hidden"
+                class="log-analysis-trigger hidden sm:inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
                 @click="openAiPanel"
               >
-                <span
-                  class="flex w-full items-center justify-center gap-2 rounded-[calc(var(--radius-xl)-2px)] bg-black px-4 py-2 transition-colors hover:bg-gray-900"
-                >
-                  LogAnalysis智能分析
-                </span>
+                LogAnalysis 智能分析
               </button>
             </div>
 
@@ -727,14 +726,10 @@ const openAiPanel = () => {
               >+</button>
             </div>
             <button
-              class="log-analysis-rainbow-ring inline-flex rounded-lg p-[2px] text-white font-semibold text-sm transition-transform hover:scale-[1.02] overflow-hidden"
+              class="log-analysis-trigger inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
               @click="openAiPanel"
             >
-              <span
-                class="flex w-full items-center justify-center gap-2 rounded-[calc(var(--radius-xl)-2px)] bg-black px-4 py-2 transition-colors hover:bg-gray-900"
-              >
-                LogAnalysis智能分析
-              </span>
+              LogAnalysis 智能分析
             </button>
           </div>
 
@@ -848,24 +843,26 @@ const openAiPanel = () => {
     <!-- 遮罩层 -->
     <div
       class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-      @click="showAiPanel = false"
+      @click="closeAiPanel"
     ></div>
 
     <!-- 面板 -->
     <div
-      class="relative h-full w-full md:w-3/4 bg-background border-r border-border shadow-2xl flex flex-col"
+      class="relative ml-auto h-full w-full md:w-[42rem] lg:w-[48rem] bg-background border-l border-border shadow-2xl flex flex-col"
     >
       <!-- 头部 -->
       <div class="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
-        <h2 class="font-semibold flex items-center gap-2">
-          {{ t('ai_analysis') }}
-          <span v-if="aiIsCached" class="text-xs text-blue-500 font-normal">
-            {{ t('ai_cached_result') }}
-          </span>
-        </h2>
+        <div class="min-w-0">
+          <h2 class="font-semibold flex items-center gap-2">
+            {{ t('ai_analysis') }}
+            <span v-if="aiIsCached" class="text-xs text-blue-500 font-normal">
+              {{ t('ai_cached_result') }}
+            </span>
+          </h2>
+        </div>
         <button
           class="p-2 rounded-md hover:bg-secondary transition-colors"
-          @click="showAiPanel = false"
+          @click="closeAiPanel"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -882,6 +879,22 @@ const openAiPanel = () => {
             <path d="m6 6 12 12" />
           </svg>
         </button>
+      </div>
+
+
+
+      <div v-if="aiIsStreaming" class="border-b bg-primary/5 px-4 py-3 text-sm">
+        <div class="flex items-center gap-2">
+          <div class="flex gap-1">
+            <div class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></div>
+            <div class="h-1.5 w-1.5 rounded-full bg-primary/70 animate-pulse animation-delay-200"></div>
+            <div class="h-1.5 w-1.5 rounded-full bg-primary/50 animate-pulse animation-delay-400"></div>
+          </div>
+          <p class="font-medium">{{ t('ai_analyzing_streaming') }}</p>
+        </div>
+        <p class="mt-1 text-muted-foreground">
+          {{ t('ai_streaming_partial').replace('{count}', aiStreamingLength.toString()) }}
+        </p>
       </div>
 
       <!-- 内容区 -->
@@ -902,119 +915,71 @@ const openAiPanel = () => {
           <p class="mt-6 text-sm text-muted-foreground">{{ t('ai_analyzing') }}</p>
         </div>
 
-        <!-- Streaming State -->
-        <div v-else-if="aiIsStreaming" class="space-y-4">
-          <div class="flex items-center gap-2 py-2">
-            <div class="flex gap-1">
-              <div class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></div>
-              <div
-                class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse"
-                style="animation-delay: 200ms"
-              ></div>
-              <div
-                class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"
-                style="animation-delay: 400ms"
-              ></div>
-            </div>
-            <p class="text-sm text-muted-foreground">{{ t('ai_analyzing_streaming') }}</p>
-          </div>
-
-          <template v-if="aiAnalysis">
-            <div class="space-y-4">
-              <div>
-                <p class="text-sm font-medium mb-1">{{ t('ai_analysis_summary') }}</p>
-                <p class="text-sm text-muted-foreground leading-relaxed">
-                  {{ aiAnalysis.summary }}
-                </p>
-                <span
-                  v-if="aiAnalysis.severity"
-                  :class="['text-xs font-medium', getSeverityTextColor(aiAnalysis.severity)]"
-                >
-                  {{ getSeverityText(aiAnalysis.severity) }}
-                </span>
-              </div>
-
-              <div v-if="aiAnalysis.issues?.length">
-                <p class="text-sm font-medium mb-3">{{ t('ai_analysis_issues') }}</p>
-                <div class="space-y-5">
-                  <div v-for="(issue, idx) in aiAnalysis.issues" :key="idx">
-                    <p class="text-sm font-semibold text-red-500">{{ issue.type }}</p>
-                    <p class="text-sm text-muted-foreground mt-1">{{ issue.description }}</p>
-                    <p v-if="issue.suggestion" class="text-sm text-green-500 mt-1">
-                      <span class="font-medium">{{ t('ai_suggestion') }}:</span>
-                      {{ issue.suggestion }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="aiAnalysis.recommendations?.length">
-                <p class="text-sm font-medium mb-2">{{ t('ai_analysis_recommendations') }}</p>
-                <ul class="space-y-1.5">
-                  <li
-                    v-for="(rec, idx) in aiAnalysis.recommendations"
-                    :key="idx"
-                    class="text-sm text-muted-foreground"
-                  >
-                    {{ rec }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </template>
-        </div>
-
         <!-- Error -->
         <div v-else-if="aiError" class="py-12 text-center">
           <p class="text-sm text-red-500">{{ aiError }}</p>
           <button
-            class="mt-4 px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all inline-flex items-center gap-2"
+            class="mt-4 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted/60 transition-colors"
             @click="loadAiAnalysis"
           >
             <RefreshCw class="h-3.5 w-3.5" />
+            {{ t('ai_cached_result') }}
             {{ t('ai_analysis_retry') }}
           </button>
         </div>
 
         <!-- Result -->
-        <div v-else-if="aiAnalysis" class="space-y-4">
-          <div>
-            <p class="text-sm font-medium mb-1">{{ t('ai_analysis_summary') }}</p>
-            <p class="text-sm text-muted-foreground leading-relaxed">{{ aiAnalysis.summary }}</p>
-            <span
-              v-if="aiAnalysis.severity"
-              :class="['text-xs font-medium', getSeverityTextColor(aiAnalysis.severity)]"
-            >
-              {{ getSeverityText(aiAnalysis.severity) }}
-            </span>
+        <div v-else-if="hasAiContent" class="space-y-3">
+          <div class="rounded-xl border bg-card p-3">
+            <p class="text-sm font-medium mb-1.5">{{ t('ai_analysis_summary') }}</p>
+            <p class="text-sm text-muted-foreground">
+              {{ aiAnalysis?.summary || t('ai_empty_result') }}
+            </p>
           </div>
 
-          <div v-if="aiAnalysis.issues?.length">
-            <p class="text-sm font-medium mb-3">{{ t('ai_analysis_issues') }}</p>
-            <div class="space-y-5">
-              <div v-for="(issue, idx) in aiAnalysis.issues" :key="idx">
-                <p class="text-sm font-semibold text-red-500">{{ issue.type }}</p>
-                <p class="text-sm text-muted-foreground mt-1">{{ issue.description }}</p>
-                <p v-if="issue.suggestion" class="text-sm text-green-500 mt-1">
+          <template v-if="aiIssueCount">
+            <div class="space-y-3">
+              <div
+                v-for="(issue, idx) in aiAnalysis?.issues"
+                :key="idx"
+                class="rounded-lg border border-border/70 bg-background/70 p-3"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <p class="text-sm font-semibold text-red-500">{{ issue.type }}</p>
+                  <span class="text-xs text-muted-foreground">#{{ idx + 1 }}</span>
+                </div>
+                <p class="mt-1.5 text-sm text-muted-foreground">{{ issue.description }}</p>
+                <div
+                  v-if="issue.suggestion"
+                  class="mt-2 rounded-md border border-green-500/20 bg-green-500/5 px-3 py-1.5 text-sm text-green-600"
+                >
                   <span class="font-medium">{{ t('ai_suggestion') }}:</span>
                   {{ issue.suggestion }}
-                </p>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
 
-          <div v-if="aiAnalysis.recommendations?.length">
-            <p class="text-sm font-medium mb-2">{{ t('ai_analysis_recommendations') }}</p>
-            <ul class="space-y-1.5">
+          <div v-if="aiRecommendationCount" class="rounded-xl border bg-card p-3">
+            <p class="text-sm font-medium mb-1.5">{{ t('ai_analysis_recommendations') }}</p>
+            <ul class="space-y-1">
               <li
-                v-for="(rec, idx) in aiAnalysis.recommendations"
+                v-for="(rec, idx) in aiAnalysis?.recommendations"
                 :key="idx"
-                class="text-sm text-muted-foreground"
+                class="rounded-md bg-background/70 px-3 py-1.5 text-sm text-muted-foreground"
               >
                 {{ rec }}
               </li>
             </ul>
           </div>
+
+          <div v-if="!aiIssueCount && !aiRecommendationCount" class="rounded-xl border border-dashed p-3">
+            <p class="text-sm text-muted-foreground">{{ t('ai_no_issues') }}</p>
+          </div>
+        </div>
+
+        <div v-else class="py-12 text-center">
+          <p class="text-sm text-muted-foreground">{{ t('ai_empty_result') }}</p>
         </div>
       </div>
     </div>
@@ -1057,26 +1022,15 @@ const openAiPanel = () => {
 </template>
 
 <style>
-.log-analysis-rainbow-ring {
-  background: linear-gradient(90deg, #ec4899, #a855f7, #06b6d4, #22c55e, #f59e0b, #ec4899);
-  background-size: 300% 100%;
-  animation: log-analysis-rainbow-flow 4s linear infinite;
+.log-analysis-trigger {
+  border: 1px solid hsl(var(--primary) / 0.25);
+  background: linear-gradient(180deg, hsl(var(--primary) / 0.16), hsl(var(--primary) / 0.08));
+  color: hsl(var(--primary));
+  box-shadow: inset 0 1px 0 hsl(var(--primary) / 0.12);
 }
 
-@keyframes log-analysis-rainbow-flow {
-  from {
-    background-position: 0% 50%;
-  }
-
-  to {
-    background-position: 300% 50%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .log-analysis-rainbow-ring {
-    animation: none;
-  }
+.log-analysis-trigger:hover {
+  background: linear-gradient(180deg, hsl(var(--primary) / 0.22), hsl(var(--primary) / 0.12));
 }
 
 .log-content table {
@@ -1196,10 +1150,19 @@ mark {
     color 0.3s ease;
   font-family: var(--font-mono);
   font-weight: 500;
+  line-height: 1.15;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   letter-spacing: 0.02em;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.log-content * {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  line-height: inherit;
 }
 
 .log-content p {

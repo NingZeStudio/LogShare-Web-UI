@@ -1,7 +1,8 @@
 .level {
   white-space: pre-wrap;
   tab-size: 4;
-  word-break: break-word;
+  word-break: break-all;
+  overflow-wrap: anywhere;
   box-sizing: border-box;
 }
 
@@ -15,7 +16,7 @@
   border-radius: 3px;
   display: inline-block;
   max-width: 100%;
-  word-break: break-word;
+  word-break: break-all;
 }
 
 .level-title {
@@ -26,7 +27,7 @@
   border-radius: 2px;
   display: inline-block;
   max-width: 100%;
-  word-break: break-word;
+  word-break: break-all;
 }
 
 .level-info .level-prefix,
@@ -41,7 +42,7 @@
   border-radius: 3px;
   display: inline-block;
   max-width: 100%;
-  word-break: break-word;
+  word-break: break-all;
 }
 
 .level-debug {
@@ -50,7 +51,7 @@
   border-radius: 3px;
   display: inline-block;
   max-width: 100%;
-  word-break: break-word;
+  word-break: break-all;
 }
 
 .level-warning {
@@ -59,7 +60,7 @@
   border-radius: 3px;
   display: inline-block;
   max-width: 100%;
-  word-break: break-word;
+  word-break: break-all;
 }
 
 .level-error,
@@ -71,7 +72,7 @@
   border-radius: 3px;
   display: inline-block;
   max-width: 100%;
-  word-break: break-word;
+  word-break: break-all;
 }
 
 .level-unknown {
@@ -81,7 +82,7 @@
   border-radius: 3px;
   display: inline-block;
   max-width: 100%;
-  word-break: break-word;
+  word-break: break-all;
 }
 
 .log-container {

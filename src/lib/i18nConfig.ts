@@ -200,7 +200,7 @@ export const zhCN = {
   support_methods: '支持方式',
   total_amount: '总金额',
 
-  ai_analysis: 'LogAnalysis自研日志智能分析系统',
+  ai_analysis: 'LogAnalysis智能分析',
   ai_analysis_button: '开始 AI 分析',
   ai_analysis_summary: '分析摘要',
   ai_analysis_severity: '严重程度',
@@ -222,9 +222,14 @@ export const zhCN = {
   ai_error_parse: '分析结果解析失败',
   ai_error_network: '网络连接失败，请检查网络后重试',
   ai_error_unknown: '未知错误',
-  ai_cached_result: '缓存结果（5 分钟内有效）',
+  ai_cached_result: '缓存结果',
   ai_stream_complete: '分析完成',
-  ai_suggestion: '解决建议'
+  ai_suggestion: '解决建议',
+  ai_panel_description: 'LogAnalysis 基于大模型智能分析日志内容，快速定位问题并提供优化建议。',
+  ai_streaming_partial: '已接收 {count} 字符，分析完成后将自动显示完整结果。',
+  ai_detected_issue_count: '检测出的问题',
+  ai_recommendation_count: '优化建议数',
+  ai_empty_result: '暂无数据'
 }
 
 export const zhTW = {
@@ -428,7 +433,7 @@ export const zhTW = {
   support_methods: '支持方式',
   total_amount: '總金額',
 
-  ai_analysis: 'LogAnalysis自研日志智能分析系统',
+  ai_analysis: 'LogAnalysis智能分析',
   ai_analysis_button: '開始 AI 分析',
   ai_analysis_summary: '分析摘要',
   ai_analysis_severity: '嚴重程度',
@@ -450,9 +455,14 @@ export const zhTW = {
   ai_error_parse: '分析結果解析失敗',
   ai_error_network: '網絡連接失敗，請檢查網絡後重試',
   ai_error_unknown: '未知錯誤',
-  ai_cached_result: '緩存結果（5 分鐘內有效）',
+  ai_cached_result: '緩存結果',
   ai_stream_complete: '分析完成',
-  ai_suggestion: '解決建議'
+  ai_suggestion: '解決建議',
+  ai_panel_description: 'LogAnalysis 基於大模型智慧分析日誌內容，快速定位問題並提供優化建議。',
+  ai_streaming_partial: '已接收 {count} 字元，分析完成後將自動顯示完整結果。',
+  ai_detected_issue_count: '檢測出的問題',
+  ai_recommendation_count: '優化建議數',
+  ai_empty_result: '暫無數據'
 }
 
 export type LanguagePack = typeof zhCN | typeof zhTW

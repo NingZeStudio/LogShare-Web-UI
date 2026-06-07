@@ -59,7 +59,7 @@ onMounted(() => {
     class="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased transition-colors duration-500"
   >
     <header
-      class="z-30 mx-auto w-full max-w-6xl"
+      class="z-30 mx-auto w-full max-w-full"
     >
       <div class="flex h-14 items-center gap-3 px-4">
         <RouterLink to="/" class="flex shrink-0 items-center font-semibold">
