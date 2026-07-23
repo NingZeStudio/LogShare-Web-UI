@@ -27,6 +27,7 @@ LogShare.CN 前端：Vue 3 + TypeScript + Vite 7 + Tailwind CSS 3，用 npm（`p
 - `src/lib/logParser.ts` 直接输出 HTML 字符串；Minecraft `§` 颜色码映射在 `formatContent()`，改映射时同步 CSS 类。
 - PWA 更新链路横跨 `public/sw.js`、`src/main.ts`、`src/components/PwaUpdateToast.vue`，通过 `BroadcastChannel('pwa-update')` 和 `pwa-update-available` 事件通知；改 SW 或缓存名要验证更新提示流程。
 - 公告内容和已读状态在 `src/lib/announcementConfig.ts`；修改 `announcementConfig.id` 会让用户重新看到公告。
+- 公告默认包含「加入官方QQ群」和「赞助支持我们」两个入口（`announcementConfig.links`），修改/重写公告时不要删除。
 
 ## Build And Deploy Notes
 

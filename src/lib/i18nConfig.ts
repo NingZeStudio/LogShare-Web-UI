@@ -193,7 +193,7 @@ export const zhCN = {
   join_qq_group_link: '加入官方 QQ 群',
   log_help_card_title: '看不懂日志分析结果？',
   log_help_card_desc:
-    '先点击左侧「复制分享」按钮复制链接，再加入官方 QQ 群，将链接粘贴到群里，等待管理员为你解答。',
+    '优先选择下方的「LogAnalysis 智能分析」进行日志分析，若实在看不懂分析结果，点击「复制分享」按钮，后加入QQ群，将链接粘贴在群内，或有志愿者/管理员为你解答[注：群成员/管理员/群主没有义务必须为你解答]。',
 
   sponsor_count: '赞助人数',
   thanks_message: '感谢',
@@ -426,7 +426,7 @@ export const zhTW = {
   join_qq_group_link: '加入官方 QQ 群',
   log_help_card_title: '看不懂日誌分析結果？',
   log_help_card_desc:
-    '先點擊左側「複製分享」按鈕複製連結，再加入官方 QQ 群，將連結貼到群裡，等待管理員為你解答。',
+    '優先選擇下方的「LogAnalysis 智能分析」進行日誌分析，若實在看不懂分析結果，點擊「複製分享」按鈕，後加入QQ群，將鏈接粘貼在群內，或有志願者/管理員為你解答[註：群成員/管理員/群主沒有義務必須為你解答]。',
 
   sponsor_count: '贊助人數',
   thanks_message: '感謝',

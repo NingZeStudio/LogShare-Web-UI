@@ -64,7 +64,7 @@ onMounted(() => {
       <div class="flex h-14 items-center gap-3 px-4">
         <RouterLink to="/" class="flex shrink-0 items-center font-semibold">
           <span class="inline"
-            >LogShare.CN<sup class="text-xs text-muted-foreground ml-0.5">v1.5.1</sup></span
+            >LogShare.CN<sup class="text-xs text-muted-foreground ml-0.5">v1.5.3</sup></span
           >
         </RouterLink>
 
@@ -131,7 +131,7 @@ onMounted(() => {
         <div class="flex flex-wrap items-center justify-center gap-3">
           <span>&copy; 2026 LogShare.CN</span>
           <span class="hidden sm:inline">|</span>
-          <span>v1.5.1</span>
+          <span>v1.5.3</span>
         </div>
         <div class="flex flex-wrap items-center justify-center gap-2">
           <span>{{ t('friend_links') }}:</span>

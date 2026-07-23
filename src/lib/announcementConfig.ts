@@ -12,17 +12,11 @@ export interface AnnouncementConfig {
 }
 
 export const announcementConfig: AnnouncementConfig = {
-  id: '20250515_iqge_cc_launch',
-  title: 'IQge Control Converter 现已上线！',
+  id: '20260624_service_stable',
+  title: 'LogShare.CN 持续稳定运营中',
   content:
-    'NingZeStudio & IQge 全新力作，IQge Control Converter 现已上线！当前最先进的控件转换算法，支持 ZalithLauncher2 控件与 FoldCraftLauncher 控件无损转换，再复杂的键位也能双启动器通用，零样式损坏，使用更安心。\n\n项目由 NingZeStudio 发行，是 NingZeStudio 全新力作，业内首个实现无损转换的算法，旨在打破启动器间的控件壁垒；IQge 版权所有。',
+    '感谢大家一直以来对 LogShare 的支持与信任。目前各项服务均正常稳定运行，我们也会持续维护和优化。\n\n推荐访问我们的教程中心，涵盖了 Minecraft 基础概念扫盲、渲染器配置、提问技巧等实用内容，帮助你更快地自行排查问题。\n\n如有任何重要更新或变更，我们会在官方QQ群中提前告知，敬请留意。祝各位游戏愉快！',
   links: [
-    {
-      label: '在线使用',
-      url: 'https://cc.miawa.cn/',
-      icon: 'ExternalLink',
-      color: 'blue'
-    },
     {
       label: '加入官方QQ群',
       url: 'https://qm.qq.com/q/FOGt99aayY',
@@ -36,7 +30,7 @@ export const announcementConfig: AnnouncementConfig = {
       color: 'red'
     }
   ],
-  importantText: '业内首个实现无损转换的算法，打破启动器间的控件壁垒！'
+  importantText: '教程中心已上线，点击导航栏「教程」查看。'
 }
 
 export interface LogUpdateConfig {

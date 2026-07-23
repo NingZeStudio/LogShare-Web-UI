@@ -52,7 +52,8 @@ const endpoints = [
       error: {
         example: `{
     "success": false,
-    "error": "请求参数错误"
+    "message": "请求参数错误",
+    "code": 400
 }`
       }
     },
@@ -131,7 +132,8 @@ curl -X POST https://api.logshare.cn/1/log \\
       error: {
         example: `{
     "success": false,
-    "error": "分析失败"
+    "message": "分析失败",
+    "code": 400
 }`
       }
     },
@@ -177,7 +179,8 @@ print_r($result);`,
       error: {
         example: `{
     "success": false,
-    "error": "Log not found."
+    "message": "Log not found.",
+    "code": 404
 }`
       }
     },
@@ -245,7 +248,7 @@ print_r($data);`,
   {
     method: 'DELETE',
     methodType: 'delete',
-    path: '/1/delete/{id}',
+    path: '/1/log/{id}',
     title: t('delete_log'),
     description: '删除指定的日志（需要 Token 认证）。支持多个 ID 用逗号分隔。',
     params: [
@@ -267,13 +270,14 @@ print_r($data);`,
       error: {
         example: `{
     "success": false,
-    "error": "Missing token in Authorization header."
+    "message": "Missing token in Authorization header.",
+    "code": 401
 }`
       }
     },
     examples: {
       js: `// 删除单个日志
-const response = await fetch('https://api.logshare.cn/1/delete/abc1234', {
+const response = await fetch('https://api.logshare.cn/1/log/abc1234', {
     method: 'DELETE',
     headers: {
         'Authorization': 'Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0'
@@ -282,7 +286,7 @@ const response = await fetch('https://api.logshare.cn/1/delete/abc1234', {
 const data = await response.json();
 
 // 删除多个日志
-const response = await fetch('https://api.logshare.cn/1/delete/abc1234,def5678', {
+const response = await fetch('https://api.logshare.cn/1/log/abc1234,def5678', {
     method: 'DELETE',
     headers: {
         'Authorization': 'Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0'
@@ -290,7 +294,7 @@ const response = await fetch('https://api.logshare.cn/1/delete/abc1234,def5678',
 });`,
       php: `<?php
 // 删除单个日志
-$ch = curl_init('https://api.logshare.cn/1/delete/abc1234');
+$ch = curl_init('https://api.logshare.cn/1/log/abc1234');
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -301,7 +305,7 @@ $data = json_decode($response, true);
 curl_close($ch);
 
 // 删除多个日志
-$ch = curl_init('https://api.logshare.cn/1/delete/abc1234,def5678');
+$ch = curl_init('https://api.logshare.cn/1/log/abc1234,def5678');
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -311,11 +315,11 @@ $response = curl_exec($ch);
 $data = json_decode($response, true);
 curl_close($ch);`,
       curl: `# 删除单个日志
-curl -X DELETE https://api.logshare.cn/1/delete/abc1234 \\
+curl -X DELETE https://api.logshare.cn/1/log/abc1234 \\
   -H "Authorization: Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
 
 # 删除多个日志
-curl -X DELETE https://api.logshare.cn/1/delete/abc1234,def5678 \\
+curl -X DELETE https://api.logshare.cn/1/log/abc1234,def5678 \\
   -H "Authorization: Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"`
     }
   },
@@ -330,12 +334,9 @@ curl -X DELETE https://api.logshare.cn/1/delete/abc1234,def5678 \\
       success: {
         code: 200,
         example: `{
-    "success": true,
-    "data": {
-        "storageTime": 2592000,
-        "maxLength": 1048576,
-        "maxLines": 50000
-    }
+    "storageTime": 7776000,
+    "maxLength": 10000000,
+    "maxLines": 50000
 }`
       }
     },
@@ -361,24 +362,22 @@ print_r($data);`,
         code: 200,
         example: `{
     "success": true,
-    "data": {
-        "filters": [
-            { "type": "trim", "data": null },
-            { "type": "limit-bytes", "data": { "limit": 1048576 } },
-            { "type": "limit-lines", "data": { "limit": 50000 } },
-            {
-                "type": "regex",
-                "data": {
-                    "patterns": [
-                        { "pattern": "IPv4", "replacement": "**.**.**.**" },
-                        { "pattern": "IPv6", "replacement": "****:****:****:****:****:****:****:****" },
-                        { "pattern": "Username", "replacement": "********" },
-                        { "pattern": "AccessToken", "replacement": "********" }
-                    ]
-                }
+    "filters": [
+        { "type": "trim", "data": null },
+        { "type": "limit-bytes", "data": { "limit": 10000000 } },
+        { "type": "limit-lines", "data": { "limit": 50000 } },
+        {
+            "type": "regex",
+            "data": {
+                "patterns": [
+                    { "pattern": "IPv4", "replacement": "**.**.**.**" },
+                    { "pattern": "IPv6", "replacement": "****:****:****:****:****:****:****:****" },
+                    { "pattern": "Username", "replacement": "********" },
+                    { "pattern": "AccessToken", "replacement": "********" }
+                ]
             }
-        ]
-    }
+        }
+    ]
 }`
       }
     },
@@ -395,79 +394,30 @@ print_r($data);`,
   {
     method: 'GET',
     methodType: 'get',
-    path: '/1/errors/rate',
-    title: t('rate_limit_info'),
-    description: '获取错误率限制信息（由 Cloudflare 提供）。',
-    params: [],
-    response: {
-      success: {
-        code: 429,
-        example: `{
-    "success": false,
-    "error": "Unfortunately you have exceeded the rate limit for the current time period. Please try again later."
-}`
-      }
-    },
-    examples: {
-      js: `const response = await fetch('https://api.logshare.cn/1/errors/rate');
-const data = await response.json();
-console.log(data);`,
-      php: `<?php
-$data = json_decode(file_get_contents('https://api.logshare.cn/1/errors/rate'), true);
-print_r($data);`,
-      curl: `curl https://api.logshare.cn/1/errors/rate`
-    }
-  },
-  {
-    method: 'GET',
-    methodType: 'get',
     path: '/1/ai/{id}',
     title: 'AI 分析已存储日志 🔵',
     description:
-      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出，首次请求流式生成，5 分钟内相同请求直接返回缓存结果。',
+      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出，以纯文本/Markdown 形式返回，30 分钟内缓存命中通过 SSE 回放。',
     isSSE: true,
     params: [{ name: 'id', type: 'string', required: true, desc: '日志 ID' }],
     response: {
       success: {
         code: 200,
-        example: `// SSE 流式数据（逐块返回）
-data: {"choices":[{"delta":{"content":"{\"summary\":\"服务器启动失败..."}}]}
+        example: `// SSE 流式数据（逐块返回纯文本/Markdown）
+data: # 服务器启动失败分析
+data:
+data: ## 问题摘要
+data: 服务器因为端口被占用而启动失败...
 
-// 流结束后完整结果
-{
-    "success": true,
-    "message": "AI analysis completed.",
-    "data": {
-        "analysis": {
-            "summary": "问题摘要",
-            "severity": "high",
-            "issues": [
-                {
-                    "type": "问题类型",
-                    "description": "问题描述",
-                    "suggestion": "解决建议"
-                }
-            ],
-            "recommendations": ["总体建议1", "总体建议2"]
-        },
-        "cached": false
-    }
-}
-
-// 缓存命中（5 分钟内）
-{
-    "success": true,
-    "message": "AI analysis completed (from cache).",
-    "data": {
-        "analysis": { ... },
-        "cached": true
-    }
-}`
+// 流结束
+event: done
+data: [DONE]`
       },
       error: {
         example: `{
     "success": false,
-    "error": "Log not found."
+    "message": "Log not found.",
+    "code": 404
 }`
       }
     },
@@ -476,7 +426,7 @@ data: {"choices":[{"delta":{"content":"{\"summary\":\"服务器启动失败..."}
 const response = await fetch('https://api.logshare.cn/1/ai/abc1234');
 const reader = response.body.getReader();
 const decoder = new TextDecoder();
-let fullJson = '';
+let fullText = '';
 
 while (true) {
     const { done, value } = await reader.read();
@@ -485,25 +435,21 @@ while (true) {
     const text = decoder.decode(value);
     const lines = text.split('\\n');
     for (const line of lines) {
+        if (line.startsWith('event: done')) break;
         if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data.trim() === '[DONE]') continue;
-            const chunk = JSON.parse(data);
-            const content = chunk.choices?.[0]?.delta?.content;
-            if (content) fullJson += content;
+            fullText += line.slice(6);
         }
     }
 }
-const analysis = JSON.parse(fullJson);
-console.log(analysis);`,
+console.log(fullText);`,
       php: `<?php
-// PHP 不支持 SSE 客户端流式读取，建议使用 curl 直接获取
+// PHP 不支持 SSE 客户端流式读取，建议使用 curl -N 直接查看
+// 或等待完整响应后输出
 $ch = curl_init('https://api.logshare.cn/1/ai/abc1234');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
-$data = json_decode($response, true);
 curl_close($ch);
-print_r($data);`,
+echo $response;`,
       curl: `# SSE 流式方式
 curl -N https://api.logshare.cn/1/ai/abc1234
 
@@ -517,30 +463,21 @@ curl https://api.logshare.cn/1/ai/abc1234`
     path: '/1/ai/analyse',
     title: 'AI 分析日志内容 🔵',
     description:
-      '直接提交日志内容，使用 AI 分析，不存储到数据库。SSE 流式输出，基于内容哈希缓存，相同内容 5 分钟内直接返回缓存结果。',
+      '直接提交日志内容，使用 AI 分析，不存储到数据库。SSE 流式输出，基于内容哈希缓存（30 分钟 TTL），缓存命中通过 SSE 回放。',
     isSSE: true,
     contentType: 'text/plain 或 application/json',
     params: [{ name: 'content', type: 'string', required: true, desc: '日志原始内容' }],
     response: {
       success: {
         code: 200,
-        example: `// SSE 流式数据（逐块返回）
-data: {"choices":[{"delta":{"content":"{\"summary\":\"服务器启动失败..."}}]}
+        example: `// SSE 流式数据（逐块返回纯文本/Markdown）
+data: # 崩溃分析
+data:
+data: 服务器因内存不足崩溃...
 
-// 流结束后完整结果
-{
-    "success": true,
-    "message": "AI analysis completed.",
-    "data": {
-        "analysis": {
-            "summary": "问题摘要",
-            "severity": "high",
-            "issues": [...],
-            "recommendations": [...]
-        },
-        "cached": false
-    }
-}`
+// 流结束
+event: done
+data: [DONE]`
       }
     },
     examples: {
@@ -553,15 +490,21 @@ data: {"choices":[{"delta":{"content":"{\"summary\":\"服务器启动失败..."}
 });
 const reader = response.body.getReader();
 const decoder = new TextDecoder();
-let fullJson = '';
+let fullText = '';
 
 while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     const text = decoder.decode(value);
-    // 解析 SSE 数据...
+    const lines = text.split('\\n');
+    for (const line of lines) {
+        if (line.startsWith('event: done')) break;
+        if (line.startsWith('data: ')) {
+            fullText += line.slice(6);
+        }
+    }
 }
-const analysis = JSON.parse(fullJson);`,
+console.log(fullText);`,
       php: `<?php
 $data = ['content' => "[Server thread/ERROR]: Could not bind to port 25565..."];
 $ch = curl_init('https://api.logshare.cn/1/ai/analyse');
@@ -569,9 +512,8 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 $response = curl_exec($ch);
-$result = json_decode($response, true);
 curl_close($ch);
-print_r($result);`,
+echo $response;`,
       curl: `curl -X POST https://api.logshare.cn/1/ai/analyse \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -760,7 +702,7 @@ const isSSEEndpoint = (endpoint: any) => {
                     >DELETE</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/1/delete/{id}</td>
+                <td class="p-3 font-mono text-xs">/1/log/{id}</td>
                 <td class="p-3 text-muted-foreground">删除日志</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -1243,11 +1185,11 @@ $id = $result['data']['id'];
 // SSE 流式 AI 分析
 $analysis = $sdk->streamAiAnalysis(
     $id,
-    function ($chunk) {
+    function ($text) {
         // 实时处理每个数据块
-        echo $chunk['choices'][0]['delta']['content'] ?? '';
+        echo $text;
     },
-    function ($fullJson) {
+    function ($fullText) {
         // 分析完成
         echo "\n分析完成！\n";
     }
@@ -1277,12 +1219,11 @@ const id = result.data.id;
 
 // SSE 流式 AI 分析
 const analysis = await sdk.streamAiAnalysis(id, {
-    onChunk: (chunk) => {
+    onChunk: (text) => {
         // 实时处理每个数据块
-        const content = chunk.choices?.[0]?.delta?.content;
-        if (content) process.stdout.write(content);
+        process.stdout.write(text);
     },
-    onDone: (fullJson) => {
+    onDone: (fullText) => {
         console.log('\n分析完成！');
     },
     onError: (error) => {
@@ -1319,13 +1260,13 @@ public class Example {
             String id = (String) data.get("id");
 
             // SSE 流式 AI 分析
-            Map&lt;String, Object&gt; analysis = sdk.streamAiAnalysis(
+            String analysis = sdk.streamAiAnalysis(
                 id,
-                chunk -> {
+                text -> {
                     // 实时处理每个数据块
-                    System.out.print(extractContent(chunk));
+                    System.out.print(text);
                 },
-                fullJson -> {
+                fullText -> {
                     System.out.println("\n分析完成！");
                 },
                 error -> {
@@ -1372,13 +1313,11 @@ class Program
             // SSE 流式 AI 分析
             var analysis = await sdk.StreamAiAnalysisAsync(
                 id,
-                onChunk: chunk => {
+                onChunk: text => {
                     // 实时处理每个数据块
-                    var content = chunk.GetProperty("choices")[0]
-                        .GetProperty("delta").GetProperty("content").GetString();
-                    Console.Write(content);
+                    Console.Write(text);
                 },
-                onDone: fullJson => {
+                onDone: fullText => {
                     Console.WriteLine("\n分析完成！");
                 },
                 onError: error => {
@@ -1411,7 +1350,7 @@ class Program
           <li class="flex items-start gap-3">
             <span class="text-primary font-medium min-w-fit">{{ t('content_limit') }}：</span>
             <span class="text-muted-foreground"
-              >最大 <strong class="text-foreground">1 MiB</strong> 或
+              >最大 <strong class="text-foreground">10 MiB</strong> 或
               <strong class="text-foreground">50,000 行</strong></span
             >
           </li>
@@ -1419,7 +1358,7 @@ class Program
             <span class="text-primary font-medium min-w-fit">{{ t('storage_time') }}：</span>
             <span class="text-muted-foreground"
               >日志在最后一次查看后至少保留
-              <strong class="text-foreground">30 天</strong>（2,592,000 秒）</span
+              <strong class="text-foreground">90 天</strong>（7,776,000 秒）</span
             >
           </li>
           <li class="flex items-start gap-3">

@@ -4,6 +4,20 @@ import { t } from '@/lib/i18n'
 
 const tutorials = [
   {
+    id: 'tutorials-collection',
+    title: '各类教程合集',
+    description: '涵盖渲染器配置、启动器使用、原生库兼容性等常见问题的教程合集',
+    category: '置顶',
+    author: '社区经验总结'
+  },
+  {
+    id: 'basic-concepts',
+    title: 'Minecraft 玩家计算机基础概念扫盲',
+    description: '文件后缀名、压缩包解压、模组插件区别等基础概念，面向新手的全面知识科普',
+    category: '新手入门',
+    author: '社区经验总结'
+  },
+  {
     id: 'ask-questions-effectively',
     title: '如何有效地提问求助指南',
     description: '学会正确的提问方法，提高获得帮助的概率，建立良好的社区关系',
@@ -16,20 +30,6 @@ const tutorials = [
     description: '在 Android 设备上配置 MobileGlues 渲染器，提升 Minecraft 游戏性能和兼容性',
     category: '客户端配置',
     author: '用户提供内容'
-  },
-  {
-    id: 'server-log-analysis',
-    title: '服务器日志分析与问题排查指南',
-    description: '学习如何分析 Minecraft 服务器日志，快速定位和解决常见问题',
-    category: '服务器管理',
-    author: 'Qwen 3.5 Plus'
-  },
-  {
-    id: 'api-integration',
-    title: 'LogShare API 集成指南',
-    description: '将 LogShare API 集成到您的服务器面板或自动化工作流中',
-    category: '开发集成',
-    author: 'Qwen 3.5 Plus'
   }
 ]
 </script>

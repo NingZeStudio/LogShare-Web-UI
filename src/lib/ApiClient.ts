@@ -50,27 +50,9 @@ export interface FiltersResponse {
   }>
 }
 
-export interface AiAnalysisResult {
-  summary: string
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  issues: Array<{
-    type: string
-    description: string
-    suggestion?: string
-  }>
-  recommendations: string[]
-}
-
-export interface AiCachedResponse {
-  success: boolean
-  message: string
-  analysis: AiAnalysisResult
-  cached: true
-}
-
 export interface AiError {
   success: false
-  error: string
+  message: string
   code?: number
   type?: 'not_found' | 'analysis_failed' | 'rate_limit' | 'server_error' | 'parse_error'
 }
@@ -138,13 +120,12 @@ export class ApiClient {
 
   /**
    * SSE 流式 AI 分析
-   * 支持流式输出和缓存直接返回两种情况
    */
   async streamAiAnalysis(
     id: string,
     callbacks: {
-      onChunk?: (chunk: string) => void
-      onDone?: (analysis: AiAnalysisResult, cached: boolean) => void
+      onChunk?: (text: string) => void
+      onDone?: (text: string, cached: boolean) => void
       onError?: (error: AiError) => void
     }
   ): Promise<void> {
@@ -159,88 +140,64 @@ export class ApiClient {
         const errorData = await response.json().catch(() => null)
         callbacks.onError?.({
           success: false,
-          error: errorData?.error || `HTTP ${response.status}`,
+          message: errorData?.message || `HTTP ${response.status}`,
           code: response.status,
           type: response.status === 404 ? 'not_found' : 'server_error'
         })
         return
       }
 
-      // 检测是否为缓存命中（普通 JSON）还是 SSE 流
-      const contentType = response.headers.get('content-type') || ''
-
-      if (contentType.includes('application/json')) {
-        // 缓存直接返回
-        const data = await response.json()
-        if (data.success && data.analysis) {
-          callbacks.onDone?.(data.analysis, true)
-        } else {
-          callbacks.onError?.({
-            success: false,
-            error: data.error || '分析结果格式错误',
-            type: 'parse_error'
-          })
-        }
-        return
-      }
-
-      // SSE 流式处理
-      let fullJson = ''
       const reader = response.body?.getReader()
       if (!reader) {
         callbacks.onError?.({
           success: false,
-          error: '浏览器不支持流式响应',
+          message: '浏览器不支持流式响应',
           type: 'server_error'
         })
         return
       }
 
+      // SSE 流式处理：OpenAI 兼容格式，提取 choices[0].delta.content
+      let fullText = ''
       const decoder = new TextDecoder()
       let buffer = ''
+      let streamDone = false
 
-      while (true) {
+      while (!streamDone) {
         const { done, value } = await reader.read()
         if (done) break
 
         buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
+        const parts = buffer.split('\n')
+        buffer = parts.pop() || ''
 
-        for (const line of lines) {
+        for (const line of parts) {
+          if (line.startsWith('event: done')) {
+            streamDone = true
+            break
+          }
           if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            if (data.trim() === '[DONE]') continue
-
+            const data = line.slice(6).trim()
+            if (!data || data === '[DONE]') continue
             try {
               const chunk = JSON.parse(data)
               const content = chunk.choices?.[0]?.delta?.content
               if (content) {
-                fullJson += content
-                callbacks.onChunk?.(fullJson)
+                fullText += content
+                callbacks.onChunk?.(content)
               }
             } catch {
-              // 忽略解析错误，可能是分块传输中的不完整 JSON
+              // 忽略非 JSON 行
             }
           }
         }
       }
 
-      // 流结束后解析完整 JSON
-      try {
-        const analysis: AiAnalysisResult = JSON.parse(fullJson)
-        callbacks.onDone?.(analysis, false)
-      } catch {
-        callbacks.onError?.({
-          success: false,
-          error: 'AI 分析结果解析失败',
-          type: 'analysis_failed'
-        })
-      }
+      callbacks.onDone?.(fullText, false)
     } catch (e: any) {
       callbacks.onError?.({
         success: false,
-        error: e.message || '网络请求失败',
+        message: e.message || '网络请求失败',
         type: 'server_error'
       })
     }
@@ -252,13 +209,12 @@ export class ApiClient {
   async streamAiAnalyseByContent(
     content: string,
     callbacks: {
-      onChunk?: (chunk: string) => void
-      onDone?: (analysis: AiAnalysisResult, cached: boolean) => void
+      onChunk?: (text: string) => void
+      onDone?: (text: string, cached: boolean) => void
       onError?: (error: AiError) => void
     }
   ): Promise<void> {
     const url = `${baseURL}/1/ai/analyse`
-    let fullJson = ''
 
     try {
       const response = await fetch(url, {
@@ -274,7 +230,7 @@ export class ApiClient {
         const errorData = await response.json().catch(() => null)
         callbacks.onError?.({
           success: false,
-          error: errorData?.error || `HTTP ${response.status}`,
+          message: errorData?.message || `HTTP ${response.status}`,
           code: response.status,
           type: response.status === 429 ? 'rate_limit' : 'server_error'
         })
@@ -285,56 +241,52 @@ export class ApiClient {
       if (!reader) {
         callbacks.onError?.({
           success: false,
-          error: '浏览器不支持流式响应',
+          message: '浏览器不支持流式响应',
           type: 'server_error'
         })
         return
       }
 
+      let fullText = ''
       const decoder = new TextDecoder()
       let buffer = ''
+      let streamDone = false
 
-      while (true) {
+      while (!streamDone) {
         const { done, value } = await reader.read()
         if (done) break
 
         buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
+        const parts = buffer.split('\n')
+        buffer = parts.pop() || ''
 
-        for (const line of lines) {
+        for (const line of parts) {
+          if (line.startsWith('event: done')) {
+            streamDone = true
+            break
+          }
           if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            if (data.trim() === '[DONE]') continue
-
+            const data = line.slice(6).trim()
+            if (!data || data === '[DONE]') continue
             try {
               const chunk = JSON.parse(data)
               const content = chunk.choices?.[0]?.delta?.content
               if (content) {
-                fullJson += content
-                callbacks.onChunk?.(fullJson)
+                fullText += content
+                callbacks.onChunk?.(content)
               }
             } catch {
-              // 忽略解析错误
+              // 忽略非 JSON 行
             }
           }
         }
       }
 
-      try {
-        const analysis: AiAnalysisResult = JSON.parse(fullJson)
-        callbacks.onDone?.(analysis, false)
-      } catch {
-        callbacks.onError?.({
-          success: false,
-          error: 'AI 分析结果解析失败',
-          type: 'analysis_failed'
-        })
-      }
+      callbacks.onDone?.(fullText, false)
     } catch (e: any) {
       callbacks.onError?.({
         success: false,
-        error: e.message || '网络请求失败',
+        message: e.message || '网络请求失败',
         type: 'server_error'
       })
     }
@@ -380,7 +332,7 @@ export class ApiClient {
    */
   async deleteLog(id: string | string[], token: string): Promise<DeleteResponse> {
     const ids = Array.isArray(id) ? id.join(',') : id
-    const response = await this.delete<DeleteResponse>(`/1/delete/${ids}`, {
+    const response = await this.delete<DeleteResponse>(`/1/log/${ids}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json'
