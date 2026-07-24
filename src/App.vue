@@ -10,12 +10,14 @@ import ThemeSettings from '@/components/ThemeSettings.vue'
 import LanguageMenu from '@/components/LanguageMenu.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 import { t } from '@/lib/i18n'
+import { APP_VERSION } from '@/lib/version'
 
 const route = useRoute()
 const isDark = ref(false)
 const isThemeSettingsOpen = ref(false)
 const showEasterEgg = ref(false)
 const announcementDialogRef = ref<InstanceType<typeof AnnouncementDialog> | null>(null)
+const themeSettingsRef = ref<InstanceType<typeof ThemeSettings> | null>(null)
 
 provide('announcementDialog', announcementDialogRef)
 
@@ -39,6 +41,7 @@ const toggleDark = () => {
   isDark.value = !isDark.value
   document.documentElement.classList.toggle('dark', isDark.value)
   localStorage.setItem('display_mode', isDark.value ? 'dark' : 'light')
+  themeSettingsRef.value?.applyDisplayMode(isDark.value ? 'dark' : 'light')
 }
 
 onMounted(() => {
@@ -64,7 +67,7 @@ onMounted(() => {
       <div class="flex h-14 items-center gap-3 px-4">
         <RouterLink to="/" class="flex shrink-0 items-center font-semibold">
           <span class="inline"
-            >LogShare.CN<sup class="text-xs text-muted-foreground ml-0.5">v1.5.3</sup></span
+            >LogShare.CN<sup class="text-xs text-muted-foreground ml-0.5">v{{ APP_VERSION }}</sup></span
           >
         </RouterLink>
 
@@ -131,7 +134,7 @@ onMounted(() => {
         <div class="flex flex-wrap items-center justify-center gap-3">
           <span>&copy; 2026 LogShare.CN</span>
           <span class="hidden sm:inline">|</span>
-          <span>v1.5.3</span>
+          <span>v{{ APP_VERSION }}</span>
         </div>
         <div class="flex flex-wrap items-center justify-center gap-2">
           <span>{{ t('friend_links') }}:</span>
@@ -181,7 +184,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <ThemeSettings v-model:open="isThemeSettingsOpen" />
+    <ThemeSettings ref="themeSettingsRef" v-model:open="isThemeSettingsOpen" />
     <PwaUpdateToast />
     <PwaInstallPrompt />
     <AnnouncementDialog ref="announcementDialogRef" />

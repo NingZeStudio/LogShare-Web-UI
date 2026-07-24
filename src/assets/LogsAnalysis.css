@@ -14,8 +14,6 @@
   color: #f0f0f0;
   padding: 2px 4px;
   border-radius: 3px;
-  display: inline-block;
-  max-width: 100%;
   word-break: break-all;
 }
 
@@ -25,8 +23,6 @@
   background-color: #2d87d3;
   padding: 0 8px;
   border-radius: 2px;
-  display: inline-block;
-  max-width: 100%;
   word-break: break-all;
 }
 
@@ -40,8 +36,6 @@
   background-color: rgba(163, 216, 245, 0.1);
   padding: 2px 4px;
   border-radius: 3px;
-  display: inline-block;
-  max-width: 100%;
   word-break: break-all;
 }
 
@@ -49,8 +43,6 @@
   background-color: rgba(163, 216, 245, 0.05);
   padding: 2px 4px;
   border-radius: 3px;
-  display: inline-block;
-  max-width: 100%;
   word-break: break-all;
 }
 
@@ -58,8 +50,6 @@
   color: #ff6625;
   padding: 2px 4px;
   border-radius: 3px;
-  display: inline-block;
-  max-width: 100%;
   word-break: break-all;
 }
 
@@ -70,8 +60,6 @@
   color: #f62451;
   padding: 2px 4px;
   border-radius: 3px;
-  display: inline-block;
-  max-width: 100%;
   word-break: break-all;
 }
 
@@ -80,8 +68,6 @@
   background-color: rgba(128, 128, 128, 0.05);
   padding: 2px 4px;
   border-radius: 3px;
-  display: inline-block;
-  max-width: 100%;
   word-break: break-all;
 }
 
@@ -396,4 +382,228 @@
 
 .dark .level-stack-exception {
   color: #ff6666;
+}
+
+/* ===== 扩展高亮样式 ===== */
+
+/** FATAL / CRITICAL / EMERGENCY 级别 — 比普通 error 更强的视觉效果 */
+.level-fatal {
+  color: #ff1744;
+  font-weight: 700;
+  padding: 2px 4px;
+  border-radius: 3px;
+  word-break: break-all;
+  background-color: rgba(255, 23, 68, 0.08);
+}
+
+.dark .level-fatal {
+  color: #ff5252;
+  background-color: rgba(255, 23, 68, 0.15);
+}
+
+/** Minecraft [Thread/ 线程名前缀 - 柔和青绿色 */
+.level-thread {
+  color: #26c6da;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.dark .level-thread {
+  color: #4dd0e1;
+}
+
+/** 行内错误/异常关键词高亮 */
+.level-error-word {
+  color: #ff1744;
+  font-weight: 600;
+}
+
+.dark .level-error-word {
+  color: #ff616f;
+}
+
+/** 行内 WARNING 标签 */
+.level-warning-tag {
+  color: #ff9100;
+  font-weight: 600;
+}
+
+.dark .level-warning-tag {
+  color: #ffab40;
+}
+
+/** [插件名] 标记 - 柔和绿色 */
+.level-plugin {
+  color: #66bb6a;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.dark .level-plugin {
+  color: #81c784;
+}
+
+/** 文件路径 - 柔和蓝色 */
+.level-filepath {
+  color: #42a5f5;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.dark .level-filepath {
+  color: #64b5f6;
+}
+
+/** 调暗信息（IP 地址等隐私敏感内容） */
+.level-dimmed {
+  color: #757575;
+  font-weight: 400;
+  opacity: 0.65;
+}
+
+.dark .level-dimmed {
+  color: #616161;
+  opacity: 0.55;
+}
+
+/* ===== 模组列表高亮 ===== */
+
+/** 模组列表头部 — "Loading mods:" / "-- Mod List --" */
+.level-mod-header {
+  color: #b388ff;
+  font-weight: 700;
+  padding: 0 2px;
+}
+
+.dark .level-mod-header {
+  color: #ce93d8;
+}
+
+/** 模组 ID */
+.level-mod-id {
+  color: #00bcd4;
+  font-weight: 500;
+}
+
+.dark .level-mod-id {
+  color: #4dd0e1;
+}
+
+/** 模组版本号 */
+.level-mod-version {
+  color: #ffd54f;
+  font-weight: 500;
+}
+
+.dark .level-mod-version {
+  color: #ffe082;
+}
+
+/** 模组友好名（表格中） */
+.level-mod-name {
+  color: #e0e0e0;
+  font-weight: 400;
+}
+
+.dark .level-mod-name {
+  color: #bdbdbd;
+}
+
+/** 模组状态（默认） */
+.level-mod-status {
+  color: #bdbdbd;
+  font-weight: 400;
+}
+
+/** 模组状态 — OK / DONE */
+.level-mod-status-ok {
+  color: #66bb6a;
+  font-weight: 600;
+}
+
+.dark .level-mod-status-ok {
+  color: #81c784;
+  font-weight: 600;
+}
+
+/** 模组状态 — ERROR / MISSING / OUTDATED */
+.level-mod-status-error {
+  color: #ef5350;
+  font-weight: 600;
+}
+
+.dark .level-mod-status-error {
+  color: #e57373;
+  font-weight: 600;
+}
+
+/** 模组状态 — WARNING */
+.level-mod-status-warn {
+  color: #ffa726;
+  font-weight: 600;
+}
+
+.dark .level-mod-status-warn {
+  color: #ffb74d;
+  font-weight: 600;
+}
+
+/** 树状连接符 "|--" 和 "\--" */
+.level-mod-tree {
+  color: #26c6da;
+  font-weight: 400;
+}
+
+.dark .level-mod-tree {
+  color: #4dd0e1;
+}
+
+/** 模糊文件名（NeoForge crash 5 列表格第一列） */
+.level-mod-dim {
+  color: #66bb6a;
+  font-weight: 400;
+}
+
+.dark .level-mod-dim {
+  color: #81c784;
+}
+
+/** 环境变量键名 / DLOPEN 关键词 */
+.level-env-key {
+  color: #00bcd4;
+  font-weight: 500;
+}
+
+.dark .level-env-key {
+  color: #4dd0e1;
+}
+
+/** 段落分隔线 "============= Env Map =============" */
+.level-section-header {
+  color: #7e57c2;
+  font-weight: 600;
+}
+
+.dark .level-section-header {
+  color: #b39ddb;
+}
+
+/** 启动参数 "--flag" / "-Dproperty" 标记 */
+.level-arg-flag {
+  color: #ffd54f;
+  font-weight: 500;
+}
+
+.dark .level-arg-flag {
+  color: #ffe082;
+}
+
+/** 崩溃报告标记 "Stacktrace:" / "Details:" */
+.level-section-marker {
+  color: #ef6c00;
+  font-weight: 600;
+}
+
+.dark .level-section-marker {
+  color: #ffa726;
 }

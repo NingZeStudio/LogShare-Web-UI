@@ -204,8 +204,16 @@ onMounted(() => {
               class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors shrink-0"
               @click="viewer.copyShareMessage()"
             >
-              {{ viewer.isCopySuccess.value ? t('copied') : '复制分享' }}
+              {{ viewer.isCopySuccess.value ? t('copied') : t('copy_share') }}
             </button>
+            <a
+              href="https://qm.qq.com/q/gZ2El58RVe"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center rounded-md bg-primary/10 text-primary px-4 py-2 text-sm font-medium transition-colors hover:bg-primary/20 shrink-0"
+            >
+              答疑解惑群
+            </a>
             <a
               href="https://qm.qq.com/q/FOGt99aayY"
               target="_blank"
@@ -260,7 +268,7 @@ onMounted(() => {
                 class="log-analysis-trigger hidden sm:inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
                 @click="ai.openAiPanel()"
               >
-                LogAnalysis 智能分析
+                {{ t('ai_analysis') }}
               </button>
             </div>
 
@@ -397,7 +405,7 @@ onMounted(() => {
               class="log-analysis-trigger inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
               @click="ai.openAiPanel()"
             >
-              LogAnalysis 智能分析
+              {{ t('ai_analysis') }}
             </button>
           </div>
 
@@ -696,13 +704,19 @@ onMounted(() => {
   display: none;
 }
 
-.log-no-wrap .log-content {
+.log-no-wrap {
   white-space: pre;
   overflow-x: auto;
 }
 
-.log-no-wrap .log-content table {
+.log-no-wrap table {
   width: auto;
+  table-layout: auto;
+}
+
+.log-no-wrap .line-content {
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 .log-no-wrap .level {

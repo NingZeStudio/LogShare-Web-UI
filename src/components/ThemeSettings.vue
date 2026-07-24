@@ -514,6 +514,10 @@ const applyDisplayMode = (mode: 'light' | 'dark' | 'system') => {
   applyTheme(savedTheme)
 }
 
+defineExpose({
+  applyDisplayMode
+})
+
 const applyFont = (fontId: string) => {
   const fontMap: Record<string, { mono: string; sans: string }> = {
     maple_mono: {

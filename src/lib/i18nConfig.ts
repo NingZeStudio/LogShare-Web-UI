@@ -12,6 +12,8 @@ export const zhCN = {
   share: '分享日志',
   copy: '复制',
   copied: '已复制',
+  copy_share: '复制分享',
+  share_failed: '复制失败',
   search: '搜索',
   next: '下一个',
   previous: '上一个',
@@ -193,7 +195,7 @@ export const zhCN = {
   join_qq_group_link: '加入官方 QQ 群',
   log_help_card_title: '看不懂日志分析结果？',
   log_help_card_desc:
-    '优先选择下方的「LogAnalysis 智能分析」进行日志分析，若实在看不懂分析结果，点击「复制分享」按钮，后加入QQ群，将链接粘贴在群内，或有志愿者/管理员为你解答[注：群成员/管理员/群主没有义务必须为你解答]。',
+    '优先使用下方的「LogAnalysis 智能分析」进行日志诊断，看不懂分析结果可点击「复制分享」按钮将链接发到群内求助。若仍有疑问，请先加入答疑解惑群咨询（该群群规更严格，专注于问题解答，问题解决后请主动退群）；日常交流和闲聊请加入外群。',
 
   sponsor_count: '赞助人数',
   thanks_message: '感谢',
@@ -246,6 +248,8 @@ export const zhTW = {
   share: '分享',
   copy: '複製',
   copied: '已複製',
+  copy_share: '複製分享',
+  share_failed: '複製失敗',
   search: '搜尋',
   next: '下一個',
   previous: '上一個',
@@ -325,6 +329,7 @@ export const zhTW = {
   loading: '正在載入...',
   back_home: '返回首頁',
   api_docs: 'API 文件',
+  privacy_policy: '隱私政策',
   tips: '如果你不曾看懂這個頁面所表達的內容，那麼請你點擊"分享記錄"按鈕，將鏈接複製粘貼給可以幫助你的人。謝謝你的配合。',
 
   close: '關閉',
@@ -426,7 +431,7 @@ export const zhTW = {
   join_qq_group_link: '加入官方 QQ 群',
   log_help_card_title: '看不懂日誌分析結果？',
   log_help_card_desc:
-    '優先選擇下方的「LogAnalysis 智能分析」進行日誌分析，若實在看不懂分析結果，點擊「複製分享」按鈕，後加入QQ群，將鏈接粘貼在群內，或有志願者/管理員為你解答[註：群成員/管理員/群主沒有義務必須為你解答]。',
+    '優先使用下方的「LogAnalysis 智能分析」進行日誌診斷，看不懂分析結果可點擊「複製分享」按鈕將鏈接發到群內求助。若有疑問，請先加入答疑解惑群諮詢（該群群規更嚴格，專注於問題解答，問題解決後請主動退群）；日常交流和閒聊請加入外群。',
 
   sponsor_count: '贊助人數',
   thanks_message: '感謝',

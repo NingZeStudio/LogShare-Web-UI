@@ -67,7 +67,7 @@ export function useLogViewer(logId: string) {
       const rawText = typeof rawRes.data === 'string' ? rawRes.data : JSON.stringify(rawRes.data)
 
       originalLogText.value = rawText
-      logContent.value = parseLog(rawText)
+      logContent.value = await parseLog(rawText)
 
       if (log.value?.title) {
         setPageTitle('log', { title: log.value.title, id: logId })
@@ -87,16 +87,6 @@ export function useLogViewer(logId: string) {
   }
 
   const deleteLog = async () => {
-    if (!logToken.value) {
-      if (!confirm(`${t('delete_log_confirm_no_token')}\n\n${t('delete_log_confirm')}`)) {
-        return
-      }
-    } else {
-      if (!confirm(t('delete_log_confirm'))) {
-        return
-      }
-    }
-
     isDeleting.value = true
     try {
       if (logToken.value) {
@@ -146,14 +136,7 @@ export function useLogViewer(logId: string) {
       setTimeout(() => (isCopySuccess.value = false), 2000)
     } catch (err) {
       console.error('Failed to copy text: ', err)
-      const textArea = document.createElement('textarea')
-      textArea.value = shareMessage
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-      isCopySuccess.value = true
-      setTimeout(() => (isCopySuccess.value = false), 2000)
+      addNotification('error', t('share_failed'))
     }
   }
 

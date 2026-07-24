@@ -7,11 +7,11 @@ export function useLogSearch(getOriginalText: () => string, setLogContent: (html
   const searchIndex = ref(0)
   const searchResults = ref<number[]>([])
 
-  const performSearch = () => {
+  const performSearch = async () => {
     const originalLogText = getOriginalText()
 
     if (!searchTerm.value.trim()) {
-      setLogContent(parseLog(originalLogText))
+      setLogContent(await parseLog(originalLogText))
       searchResults.value = []
       searchIndex.value = 0
       return
@@ -45,25 +45,20 @@ export function useLogSearch(getOriginalText: () => string, setLogContent: (html
     })
 
     if (matchingLines.length > 0) {
-      setLogContent(parseLog(matchingLines.join('\n')))
+      setLogContent(await parseLog(matchingLines.join('\n')))
     } else {
-      setLogContent(
-        `<div class="text-center p-8 text-muted-foreground">${t('no_results')}</div>`
-      )
+      setLogContent(`<div class="text-center p-8 text-muted-foreground">${t('no_results')}</div>`)
     }
 
     searchResults.value = results
     searchIndex.value = 0
-
-    if (results.length === 0) {
-      alert(t('no_results'))
-    }
   }
 
-  const scrollToSearchResult = (_index: number) => {
-    const element = document.querySelector('.log-content')
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const scrollToSearchResult = (resultIndex: number) => {
+    const lineNum = resultIndex + 1
+    const el = document.getElementById(`L${lineNum}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }
 
