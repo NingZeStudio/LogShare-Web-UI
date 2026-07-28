@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { t } from '@/lib/i18n'
 import { useLogViewer } from '@/composables/useLogViewer'
@@ -57,6 +57,13 @@ onMounted(() => {
   viewer.init()
   viewer.loadLog()
 })
+
+const showDeleteDialog = ref(false)
+
+const confirmDelete = () => {
+  showDeleteDialog.value = false
+  viewer.deleteLog()
+}
 </script>
 
 <template>
@@ -283,7 +290,7 @@ onMounted(() => {
                 <span class="hidden sm:inline">{{ t('download') }}</span>
               </button>
               <a
-                :href="`https://api.logshare.cn/1/raw/${id}`"
+                :href="`https://api.logshare.cn/v1/raw/${id}`"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground"
@@ -296,13 +303,77 @@ onMounted(() => {
                 :disabled="viewer.isDeleting.value"
                 class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium bg-destructive/10 hover:bg-destructive/20 text-destructive disabled:opacity-50"
                 :title="t('delete')"
-                @click="viewer.deleteLog()"
+                @click="showDeleteDialog = true"
               >
                 <Trash2 class="h-5 w-5" />
                 <span class="hidden sm:inline">{{
                   viewer.isDeleting.value ? t('deleting') : t('delete')
                 }}</span>
               </button>
+
+              <!-- 删除确认对话框 -->
+              <Teleport to="body">
+                <Transition
+                  enter-active-class="transition ease-out duration-200"
+                  enter-from-class="opacity-0"
+                  enter-to-class="opacity-100"
+                  leave-active-class="transition ease-in duration-150"
+                  leave-from-class="opacity-100"
+                  leave-to-class="opacity-0"
+                >
+                  <div
+                    v-if="showDeleteDialog"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4"
+                    @click.self="showDeleteDialog = false"
+                  >
+                    <Transition
+                      enter-active-class="transition ease-out duration-200"
+                      enter-from-class="opacity-0 scale-95"
+                      enter-to-class="opacity-100 scale-100"
+                      leave-active-class="transition ease-in duration-150"
+                      leave-from-class="opacity-100 scale-100"
+                      leave-to-class="opacity-0 scale-95"
+                    >
+                      <div
+                        class="bg-card text-card-foreground rounded-lg shadow-2xl max-w-sm w-full overflow-hidden"
+                      >
+                        <div class="p-5 sm:p-6">
+                          <div class="flex items-start gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                              <AlertTriangle class="h-5 w-5 text-destructive" />
+                            </div>
+                            <div>
+                              <h2 class="text-lg font-semibold text-foreground">
+                                {{ t('delete_log') }}
+                              </h2>
+                              <p class="text-sm text-muted-foreground mt-1">
+                                此操作不可撤销，确定要删除这个日志吗？
+                              </p>
+                            </div>
+                          </div>
+
+                          <div class="flex items-center justify-end gap-2">
+                            <button
+                              class="px-4 py-2 text-sm font-medium rounded-md transition-colors bg-muted hover:bg-muted/80 text-muted-foreground"
+                              :disabled="viewer.isDeleting.value"
+                              @click="showDeleteDialog = false"
+                            >
+                              {{ t('cancel') }}
+                            </button>
+                            <button
+                              class="px-4 py-2 text-sm font-medium rounded-md transition-colors bg-destructive hover:bg-destructive/90 text-destructive-foreground disabled:opacity-50"
+                              :disabled="viewer.isDeleting.value"
+                              @click="confirmDelete"
+                            >
+                              {{ viewer.isDeleting.value ? t('deleting') : t('delete') }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </Transition>
+                  </div>
+                </Transition>
+              </Teleport>
               <button
                 v-if="!viewer.isFullscreen.value"
                 class="inline-flex items-center gap-1.5 text-sm rounded-md transition-all duration-300 px-4 py-2 font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground"

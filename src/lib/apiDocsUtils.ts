@@ -18,7 +18,7 @@ export const apiEndpoints = [
     id: 'log',
     title: 'paste_log',
     method: 'POST',
-    url: 'https://api.logshare.cn/1/log',
+    url: 'https://api.logshare.cn/v1/log',
     description: 'home_subtitle',
     params: [
       {
@@ -31,7 +31,7 @@ export const apiEndpoints = [
       success: true,
       id: '8FlTowW',
       url: 'https://logshare.cn/8FlTowW',
-      raw: 'https://api.logshare.cn/1/raw/8FlTowW'
+      raw: 'https://api.logshare.cn/v1/raw/8FlTowW'
     },
     errorResponse: {
       success: false,
@@ -42,7 +42,7 @@ export const apiEndpoints = [
     id: 'analyse',
     title: 'instant_analysis',
     method: 'POST',
-    url: 'https://api.logshare.cn/1/analyse',
+    url: 'https://api.logshare.cn/v1/analyse',
     description: 'instant_analysis_desc',
     params: []
   },
@@ -50,49 +50,49 @@ export const apiEndpoints = [
     id: 'insights',
     title: 'get_insights',
     method: 'GET',
-    url: 'https://api.logshare.cn/1/insights/{id}',
+    url: 'https://api.logshare.cn/v1/insights/{id}',
     description: 'get_insights_desc'
   },
   {
     id: 'raw',
     title: 'get_raw_log',
     method: 'GET',
-    url: 'https://api.logshare.cn/1/raw/{id}',
+    url: 'https://api.logshare.cn/v1/raw/{id}',
     description: 'get_raw_log_desc'
   },
   {
     id: 'ai',
     title: 'ai_analysis',
     method: 'GET',
-    url: 'https://api.logshare.cn/1/ai/{id}',
+    url: 'https://api.logshare.cn/v1/ai/{id}',
     description: 'AI 分析已存储日志（SSE 流式输出，30分钟内缓存命中通过 SSE 回放）'
   },
   {
     id: 'ai-analyse',
     title: 'ai_analysis',
     method: 'POST',
-    url: 'https://api.logshare.cn/1/ai/analyse',
+    url: 'https://api.logshare.cn/v1/ai/analyse',
     description: 'AI 分析日志内容（SSE 流式输出，基于内容哈希缓存）'
   },
   {
     id: 'filters',
     title: 'get_filters',
     method: 'GET',
-    url: 'https://api.logshare.cn/1/filters',
+    url: 'https://api.logshare.cn/v1/filters',
     description: '获取当前启用的日志过滤器信息，包括隐私保护规则。'
   },
   {
     id: 'limits',
     title: 'get_limits',
     method: 'GET',
-    url: 'https://api.logshare.cn/1/limits',
+    url: 'https://api.logshare.cn/v1/limits',
     description: 'get_limits_desc'
   },
   {
     id: 'delete',
     title: 'delete_log',
     method: 'DELETE',
-    url: 'https://api.logshare.cn/1/log/{id}',
+    url: 'https://api.logshare.cn/v1/log/{id}',
     description: '删除日志文件（需要 Token 认证）',
     params: [
       {
@@ -107,20 +107,20 @@ export const apiEndpoints = [
 export const apiCodeExamples = {
   js: {
     log: `const content = "Your log content here...";
-const response = await fetch('https://api.logshare.cn/1/log', {
+const response = await fetch('https://api.logshare.cn/v1/log', {
     method: 'POST',
     body: new URLSearchParams({ content })
 });
 const data = await response.json();
 console.log(data);`,
-    insights: `const response = await fetch('https://api.logshare.cn/1/insights/8FlTowW');
+    insights: `const response = await fetch('https://api.logshare.cn/v1/insights/8FlTowW');
 const data = await response.json();
 console.log(data);`,
-    raw: `const response = await fetch('https://api.logshare.cn/1/raw/8FlTowW');
+    raw: `const response = await fetch('https://api.logshare.cn/v1/raw/8FlTowW');
 const text = await response.text();
 console.log(text);`,
     ai: `// SSE 流式方式 - 接收纯文本/Markdown 流
-const response = await fetch('https://api.logshare.cn/1/ai/8FlTowW');
+const response = await fetch('https://api.logshare.cn/v1/ai/8FlTowW');
 const reader = response.body.getReader();
 const decoder = new TextDecoder();
 let fullText = '';
@@ -138,7 +138,7 @@ while (true) {
     }
 }
 console.log(fullText);`,
-    'ai-analyse': `const response = await fetch('https://api.logshare.cn/1/ai/analyse', {
+    'ai-analyse': `const response = await fetch('https://api.logshare.cn/v1/ai/analyse', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -146,14 +146,14 @@ console.log(fullText);`,
     })
 });
 // SSE 流式读取同上`,
-    filters: `const response = await fetch('https://api.logshare.cn/1/filters');
+    filters: `const response = await fetch('https://api.logshare.cn/v1/filters');
 const data = await response.json();
 console.log(data);`,
-    limits: `const response = await fetch('https://api.logshare.cn/1/limits');
+    limits: `const response = await fetch('https://api.logshare.cn/v1/limits');
 const data = await response.json();
 console.log(data);`,
     delete: `const logId = "8FlTowW";
-const response = await fetch(\`https://api.logshare.cn/1/log/\${logId}\`, {
+const response = await fetch(\`https://api.logshare.cn/v1/log/\${logId}\`, {
     method: 'DELETE',
     headers: {
         'Authorization': 'Bearer token_xxxxx'
@@ -165,7 +165,7 @@ console.log(data);`
   php: {
     log: `<?php
 $content = "Your log content here...";
-$ch = curl_init('https://api.logshare.cn/1/log');
+$ch = curl_init('https://api.logshare.cn/v1/log');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['content' => $content]));
 $response = curl_exec($ch);
@@ -173,12 +173,12 @@ $data = json_decode($response, true);
 curl_close($ch);
 print_r($data);`,
     insights: `<?php
-$data = json_decode(file_get_contents('https://api.logshare.cn/1/insights/8FlTowW'), true);
+$data = json_decode(file_get_contents('https://api.logshare.cn/v1/insights/8FlTowW'), true);
 print_r($data);`,
     raw: `<?php
-echo file_get_contents('https://api.logshare.cn/1/raw/8FlTowW');`,
+echo file_get_contents('https://api.logshare.cn/v1/raw/8FlTowW');`,
     ai: `<?php
-$ch = curl_init('https://api.logshare.cn/1/ai/8FlTowW');
+$ch = curl_init('https://api.logshare.cn/v1/ai/8FlTowW');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
 $data = json_decode($response, true);
@@ -186,7 +186,7 @@ curl_close($ch);
 print_r($data);`,
     'ai-analyse': `<?php
 $data = ['content' => "[Server thread/ERROR]: Could not bind to port 25565..."];
-$ch = curl_init('https://api.logshare.cn/1/ai/analyse');
+$ch = curl_init('https://api.logshare.cn/v1/ai/analyse');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
@@ -195,14 +195,14 @@ $result = json_decode($response, true);
 curl_close($ch);
 print_r($result);`,
     filters: `<?php
-$data = json_decode(file_get_contents('https://api.logshare.cn/1/filters'), true);
+$data = json_decode(file_get_contents('https://api.logshare.cn/v1/filters'), true);
 print_r($data);`,
     limits: `<?php
-$data = json_decode(file_get_contents('https://api.logshare.cn/1/limits'), true);
+$data = json_decode(file_get_contents('https://api.logshare.cn/v1/limits'), true);
 print_r($data);`,
     delete: `<?php
 $logId = "8FlTowW";
-$ch = curl_init("https://api.logshare.cn/1/log/$logId");
+$ch = curl_init("https://api.logshare.cn/v1/log/$logId");
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -214,17 +214,17 @@ curl_close($ch);
 print_r($data);`
   },
   curl: {
-    log: `curl -X POST --data-urlencode 'content@path/to/latest.log' 'https://api.logshare.cn/1/log'`,
-    insights: `curl https://api.logshare.cn/1/insights/8FlTowW`,
-    raw: `curl https://api.logshare.cn/1/raw/8FlTowW`,
-    ai: `curl -N https://api.logshare.cn/1/ai/8FlTowW`,
-    'ai-analyse': `curl -X POST https://api.logshare.cn/1/ai/analyse \\
+    log: `curl -X POST --data-urlencode 'content@path/to/latest.log' 'https://api.logshare.cn/v1/log'`,
+    insights: `curl https://api.logshare.cn/v1/insights/8FlTowW`,
+    raw: `curl https://api.logshare.cn/v1/raw/8FlTowW`,
+    ai: `curl -N https://api.logshare.cn/v1/ai/8FlTowW`,
+    'ai-analyse': `curl -X POST https://api.logshare.cn/v1/ai/analyse \\
   -H "Content-Type: application/json" \\
   -d '{
     "content": "[Server thread/ERROR]: Could not bind to port 25565..."
   }'`,
-    filters: `curl https://api.logshare.cn/1/filters`,
-    limits: `curl https://api.logshare.cn/1/limits`,
-    delete: `curl -X DELETE -H "Authorization: Bearer token_xxxxx" 'https://api.logshare.cn/1/log/8FlTowW'`
+    filters: `curl https://api.logshare.cn/v1/filters`,
+    limits: `curl https://api.logshare.cn/v1/limits`,
+    delete: `curl -X DELETE -H "Authorization: Bearer token_xxxxx" 'https://api.logshare.cn/v1/log/8FlTowW'`
   }
 }

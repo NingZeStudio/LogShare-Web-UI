@@ -20,7 +20,7 @@ const endpoints = [
   {
     method: 'POST',
     methodType: 'post',
-    path: '/1/log',
+    path: '/v1/log',
     title: t('paste_log'),
     description:
       '提交新的日志数据进行分析，生成分享链接和分析结果。支持纯文本或 JSON 格式，支持 gzip/deflate/br 压缩。',
@@ -44,7 +44,7 @@ const endpoints = [
     "data": {
         "id": "abc123",
         "url": "https://logshare.cn/abc123",
-        "raw": "https://api.logshare.cn/1/raw/abc123",
+        "raw": "https://api.logshare.cn/v1/raw/abc123",
         "token": "token_xxxxx"
     }
 }`
@@ -59,7 +59,7 @@ const endpoints = [
     },
     examples: {
       js: `// JSON 模式
-const response = await fetch('https://api.logshare.cn/1/log', {
+const response = await fetch('https://api.logshare.cn/v1/log', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -72,7 +72,7 @@ const data = await response.json();
 console.log(data);
 
 // 纯文本模式
-const response = await fetch('https://api.logshare.cn/1/log', {
+const response = await fetch('https://api.logshare.cn/v1/log', {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: logContent
@@ -83,7 +83,7 @@ $data = [
     'metadata' => ['version' => '1.20.1'],
     'source' => 'web-upload'
 ];
-$ch = curl_init('https://api.logshare.cn/1/log');
+$ch = curl_init('https://api.logshare.cn/v1/log');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
@@ -92,7 +92,7 @@ $result = json_decode($response, true);
 curl_close($ch);
 print_r($result);`,
       curl: `# JSON 模式
-curl -X POST https://api.logshare.cn/1/log \\
+curl -X POST https://api.logshare.cn/v1/log \\
   -H "Content-Type: application/json" \\
   -d '{
     "content": "[Server thread/INFO]: Starting minecraft server",
@@ -101,7 +101,7 @@ curl -X POST https://api.logshare.cn/1/log \\
   }'
 
 # 纯文本模式
-curl -X POST https://api.logshare.cn/1/log \\
+curl -X POST https://api.logshare.cn/v1/log \\
   -H "Content-Type: text/plain" \\
   -d @server.log`
     }
@@ -109,7 +109,7 @@ curl -X POST https://api.logshare.cn/1/log \\
   {
     method: 'POST',
     methodType: 'post',
-    path: '/1/analyse',
+    path: '/v1/analyse',
     title: '分析日志（本地 Codex）',
     description:
       '提交日志内容进行本地分析，不会存储到数据库。返回分析结果包括服务器类型、版本和问题检测。',
@@ -138,7 +138,7 @@ curl -X POST https://api.logshare.cn/1/log \\
       }
     },
     examples: {
-      js: `const response = await fetch('https://api.logshare.cn/1/analyse', {
+      js: `const response = await fetch('https://api.logshare.cn/v1/analyse', {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: logContent
@@ -146,7 +146,7 @@ curl -X POST https://api.logshare.cn/1/log \\
 const data = await response.json();
 console.log(data);`,
       php: `<?php
-$ch = curl_init('https://api.logshare.cn/1/analyse');
+$ch = curl_init('https://api.logshare.cn/v1/analyse');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $logContent);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: text/plain']);
@@ -154,7 +154,7 @@ $response = curl_exec($ch);
 $result = json_decode($response, true);
 curl_close($ch);
 print_r($result);`,
-      curl: `curl -X POST https://api.logshare.cn/1/analyse \\
+      curl: `curl -X POST https://api.logshare.cn/v1/analyse \\
   -H "Content-Type: text/plain" \\
   -d @server.log`
     }
@@ -162,7 +162,7 @@ print_r($result);`,
   {
     method: 'GET',
     methodType: 'get',
-    path: '/1/raw/{id}',
+    path: '/v1/raw/{id}',
     title: t('get_raw_log'),
     description: '获取指定日志的原始内容。支持多个 ID 用逗号分隔。',
     params: [
@@ -186,30 +186,30 @@ print_r($result);`,
     },
     examples: {
       js: `// 获取单个日志
-const response = await fetch('https://api.logshare.cn/1/raw/abc1234');
+const response = await fetch('https://api.logshare.cn/v1/raw/abc1234');
 const text = await response.text();
 console.log(text);
 
 // 获取多个日志
-const response = await fetch('https://api.logshare.cn/1/raw/abc1234,def5678');`,
+const response = await fetch('https://api.logshare.cn/v1/raw/abc1234,def5678');`,
       php: `<?php
 // 获取单个日志
-$text = file_get_contents('https://api.logshare.cn/1/raw/abc1234');
+$text = file_get_contents('https://api.logshare.cn/v1/raw/abc1234');
 echo $text;
 
 // 获取多个日志
-$text = file_get_contents('https://api.logshare.cn/1/raw/abc1234,def5678');`,
+$text = file_get_contents('https://api.logshare.cn/v1/raw/abc1234,def5678');`,
       curl: `# 获取单个日志
-curl https://api.logshare.cn/1/raw/abc1234
+curl https://api.logshare.cn/v1/raw/abc1234
 
 # 获取多个日志
-curl https://api.logshare.cn/1/raw/abc1234,def5678`
+curl https://api.logshare.cn/v1/raw/abc1234,def5678`
     }
   },
   {
     method: 'GET',
     methodType: 'get',
-    path: '/1/insights/{id}',
+    path: '/v1/insights/{id}',
     title: t('get_insights'),
     description: '获取已存储日志的分析洞察，包括服务器软件类型、版本和问题检测。',
     params: [{ name: 'id', type: 'string', required: true, desc: '日志 ID' }],
@@ -236,19 +236,19 @@ curl https://api.logshare.cn/1/raw/abc1234,def5678`
       }
     },
     examples: {
-      js: `const response = await fetch('https://api.logshare.cn/1/insights/abc1234');
+      js: `const response = await fetch('https://api.logshare.cn/v1/insights/abc1234');
 const data = await response.json();
 console.log(data);`,
       php: `<?php
-$data = json_decode(file_get_contents('https://api.logshare.cn/1/insights/abc1234'), true);
+$data = json_decode(file_get_contents('https://api.logshare.cn/v1/insights/abc1234'), true);
 print_r($data);`,
-      curl: `curl https://api.logshare.cn/1/insights/abc1234`
+      curl: `curl https://api.logshare.cn/v1/insights/abc1234`
     }
   },
   {
     method: 'DELETE',
     methodType: 'delete',
-    path: '/1/log/{id}',
+    path: '/v1/log/{id}',
     title: t('delete_log'),
     description: '删除指定的日志（需要 Token 认证）。支持多个 ID 用逗号分隔。',
     params: [
@@ -277,7 +277,7 @@ print_r($data);`,
     },
     examples: {
       js: `// 删除单个日志
-const response = await fetch('https://api.logshare.cn/1/log/abc1234', {
+const response = await fetch('https://api.logshare.cn/v1/log/abc1234', {
     method: 'DELETE',
     headers: {
         'Authorization': 'Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0'
@@ -286,7 +286,7 @@ const response = await fetch('https://api.logshare.cn/1/log/abc1234', {
 const data = await response.json();
 
 // 删除多个日志
-const response = await fetch('https://api.logshare.cn/1/log/abc1234,def5678', {
+const response = await fetch('https://api.logshare.cn/v1/log/abc1234,def5678', {
     method: 'DELETE',
     headers: {
         'Authorization': 'Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0'
@@ -294,7 +294,7 @@ const response = await fetch('https://api.logshare.cn/1/log/abc1234,def5678', {
 });`,
       php: `<?php
 // 删除单个日志
-$ch = curl_init('https://api.logshare.cn/1/log/abc1234');
+$ch = curl_init('https://api.logshare.cn/v1/log/abc1234');
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -305,7 +305,7 @@ $data = json_decode($response, true);
 curl_close($ch);
 
 // 删除多个日志
-$ch = curl_init('https://api.logshare.cn/1/log/abc1234,def5678');
+$ch = curl_init('https://api.logshare.cn/v1/log/abc1234,def5678');
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -315,18 +315,18 @@ $response = curl_exec($ch);
 $data = json_decode($response, true);
 curl_close($ch);`,
       curl: `# 删除单个日志
-curl -X DELETE https://api.logshare.cn/1/log/abc1234 \\
+curl -X DELETE https://api.logshare.cn/v1/log/abc1234 \\
   -H "Authorization: Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
 
 # 删除多个日志
-curl -X DELETE https://api.logshare.cn/1/log/abc1234,def5678 \\
+curl -X DELETE https://api.logshare.cn/v1/log/abc1234,def5678 \\
   -H "Authorization: Bearer a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"`
     }
   },
   {
     method: 'GET',
     methodType: 'get',
-    path: '/1/limits',
+    path: '/v1/limits',
     title: t('get_limits'),
     description: t('get_limits_desc'),
     params: [],
@@ -341,19 +341,19 @@ curl -X DELETE https://api.logshare.cn/1/log/abc1234,def5678 \\
       }
     },
     examples: {
-      js: `const response = await fetch('https://api.logshare.cn/1/limits');
+      js: `const response = await fetch('https://api.logshare.cn/v1/limits');
 const data = await response.json();
 console.log(data);`,
       php: `<?php
-$data = json_decode(file_get_contents('https://api.logshare.cn/1/limits'), true);
+$data = json_decode(file_get_contents('https://api.logshare.cn/v1/limits'), true);
 print_r($data);`,
-      curl: `curl https://api.logshare.cn/1/limits`
+      curl: `curl https://api.logshare.cn/v1/limits`
     }
   },
   {
     method: 'GET',
     methodType: 'get',
-    path: '/1/filters',
+    path: '/v1/filters',
     title: '获取过滤器信息',
     description: '获取当前启用的日志过滤器信息，包括隐私保护规则。',
     params: [],
@@ -382,19 +382,19 @@ print_r($data);`,
       }
     },
     examples: {
-      js: `const response = await fetch('https://api.logshare.cn/1/filters');
+      js: `const response = await fetch('https://api.logshare.cn/v1/filters');
 const data = await response.json();
 console.log(data);`,
       php: `<?php
-$data = json_decode(file_get_contents('https://api.logshare.cn/1/filters'), true);
+$data = json_decode(file_get_contents('https://api.logshare.cn/v1/filters'), true);
 print_r($data);`,
-      curl: `curl https://api.logshare.cn/1/filters`
+      curl: `curl https://api.logshare.cn/v1/filters`
     }
   },
   {
     method: 'GET',
     methodType: 'get',
-    path: '/1/ai/{id}',
+    path: '/v1/ai/{id}',
     title: 'AI 分析已存储日志 🔵',
     description:
       '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出，以纯文本/Markdown 形式返回，30 分钟内缓存命中通过 SSE 回放。',
@@ -423,7 +423,7 @@ data: [DONE]`
     },
     examples: {
       js: `// SSE 流式方式（推荐）
-const response = await fetch('https://api.logshare.cn/1/ai/abc1234');
+const response = await fetch('https://api.logshare.cn/v1/ai/abc1234');
 const reader = response.body.getReader();
 const decoder = new TextDecoder();
 let fullText = '';
@@ -445,22 +445,22 @@ console.log(fullText);`,
       php: `<?php
 // PHP 不支持 SSE 客户端流式读取，建议使用 curl -N 直接查看
 // 或等待完整响应后输出
-$ch = curl_init('https://api.logshare.cn/1/ai/abc1234');
+$ch = curl_init('https://api.logshare.cn/v1/ai/abc1234');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
 curl_close($ch);
 echo $response;`,
       curl: `# SSE 流式方式
-curl -N https://api.logshare.cn/1/ai/abc1234
+curl -N https://api.logshare.cn/v1/ai/abc1234
 
 # 或直接等待完整结果
-curl https://api.logshare.cn/1/ai/abc1234`
+curl https://api.logshare.cn/v1/ai/abc1234`
     }
   },
   {
     method: 'POST',
     methodType: 'post',
-    path: '/1/ai/analyse',
+    path: '/v1/ai/analyse',
     title: 'AI 分析日志内容 🔵',
     description:
       '直接提交日志内容，使用 AI 分析，不存储到数据库。SSE 流式输出，基于内容哈希缓存（30 分钟 TTL），缓存命中通过 SSE 回放。',
@@ -481,7 +481,7 @@ data: [DONE]`
       }
     },
     examples: {
-      js: `const response = await fetch('https://api.logshare.cn/1/ai/analyse', {
+      js: `const response = await fetch('https://api.logshare.cn/v1/ai/analyse', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -507,14 +507,14 @@ while (true) {
 console.log(fullText);`,
       php: `<?php
 $data = ['content' => "[Server thread/ERROR]: Could not bind to port 25565..."];
-$ch = curl_init('https://api.logshare.cn/1/ai/analyse');
+$ch = curl_init('https://api.logshare.cn/v1/ai/analyse');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 $response = curl_exec($ch);
 curl_close($ch);
 echo $response;`,
-      curl: `curl -X POST https://api.logshare.cn/1/ai/analyse \\
+      curl: `curl -X POST https://api.logshare.cn/v1/ai/analyse \\
   -H "Content-Type: application/json" \\
   -d '{
     "content": "[Server thread/ERROR]: Could not bind to port 25565..."
@@ -664,7 +664,7 @@ const isSSEEndpoint = (endpoint: any) => {
                     >POST</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/1/log</td>
+                <td class="p-3 font-mono text-xs">/v1/log</td>
                 <td class="p-3 text-muted-foreground">提交日志</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -673,7 +673,7 @@ const isSSEEndpoint = (endpoint: any) => {
                     >POST</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/1/analyse</td>
+                <td class="p-3 font-mono text-xs">/v1/analyse</td>
                 <td class="p-3 text-muted-foreground">分析日志（本地 Codex）</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -682,7 +682,7 @@ const isSSEEndpoint = (endpoint: any) => {
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/1/raw/{id}</td>
+                <td class="p-3 font-mono text-xs">/v1/raw/{id}</td>
                 <td class="p-3 text-muted-foreground">获取原始日志</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -691,7 +691,7 @@ const isSSEEndpoint = (endpoint: any) => {
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/1/insights/{id}</td>
+                <td class="p-3 font-mono text-xs">/v1/insights/{id}</td>
                 <td class="p-3 text-muted-foreground">获取日志分析结果</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -702,7 +702,7 @@ const isSSEEndpoint = (endpoint: any) => {
                     >DELETE</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/1/log/{id}</td>
+                <td class="p-3 font-mono text-xs">/v1/log/{id}</td>
                 <td class="p-3 text-muted-foreground">删除日志</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -711,7 +711,7 @@ const isSSEEndpoint = (endpoint: any) => {
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/1/limits</td>
+                <td class="p-3 font-mono text-xs">/v1/limits</td>
                 <td class="p-3 text-muted-foreground">获取限制信息</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -720,7 +720,7 @@ const isSSEEndpoint = (endpoint: any) => {
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/1/filters</td>
+                <td class="p-3 font-mono text-xs">/v1/filters</td>
                 <td class="p-3 text-muted-foreground">获取过滤器信息</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -729,7 +729,7 @@ const isSSEEndpoint = (endpoint: any) => {
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/1/ai/{id}</td>
+                <td class="p-3 font-mono text-xs">/v1/ai/{id}</td>
                 <td class="p-3 text-muted-foreground">AI 分析已存储日志（SSE 流式输出）</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -738,7 +738,7 @@ const isSSEEndpoint = (endpoint: any) => {
                     >POST</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/1/ai/analyse</td>
+                <td class="p-3 font-mono text-xs">/v1/ai/analyse</td>
                 <td class="p-3 text-muted-foreground">AI 分析日志内容（SSE 流式输出）</td>
               </tr>
             </tbody>
@@ -1388,37 +1388,59 @@ class Program
 
       <div class="rounded-lg border border-border bg-card p-5">
         <h2 class="text-lg font-semibold mb-4">隐私保护过滤器</h2>
-        <p class="text-sm text-muted-foreground mb-4">所有提交的日志会自动应用以下过滤器：</p>
+        <p class="text-sm text-muted-foreground mb-4">所有提交的日志会自动应用以下过滤器（按执行顺序）：</p>
         <ul class="space-y-2 text-sm">
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"
-              ><strong class="text-foreground">IPv4 地址</strong> 替换为
-              <code class="bg-muted px-1.5 py-0.5 rounded text-xs">**.**.**.**</code></span
-            >
+            <span class="text-muted-foreground"><strong class="text-foreground">Trim</strong> — 去除日志首尾空白</span>
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"
-              ><strong class="text-foreground">IPv6 地址</strong> 替换为
-              <code class="bg-muted px-1.5 py-0.5 rounded text-xs"
-                >****:****:****:****:****:****:****:****</code
-              ></span
-            >
+            <span class="text-muted-foreground"><strong class="text-foreground">LimitBytes</strong> — 超过 10 MiB 拒绝上传</span>
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"
-              ><strong class="text-foreground">用户名</strong> 替换为
-              <code class="bg-muted px-1.5 py-0.5 rounded text-xs">********</code></span
-            >
+            <span class="text-muted-foreground"><strong class="text-foreground">LimitLines</strong> — 超过 50,000 行拒绝上传</span>
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"
-              ><strong class="text-foreground">访问令牌</strong> 替换为
-              <code class="bg-muted px-1.5 py-0.5 rounded text-xs">********</code></span
-            >
+            <span class="text-muted-foreground"><strong class="text-foreground">IPv4</strong> — 替换为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">**.**.**.**</code>（豁免 127.x、0.0.0.0、1.x、8.8.8.8）</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <span class="text-muted-foreground"><strong class="text-foreground">IPv6</strong> — 完整 IPv6 替换为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">****:****:****:****:****:****:****:****</code>（豁免 ::1、::）</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <span class="text-muted-foreground"><strong class="text-foreground">IPv6Short</strong> — 简写 IPv6（含 ::ffff: 映射）替换为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">****:****:****:****:****:****:****:****</code></span>
+          </li>
+          <li class="flex items-start gap-2">
+            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <span class="text-muted-foreground"><strong class="text-foreground">UUID</strong> — 替换标准/无连字符/花括号/urn:uuid 格式为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">********-****-****-****-************</code></span>
+          </li>
+          <li class="flex items-start gap-2">
+            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <span class="text-muted-foreground"><strong class="text-foreground">XUID</strong> — 替换 Xbox User ID 为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">****************</code></span>
+          </li>
+          <li class="flex items-start gap-2">
+            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <span class="text-muted-foreground"><strong class="text-foreground">SessionToken</strong> — 替换 access token、Bearer token、session ID</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <span class="text-muted-foreground"><strong class="text-foreground">ClientId</strong> — 替换 clientId / deviceId / instanceId / launcherId</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <span class="text-muted-foreground"><strong class="text-foreground">Coordinate</strong> — 替换 Minecraft 坐标（BlockPos / Vec3d / at() 等）</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <span class="text-muted-foreground"><strong class="text-foreground">Username</strong> — 替换用户路径中的用户名及 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">USERNAME=</code> 环境变量</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <span class="text-muted-foreground"><strong class="text-foreground">AccessToken</strong> — 替换 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">accessToken</code> / <code class="bg-muted px-1.5 py-0.5 rounded text-xs">access_token</code> 字段值及 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">X-Access-Token</code> 请求头</span>
           </li>
         </ul>
       </div>

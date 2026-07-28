@@ -59,8 +59,8 @@ export function useLogViewer(logId: string) {
   const loadLog = async () => {
     try {
       const [rawRes, insightsRes] = await Promise.all([
-        apiClient.get(`/1/raw/${logId}`),
-        apiClient.get(`/1/insights/${logId}`)
+        apiClient.get(`/v1/raw/${logId}`),
+        apiClient.get(`/v1/insights/${logId}`)
       ])
 
       log.value = insightsRes.data
@@ -115,7 +115,7 @@ export function useLogViewer(logId: string) {
   const copyShareMessage = async () => {
     if (!log.value || !log.value.title) {
       try {
-        const insightsRes = await apiClient.get(`/1/insights/${logId}`)
+        const insightsRes = await apiClient.get(`/v1/insights/${logId}`)
         log.value = insightsRes.data
       } catch (e) {
         console.error('Failed to load analysis for share message:', e)

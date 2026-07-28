@@ -129,7 +129,7 @@ export class ApiClient {
       onError?: (error: AiError) => void
     }
   ): Promise<void> {
-    const url = `${baseURL}/1/ai/${id}`
+    const url = `${baseURL}/v1/ai/${id}`
 
     try {
       const response = await fetch(url, {
@@ -214,7 +214,7 @@ export class ApiClient {
       onError?: (error: AiError) => void
     }
   ): Promise<void> {
-    const url = `${baseURL}/1/ai/analyse`
+    const url = `${baseURL}/v1/ai/analyse`
 
     try {
       const response = await fetch(url, {
@@ -296,7 +296,7 @@ export class ApiClient {
    * 提交日志
    */
   async submitLog(params: LogSubmitParams): Promise<LogSubmitResponse> {
-    const response = await this.post<LogSubmitResponse>('/1/log', params)
+    const response = await this.post<LogSubmitResponse>('/v1/log', params)
     return response.data
   }
 
@@ -304,7 +304,7 @@ export class ApiClient {
    * 获取原始日志
    */
   async getRawLog(id: string): Promise<string> {
-    const response = await this.get<string>(`/1/raw/${id}`, {
+    const response = await this.get<string>(`/v1/raw/${id}`, {
       headers: { Accept: 'text/plain' }
     })
     return response.data
@@ -314,7 +314,7 @@ export class ApiClient {
    * 获取日志洞察
    */
   async getInsights(id: string) {
-    const response = await this.get(`/1/insights/${id}`)
+    const response = await this.get(`/v1/insights/${id}`)
     return response.data
   }
 
@@ -323,7 +323,7 @@ export class ApiClient {
    * @deprecated 使用 streamAiAnalysis 替代
    */
   async getAiAnalysis(id: string) {
-    const response = await this.get(`/1/ai/${id}`)
+    const response = await this.get(`/v1/ai/${id}`)
     return response.data
   }
 
@@ -332,7 +332,7 @@ export class ApiClient {
    */
   async deleteLog(id: string | string[], token: string): Promise<DeleteResponse> {
     const ids = Array.isArray(id) ? id.join(',') : id
-    const response = await this.delete<DeleteResponse>(`/1/log/${ids}`, {
+    const response = await this.delete<DeleteResponse>(`/v1/log/${ids}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json'
@@ -345,7 +345,7 @@ export class ApiClient {
    * 获取限制信息
    */
   async getLimits(): Promise<LimitsResponse> {
-    const response = await this.get<LimitsResponse>('/1/limits')
+    const response = await this.get<LimitsResponse>('/v1/limits')
     return response.data
   }
 
@@ -353,7 +353,7 @@ export class ApiClient {
    * 获取过滤器信息
    */
   async getFilters(): Promise<FiltersResponse> {
-    const response = await this.get<FiltersResponse>('/1/filters')
+    const response = await this.get<FiltersResponse>('/v1/filters')
     return response.data
   }
 }
