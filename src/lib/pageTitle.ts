@@ -5,6 +5,7 @@ export const pageTitleTemplates = {
   sponsor: '赞助支持 - LogShare.CN',
   tutorials: '教程中心 - LogShare.CN',
   tutorialArticle: (title?: string) => `${title || '教程'} - LogShare.CN`,
+  groups: '群列表 - LogShare.CN',
   notFound: '页面未找到 - LogShare.CN'
 }
 
@@ -44,6 +45,8 @@ export const getCurrentPageTemplate = (routeName: string | undefined) => {
       return 'tutorials'
     case 'tutorial-article':
       return 'tutorialArticle'
+    case 'groups':
+      return 'groups'
     default:
       return 'notFound'
   }

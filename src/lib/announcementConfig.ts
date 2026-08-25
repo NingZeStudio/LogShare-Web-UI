@@ -12,10 +12,10 @@ export interface AnnouncementConfig {
 }
 
 export const announcementConfig: AnnouncementConfig = {
-  id: '20260624_service_stable',
-  title: 'LogShare.CN 持续稳定运营中',
+  id: '20260823_system_upgrade',
+  title: '系统全面重构升级公告',
   content:
-    '感谢大家一直以来对 LogShare 的支持与信任。目前各项服务均正常稳定运行，我们也会持续维护和优化。\n\n推荐访问我们的教程中心，涵盖了 Minecraft 基础概念扫盲、渲染器配置、提问技巧等实用内容，帮助你更快地自行排查问题。\n\n如有任何重要更新或变更，我们会在官方QQ群中提前告知，敬请留意。祝各位游戏愉快！',
+    'LogShare 上线至今已有 7 月有余，处理或历史存储日志量已有千万之数。为给用户们更好的体验，我们于 2026 年 8 月 23 日对系统和框架进行了全面重构和升级。\n\n再次感谢您的支持。',
   links: [
     {
       label: '加入官方QQ群',
@@ -30,7 +30,7 @@ export const announcementConfig: AnnouncementConfig = {
       color: 'red'
     }
   ],
-  importantText: '教程中心已上线，点击导航栏「教程」查看。'
+  importantText: '我们近期遭受了一些满怀恶意的攻击'
 }
 
 export interface LogUpdateConfig {

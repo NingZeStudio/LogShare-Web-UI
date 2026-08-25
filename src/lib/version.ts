@@ -1,5 +1,6 @@
 /**
- * 应用版本号，与 package.json 中的 version 保持一致。
- * 更新版本时需同步修改此文件。
+ * 应用版本号，构建时由 vite.config.ts 从 package.json 注入。
  */
-export const APP_VERSION = '1.5.5'
+declare const __APP_VERSION__: string
+
+export const APP_VERSION: string = __APP_VERSION__

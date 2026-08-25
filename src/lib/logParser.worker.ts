@@ -374,10 +374,17 @@ function formatContent(text: string): string {
   out = out.replace(RE_MARK_OPEN, '<mark>').replace(RE_MARK_CLOSE, '</mark>')
 
   // ---- Minecraft § 颜色码 ----
+  let openColorSpans = 0
   out = out.replace(RE_COLOR_CODE, (_match, code) => {
     const cls = COLOR_STYLE_MAP[code.toLowerCase() as keyof typeof COLOR_STYLE_MAP]
-    return cls ? '<span class="' + cls + '">' : _match
+    if (!cls) return _match
+    openColorSpans++
+    return '<span class="' + cls + '">'
   })
+  // 颜色码 span 嵌套叠加（格式码持续到 reset 的 MC 语义），行尾统一补闭合保持标签平衡
+  if (openColorSpans > 0) {
+    out += '</span>'.repeat(openColorSpans)
+  }
 
   // ---- Java 堆栈帧 ----
   if (RE_STACK_AT.test(text)) {
@@ -426,6 +433,7 @@ function formatContent(text: string): string {
   }
 
   // ---- Minecraft [Thread/LEVEL] 前缀 ----
+  // 注意：out 已经过 escapeHtml，此处不再重复转义
   out = out.replace(RE_THREAD_PREFIX, match => {
     const sepIdx = match.lastIndexOf('/')
     if (sepIdx === -1) return match
@@ -440,11 +448,11 @@ function formatContent(text: string): string {
           : 'level-info-prefix'
     return (
       '<span class="level-thread">' +
-      escapeHtml(thread) +
+      thread +
       '</span><span class="' +
       levelClass +
       '">' +
-      escapeHtml(level) +
+      level +
       '</span>]'
     )
   })
@@ -613,6 +621,7 @@ interface Group {
   start: number
   level: LogLevel
   lines: string[]
+  levels: LogLevel[]
 }
 
 function groupLines(lines: string[]): Group[] {
@@ -632,16 +641,17 @@ function groupLines(lines: string[]): Group[] {
       const groupLevel = level === 'fatal' ? 'error' : level
       if (current && current.level === groupLevel) {
         current.lines.push(line)
+        current.levels.push(level)
       } else {
         if (current) groups.push(current)
-        current = { start: i, level: groupLevel, lines: [line] }
+        current = { start: i, level: groupLevel, lines: [line], levels: [level] }
       }
     } else {
       if (current) {
         groups.push(current)
         current = null
       }
-      groups.push({ start: i, level: 'info', lines: [line] })
+      groups.push({ start: i, level: 'info', lines: [line], levels: [level] })
     }
   }
   if (current) groups.push(current)
@@ -687,7 +697,7 @@ function renderWithLineNumbers(lines: string[]): string {
         const lineIndex = start + li
         const lineNumber = lineIndex + 1
         const line = gLines[li]!
-        const lineLevel = getLevel(line)
+        const lineLevel = group.levels[li]!
         const isErrStyle = lineLevel === 'error' || lineLevel === 'fatal'
         const entryClass = isErrStyle ? 'entry-error' : 'entry-no-error'
 
@@ -753,18 +763,22 @@ function parseLogWorker(raw: string, showLineNumbers: boolean = true): string {
 
 // ======================== Worker 入口 ========================
 
-self.onmessage = (e: MessageEvent<{ type: string; raw: string; showLineNumbers: boolean }>) => {
+self.onmessage = (
+  e: MessageEvent<{ type: string; raw: string; showLineNumbers: boolean; id: number }>
+) => {
   if (e.data.type === 'parse') {
     try {
       const html = parseLogWorker(e.data.raw, e.data.showLineNumbers)
       ;(self as unknown as { postMessage: (msg: unknown) => void }).postMessage({
         type: 'result',
-        html
+        html,
+        id: e.data.id
       })
     } catch (err) {
       ;(self as unknown as { postMessage: (msg: unknown) => void }).postMessage({
         type: 'error',
-        error: err instanceof Error ? err.message : String(err)
+        error: err instanceof Error ? err.message : String(err),
+        id: e.data.id
       })
     }
   }

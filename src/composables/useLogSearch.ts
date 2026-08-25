@@ -11,46 +11,63 @@ export function useLogSearch(getOriginalText: () => string, setLogContent: (html
     const originalLogText = getOriginalText()
 
     if (!searchTerm.value.trim()) {
-      setLogContent(await parseLog(originalLogText))
-      searchResults.value = []
-      searchIndex.value = 0
+      await resetView()
       return
     }
 
-    const lines = originalLogText.split('\n')
-    const results: number[] = []
-    const matchingLines: string[] = []
+    try {
+      const lines = originalLogText.split('\n')
+      const results: number[] = []
+      const matchingLines: string[] = []
 
-    lines.forEach((line, index) => {
-      const lowerLine = line.toLowerCase()
-      const searchTerms = searchTerm.value
-        .toLowerCase()
-        .split(/\s+/)
-        .filter(t => t.length > 0)
+      lines.forEach((line, index) => {
+        const lowerLine = line.toLowerCase()
+        const searchTerms = searchTerm.value
+          .toLowerCase()
+          .split(/\s+/)
+          .filter(t => t.length > 0)
 
-      if (searchTerms.length > 0 && searchTerms.every(term => lowerLine.includes(term))) {
-        results.push(index)
+        if (searchTerms.length > 0 && searchTerms.every(term => lowerLine.includes(term))) {
+          results.push(index)
 
-        let highlightedLine = line
-        const sortedTerms = [...searchTerms].sort((a, b) => b.length - a.length)
+          let highlightedLine = line
+          const sortedTerms = [...searchTerms].sort((a, b) => b.length - a.length)
 
-        sortedTerms.forEach(term => {
-          const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-          const regex = new RegExp(`(${escapedTerm})`, 'gi')
-          highlightedLine = highlightedLine.replace(regex, '<mark>$1</mark>')
-        })
+          sortedTerms.forEach(term => {
+            const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const regex = new RegExp(`(${escapedTerm})`, 'gi')
+            highlightedLine = highlightedLine.replace(regex, '<mark>$1</mark>')
+          })
 
-        matchingLines.push(highlightedLine)
+          matchingLines.push(highlightedLine)
+        }
+      })
+
+      if (matchingLines.length > 0) {
+        setLogContent(await parseLog(matchingLines.join('\n')))
+      } else {
+        setLogContent(`<div class="text-center p-8 text-muted-foreground">${t('no_results')}</div>`)
       }
-    })
 
-    if (matchingLines.length > 0) {
-      setLogContent(await parseLog(matchingLines.join('\n')))
-    } else {
-      setLogContent(`<div class="text-center p-8 text-muted-foreground">${t('no_results')}</div>`)
+      searchResults.value = results
+      searchIndex.value = 0
+    } catch (e) {
+      console.error('Search failed:', e)
+      setLogContent(
+        `<div class="text-center p-8 text-muted-foreground">${t('log_load_failed')}</div>`
+      )
+      searchResults.value = []
+      searchIndex.value = 0
     }
+  }
 
-    searchResults.value = results
+  const resetView = async () => {
+    try {
+      setLogContent(await parseLog(getOriginalText()))
+    } catch (e) {
+      console.error('Failed to restore log view:', e)
+    }
+    searchResults.value = []
     searchIndex.value = 0
   }
 

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { t } from '@/lib/i18n'
+import { apiClient, getApiUrl } from '@/lib/ApiClient'
 import { useLogViewer } from '@/composables/useLogViewer'
 import { useAiAnalysis } from '@/composables/useAiAnalysis'
 import { useLogSearch } from '@/composables/useLogSearch'
@@ -18,9 +19,10 @@ import {
   AlertTriangle,
   ArrowUp,
   Code,
-  BookText,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Loader2,
+  X
 } from 'lucide-vue-next'
 
 declare global {
@@ -36,7 +38,9 @@ const viewer = useLogViewer(id)
 const ai = useAiAnalysis(id)
 const search = useLogSearch(
   () => viewer.originalLogText.value,
-  (html: string) => { viewer.logContent.value = html }
+  (html: string) => {
+    viewer.logContent.value = html
+  }
 )
 
 const md = new MarkdownIt({
@@ -44,13 +48,20 @@ const md = new MarkdownIt({
   linkify: true
 })
 
-const renderMarkdown = (text: string): string => {
+const renderMarkdown = (text: string, streaming = false): string => {
   if (!text) return ''
   try {
-    return md.render(text)
+    const source = streaming ? closeIncompleteMarkdown(text) : text
+    return md.render(source)
   } catch {
-    return text
+    return md.utils.escapeHtml(text)
   }
+}
+
+const closeIncompleteMarkdown = (text: string): string => {
+  const fenceCount = (text.match(/^\s*```/gm) || []).length
+  if (fenceCount % 2 === 1) return `${text}\n\n\`\`\``
+  return text
 }
 
 onMounted(() => {
@@ -64,21 +75,112 @@ const confirmDelete = () => {
   showDeleteDialog.value = false
   viewer.deleteLog()
 }
+
+const selectedFile = ref('') // 当前渲染的文件名（API files 列表中的 name）
+const fileSwitching = ref(false)
+
+// 文件列表完全来自 GET /v1/log/{id} 的 files 字段
+const attachedFiles = computed(() => viewer.logMeta.value?.files ?? [])
+
+watch(attachedFiles, list => {
+  // 元信息就绪后默认选中第一项（即主文件），正文初始已是主文件，无需拉取
+  if (!selectedFile.value && list.length > 0) {
+    selectedFile.value = list[0]!.name
+  }
+})
+
+const formatBytes = (bytes?: number): string => {
+  if (bytes == null) return '-'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
+// 由接口实际返回的字段拼接摘要句，未返回的部分不出现在句子里
+const logSummary = computed(() => {
+  const info = viewer.log.value
+  if (!info) return ''
+
+  // 首段使用接口的类型标识（xxxx/xxx 形式），如 vanilla/server
+  let head = ''
+  if (info.id) head = `这是一份 ${info.id} 日志`
+  else if (info.type) head = `这是一份 ${info.type}`
+  else if (info.name) head = `这是一份 ${info.name} 日志`
+  if (!head) return ''
+
+  const parts: string[] = [head]
+  if (info.version) parts.push(`版本是 ${info.version}`)
+  for (const item of info.analysis?.information ?? []) {
+    if (item.label && item.value) parts.push(`${item.label}是 ${item.value}`)
+  }
+  return parts.join('，')
+})
+
+const HELP_TIP_DISMISS_KEY = 'log_help_tip_dismissed'
+const showHelpTip = ref(localStorage.getItem(HELP_TIP_DISMISS_KEY) !== '1')
+
+const dismissHelpTip = () => {
+  showHelpTip.value = false
+  localStorage.setItem(HELP_TIP_DISMISS_KEY, '1')
+}
+
+// AI 面板流式输出自动跟随滚动；用户上滑阅读时暂停，回到底部后恢复
+const aiScrollEl = ref<HTMLElement | null>(null)
+const aiUserScrolledUp = ref(false)
+
+const onAiScroll = () => {
+  const el = aiScrollEl.value
+  if (!el) return
+  aiUserScrolledUp.value = el.scrollTop + el.clientHeight < el.scrollHeight - 48
+}
+
+watch(
+  () => [ai.aiStreamingContent.value, ai.aiStatusEntries.value.length],
+  async () => {
+    if (aiUserScrolledUp.value) return
+    await nextTick()
+    const el = aiScrollEl.value
+    if (el) el.scrollTop = el.scrollHeight
+  }
+)
+
+watch(ai.showAiPanel, open => {
+  if (open) {
+    aiUserScrolledUp.value = false
+  }
+})
+
+const onFileChange = async () => {
+  const name = selectedFile.value
+  if (!name) return
+  fileSwitching.value = true
+  try {
+    const text = await apiClient.getRawFile(id, name)
+    await viewer.applyRawText(text)
+  } catch (e: any) {
+    console.error('Failed to load attached file:', e)
+    viewer.addNotification('error', t('file_load_failed'))
+    // 加载失败回退主文件，避免正文与下拉状态不一致
+    selectedFile.value = attachedFiles.value[0]?.name || ''
+    await viewer.restoreMain()
+  } finally {
+    fileSwitching.value = false
+  }
+}
+
+onMounted(() => {
+  viewer.init()
+  viewer.loadLog()
+})
 </script>
 
 <template>
-  <div
-    v-if="viewer.loading.value"
-    class="container mx-auto px-4 py-12 text-center"
-  >
+  <div v-if="viewer.loading.value" class="container mx-auto px-4 py-12 text-center">
     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
     <p class="mt-4 text-muted-foreground">{{ t('loading_log') }}</p>
   </div>
 
-  <div
-    v-else-if="viewer.error.value"
-    class="container mx-auto px-4 py-12 text-center"
-  >
+  <div v-else-if="viewer.error.value" class="container mx-auto px-4 py-12 text-center">
     <h2 class="text-2xl font-bold text-destructive">{{ t('error_title') }}</h2>
     <p class="text-muted-foreground">{{ viewer.error.value }}</p>
   </div>
@@ -93,46 +195,34 @@ const confirmDelete = () => {
   >
     <div :class="viewer.isFullscreen.value ? 'h-full flex flex-col' : 'flex flex-col'">
       <!-- 标题栏 -->
-      <div v-if="!viewer.isFullscreen.value" class="flex items-start justify-between gap-4 px-4 py-3">
+      <div
+        v-if="!viewer.isFullscreen.value"
+        class="flex items-start justify-between gap-4 px-4 py-3"
+      >
         <div class="min-w-0 flex-1">
           <h1 class="text-3xl font-bold break-all">{{ viewer.log.value?.title }}</h1>
-          <p class="text-sm text-muted-foreground mt-1">
-            {{ t('log_type') }}:
-            <code class="bg-muted px-2 py-0.5 rounded text-xs">{{ viewer.log.value?.id }}</code>
-          </p>
+          <p v-if="logSummary" class="text-sm text-muted-foreground mt-1">{{ logSummary }}</p>
+          <div v-if="attachedFiles.length > 1" class="flex items-center gap-1.5 text-sm mt-1">
+            <span class="text-muted-foreground">{{ t('show_current_file') }}:</span>
+            <select
+              v-model="selectedFile"
+              :disabled="fileSwitching"
+              class="max-w-56 truncate bg-muted px-1.5 py-0.5 rounded text-xs font-mono cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+              @change="onFileChange"
+            >
+              <option v-for="file in attachedFiles" :key="file.name" :value="file.name">
+                {{ file.name }} ({{ formatBytes(file.size) }})
+              </option>
+            </select>
+            <Loader2 v-if="fileSwitching" class="h-3.5 w-3.5 animate-spin text-primary" />
+          </div>
         </div>
       </div>
 
       <!-- 信息卡片区域 -->
       <div v-if="!viewer.isFullscreen.value" class="grid gap-4 md:grid-cols-2 px-4">
-        <!-- Server Info -->
-        <div
-          v-if="viewer.log.value?.analysis?.information?.length > 0"
-          class="bg-card p-4"
-        >
-          <div class="flex items-center gap-2 mb-3 pb-3 border-b">
-            <BookText class="h-5 w-5 text-primary" />
-            <h2 class="font-semibold">{{ t('server_info') }}</h2>
-          </div>
-          <div class="space-y-2">
-            <div
-              v-for="info in viewer.log.value.analysis.information"
-              :key="info.label"
-              class="flex items-start justify-between gap-3 py-1.5"
-            >
-              <span class="text-sm text-muted-foreground font-mono">{{ info.label }}</span>
-              <span class="text-sm font-medium text-right break-all max-w-[60%]">{{
-                info.value
-              }}</span>
-            </div>
-          </div>
-        </div>
-
         <!-- 问题统计 -->
-        <div
-          v-if="viewer.log.value?.analysis?.problems?.length > 0"
-          class="bg-card p-4"
-        >
+        <div v-if="viewer.log.value?.analysis?.problems?.length > 0" class="bg-card p-4">
           <div class="flex items-center gap-2 mb-3 pb-3 border-b">
             <AlertTriangle class="h-5 w-5 text-destructive" />
             <h2 class="font-semibold">{{ t('problems_detected') }}</h2>
@@ -169,9 +259,9 @@ const confirmDelete = () => {
               <span class="text-sm font-medium">{{
                 t('solvable_count').replace(
                   '{count}',
-                  viewer.log.value.analysis.problems.filter(
-                    (p: any) => p.solutions?.length
-                  ).length.toString()
+                  viewer.log.value.analysis.problems
+                    .filter((p: any) => p.solutions?.length)
+                    .length.toString()
                 )
               }}</span>
             </div>
@@ -190,46 +280,39 @@ const confirmDelete = () => {
         </div>
       </div>
 
-      <!-- 帮助提示 -->
-      <div v-if="!viewer.isFullscreen.value" class="px-4 my-4">
-        <div
-          class="bg-card border border-border rounded-lg p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div class="flex-1">
-            <h2 class="text-base font-semibold">{{ t('log_help_card_title') }}</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              {{ t('log_help_card_desc') }}
-            </p>
-          </div>
-          <div class="flex items-center gap-2 shrink-0">
+      <!-- 帮助提示（可关闭 Tips） -->
+      <div
+        v-if="!viewer.isFullscreen.value && showHelpTip"
+        class="px-4 mt-3 mb-3 text-sm"
+      >
+        <div class="relative bg-muted/50 rounded-lg px-4 py-2.5 pr-9 space-y-1.5">
+          <span class="font-medium">{{ t('log_help_card_title') }}</span>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <button
               :class="
                 viewer.isCopySuccess.value
                   ? 'bg-green-500 text-white hover:bg-green-600'
                   : 'bg-primary/10 text-primary hover:bg-primary/20'
               "
-              class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors shrink-0"
+              class="inline-flex items-center rounded-md px-3.5 py-2 font-medium transition-colors"
               @click="viewer.copyShareMessage()"
             >
               {{ viewer.isCopySuccess.value ? t('copied') : t('copy_share') }}
             </button>
-            <a
-              href="https://qm.qq.com/q/gZ2El58RVe"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center justify-center rounded-md bg-primary/10 text-primary px-4 py-2 text-sm font-medium transition-colors hover:bg-primary/20 shrink-0"
+            <RouterLink
+              to="/groups"
+              class="inline-flex items-center rounded-md bg-primary/10 text-primary px-3.5 py-2 font-medium transition-colors hover:bg-primary/20"
             >
-              答疑解惑群
-            </a>
-            <a
-              href="https://qm.qq.com/q/FOGt99aayY"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 shrink-0"
-            >
-              {{ t('join_qq_group_link') }}
-            </a>
+              {{ t('go_group_list') }}
+            </RouterLink>
           </div>
+          <button
+            class="absolute right-2 top-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            :aria-label="t('close')"
+            @click="dismissHelpTip"
+          >
+            <X class="h-4 w-4" />
+          </button>
         </div>
       </div>
 
@@ -290,7 +373,7 @@ const confirmDelete = () => {
                 <span class="hidden sm:inline">{{ t('download') }}</span>
               </button>
               <a
-                :href="`https://api.logshare.cn/v1/raw/${id}`"
+                :href="getApiUrl(`/v1/raw/${id}`)"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground"
@@ -339,7 +422,9 @@ const confirmDelete = () => {
                       >
                         <div class="p-5 sm:p-6">
                           <div class="flex items-start gap-3 mb-4">
-                            <div class="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                            <div
+                              class="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0"
+                            >
                               <AlertTriangle class="h-5 w-5 text-destructive" />
                             </div>
                             <div>
@@ -414,7 +499,9 @@ const confirmDelete = () => {
                   :class="{ 'opacity-40': viewer.logFontSize.value <= 10 }"
                   :disabled="viewer.logFontSize.value <= 10"
                   @click="viewer.decreaseFontSize()"
-                >−</button>
+                >
+                  −
+                </button>
                 <input
                   v-if="viewer.isEditingFontSize.value"
                   ref="viewer.fontSizeInputEl"
@@ -430,13 +517,17 @@ const confirmDelete = () => {
                   v-else
                   class="w-10 text-center text-sm font-mono text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors cursor-pointer"
                   @click="viewer.startEditFontSize()"
-                >{{ viewer.logFontSize.value }}</button>
+                >
+                  {{ viewer.logFontSize.value }}
+                </button>
                 <button
                   class="inline-flex items-center justify-center h-9 w-9 rounded-md text-sm font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-colors"
                   :class="{ 'opacity-40': viewer.logFontSize.value >= 24 }"
                   :disabled="viewer.logFontSize.value >= 24"
                   @click="viewer.increaseFontSize()"
-                >+</button>
+                >
+                  +
+                </button>
               </div>
             </div>
           </div>
@@ -449,7 +540,9 @@ const confirmDelete = () => {
                 :class="{ 'opacity-40': viewer.logFontSize.value <= 10 }"
                 :disabled="viewer.logFontSize.value <= 10"
                 @click="viewer.decreaseFontSize()"
-              >−</button>
+              >
+                −
+              </button>
               <input
                 v-if="viewer.isEditingFontSize.value"
                 v-model="viewer.fontSizeInput.value"
@@ -464,13 +557,17 @@ const confirmDelete = () => {
                 v-else
                 class="w-8 text-center text-sm font-mono text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors cursor-pointer"
                 @click="viewer.startEditFontSize()"
-              >{{ viewer.logFontSize.value }}</button>
+              >
+                {{ viewer.logFontSize.value }}
+              </button>
               <button
                 class="inline-flex items-center justify-center h-8 w-8 rounded-md text-sm font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-colors"
                 :class="{ 'opacity-40': viewer.logFontSize.value >= 24 }"
                 :disabled="viewer.logFontSize.value >= 24"
                 @click="viewer.increaseFontSize()"
-              >+</button>
+              >
+                +
+              </button>
             </div>
             <button
               class="log-analysis-trigger inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
@@ -521,7 +618,9 @@ const confirmDelete = () => {
         <!-- 日志内容 -->
         <div :class="viewer.isFullscreen.value ? 'flex-1 flex flex-col min-h-0' : ''">
           <div
-            :class="viewer.isFullscreen.value ? 'flex-1 overflow-y-auto' : 'overflow-x-auto relative'"
+            :class="
+              viewer.isFullscreen.value ? 'flex-1 overflow-y-auto' : 'overflow-x-auto relative'
+            "
             class="bg-[#2a2a2a] py-2"
           >
             <div
@@ -631,8 +730,12 @@ const confirmDelete = () => {
         <div class="flex items-center gap-2">
           <div class="flex gap-1">
             <div class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></div>
-            <div class="h-1.5 w-1.5 rounded-full bg-primary/70 animate-pulse animation-delay-200"></div>
-            <div class="h-1.5 w-1.5 rounded-full bg-primary/50 animate-pulse animation-delay-400"></div>
+            <div
+              class="h-1.5 w-1.5 rounded-full bg-primary/70 animate-pulse animation-delay-200"
+            ></div>
+            <div
+              class="h-1.5 w-1.5 rounded-full bg-primary/50 animate-pulse animation-delay-400"
+            ></div>
           </div>
           <p class="font-medium">{{ t('ai_analyzing_streaming') }}</p>
         </div>
@@ -641,11 +744,39 @@ const confirmDelete = () => {
         </p>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-4">
+      <div
+        ref="aiScrollEl"
+        class="flex-1 overflow-y-auto p-4 space-y-3"
+        @scroll="onAiScroll"
+      >
+        <!-- 分析步骤：与正文同一滚动流 -->
         <div
-          v-if="ai.aiLoading.value && !ai.aiIsStreaming.value"
-          class="flex flex-col items-center justify-center min-h-[300px]"
+          v-if="ai.aiStatusBlocks.value.length"
+          class="bg-muted/40 rounded-lg px-3 py-2.5 space-y-1.5"
         >
+          <div v-for="block in ai.aiStatusBlocks.value" :key="block.id">
+            <button
+              class="w-full flex items-center gap-2 text-left text-sm text-muted-foreground hover:text-foreground transition-colors"
+              :aria-expanded="block.expanded"
+              @click="ai.toggleStatusBlock(block.id)"
+            >
+              <span
+                class="h-2 w-2 rounded-full flex-shrink-0"
+                :class="block.completed ? 'bg-green-500' : 'bg-primary animate-pulse'"
+              ></span>
+              <span class="flex-1">{{ block.title }}</span>
+              <span class="text-xs">{{ block.expanded ? '收起' : '展开' }}</span>
+            </button>
+            <div
+              v-show="block.expanded"
+              class="mt-1 ml-4 rounded-md bg-background/60 px-3 py-2 text-xs text-muted-foreground whitespace-pre-wrap break-words"
+            >
+              {{ block.detail || '暂无详细信息' }}
+            </div>
+          </div>
+        </div>
+
+        <div v-if="ai.aiLoading.value && !ai.aiIsStreaming.value" class="flex flex-col items-center justify-center min-h-[300px]">
           <div class="relative w-16 h-16">
             <div
               class="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin"
@@ -654,11 +785,16 @@ const confirmDelete = () => {
               class="absolute inset-2 rounded-full border-4 border-transparent border-b-primary animate-spin-reverse"
             ></div>
           </div>
-          <p class="mt-6 text-sm text-muted-foreground">{{ t('ai_analyzing') }}</p>
+          <p class="mt-6 text-muted-foreground text-sm">{{ t('ai_analyzing') }}</p>
         </div>
 
-        <div v-else-if="ai.aiError.value" class="py-12 text-center">
+        <div v-else-if="ai.aiError.value" class="py-8 text-center">
           <p class="text-sm text-red-500">{{ ai.aiError.value }}</p>
+          <pre
+            v-if="ai.aiRawError.value"
+            class="mt-4 max-h-48 overflow-auto rounded-lg bg-[#1e1e1e] p-3 text-left text-xs text-gray-100 font-mono whitespace-pre-wrap break-all leading-relaxed"
+            >{{ ai.aiRawError.value }}</pre
+          >
           <button
             class="mt-4 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted/60 transition-colors"
             @click="ai.loadAiAnalysis()"
@@ -668,23 +804,27 @@ const confirmDelete = () => {
           </button>
         </div>
 
-        <div v-else-if="ai.hasAiContent.value" class="space-y-3">
+        <div v-else-if="ai.hasAiContent.value">
           <div class="rounded-xl border bg-card p-3">
-            <!-- 流式进行中显示纯文本，避免频繁 Markdown 渲染 -->
-            <div v-if="ai.aiIsStreaming.value"
-              class="whitespace-pre-wrap text-sm text-muted-foreground break-words font-mono leading-relaxed">
-              {{ ai.aiStreamingContent.value }}
-            </div>
-            <!-- 流结束后渲染 Markdown -->
-            <div v-else
-              class="prose prose-sm dark:prose-invert max-w-none break-words"
-              v-html="renderMarkdown(ai.aiText.value)">
-            </div>
+            <div
+              class="ai-markdown-body prose prose-sm dark:prose-invert max-w-none break-words"
+              v-html="
+                renderMarkdown(
+                  ai.aiIsStreaming.value ? ai.aiStreamingContent.value : ai.aiText.value,
+                  ai.aiIsStreaming.value
+                )
+              "
+            ></div>
+            <span
+              v-if="ai.aiIsStreaming.value"
+              class="ai-streaming-cursor"
+              aria-hidden="true"
+            ></span>
           </div>
         </div>
 
-        <div v-else class="py-12 text-center">
-          <p class="text-sm text-muted-foreground">{{ t('ai_empty_result') }}</p>
+        <div v-else-if="!ai.aiLoading.value" class="py-12 text-center">
+          <p class="text-muted-foreground text-sm">{{ t('ai_empty_result') }}</p>
         </div>
       </div>
     </div>
@@ -697,11 +837,7 @@ const confirmDelete = () => {
         v-for="notification in viewer.notifications.value"
         :key="notification.id"
         class="flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg bg-card min-w-[300px]"
-        :class="
-          notification.type === 'success'
-            ? 'border-green-500/50'
-            : 'border-destructive/50'
-        "
+        :class="notification.type === 'success' ? 'border-green-500/50' : 'border-destructive/50'"
       >
         <Check
           v-if="notification.type === 'success'"
@@ -743,6 +879,66 @@ const confirmDelete = () => {
 
 .log-analysis-trigger:hover {
   background: linear-gradient(180deg, hsl(var(--primary) / 0.22), hsl(var(--primary) / 0.12));
+}
+
+.ai-streaming-cursor {
+  display: inline-block;
+  width: 0.45rem;
+  height: 1rem;
+  margin-left: 0.2rem;
+  vertical-align: -0.15rem;
+  background: hsl(var(--primary));
+  animation: ai-cursor-blink 0.9s steps(2) infinite;
+}
+
+@keyframes ai-cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-streaming-cursor {
+    animation: none;
+  }
+}
+
+/* AI 正文 Markdown 渲染增强 */
+.ai-markdown-body :is(table) {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.ai-markdown-body th,
+.ai-markdown-body td {
+  white-space: nowrap;
+  border: 1px solid hsl(var(--border));
+  padding: 0.375rem 0.625rem;
+}
+
+.ai-markdown-body pre {
+  overflow-x: auto;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: #1e1e1e;
+}
+
+.ai-markdown-body code:not(pre code) {
+  background-color: hsl(var(--muted));
+  padding: 0.125rem 0.3125rem;
+  border-radius: 0.25rem;
+}
+
+.ai-markdown-body hr {
+  border-color: hsl(var(--border));
+}
+
+.ai-markdown-body img {
+  max-width: 100%;
+  height: auto;
 }
 
 .log-content table {

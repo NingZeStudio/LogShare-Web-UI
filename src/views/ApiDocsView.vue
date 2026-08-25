@@ -26,7 +26,18 @@ const endpoints = [
       '提交新的日志数据进行分析，生成分享链接和分析结果。支持纯文本或 JSON 格式，支持 gzip/deflate/br 压缩。',
     contentType: 'text/plain 或 application/json',
     params: [
-      { name: 'content', type: 'string', required: true, desc: '日志内容字符串（JSON 模式必需）' },
+      {
+        name: 'content',
+        type: 'string',
+        required: false,
+        desc: '日志内容字符串（JSON 模式必需，提供 files 时可省略）。最大 10 MiB / 50,000 行'
+      },
+      {
+        name: 'files',
+        type: 'array',
+        required: false,
+        desc: '附加文件数组，每个元素 {name, content}。name 以 .zip 结尾时自动展开（≤200 个文件，解压后累计 ≤12MB）'
+      },
       {
         name: 'metadata',
         type: 'object',
@@ -41,18 +52,16 @@ const endpoints = [
         example: `{
     "success": true,
     "message": "Log submitted successfully",
-    "data": {
-        "id": "abc123",
-        "url": "https://logshare.cn/abc123",
-        "raw": "https://api.logshare.cn/v1/raw/abc123",
-        "token": "token_xxxxx"
-    }
+    "id": "abc123",
+    "url": "https://logshare.cn/abc123",
+    "raw": "https://api.logshare.cn/v1/raw/abc123",
+    "token": "token_xxxxx"
 }`
       },
       error: {
         example: `{
     "success": false,
-    "message": "请求参数错误",
+    "error": "请求参数错误",
     "code": 400
 }`
       }
@@ -119,20 +128,25 @@ curl -X POST https://api.logshare.cn/v1/log \\
       success: {
         code: 200,
         example: `{
-    "success": true,
-    "data": {
-        "id": "log-id",
-        "name": "Minecraft",
-        "type": "ServerLog",
-        "entries": [...],
-        "insights": [...]
+    "id": "vanilla/server",
+    "name": "Vanilla",
+    "type": "server",
+    "version": "1.21.9",
+    "title": "Vanilla 1.21.9 server",
+    "analysis": {
+        "problems": [
+            { "message": "...", "counter": 1, "solutions": ["..."] }
+        ],
+        "information": [
+            { "message": "minecraft-version: 1.21.9", "counter": 1 }
+        ]
     }
 }`
       },
       error: {
         example: `{
     "success": false,
-    "message": "分析失败",
+    "error": "分析失败",
     "code": 400
 }`
       }
@@ -164,7 +178,7 @@ print_r($result);`,
     methodType: 'get',
     path: '/v1/raw/{id}',
     title: t('get_raw_log'),
-    description: '获取指定日志的原始内容。支持多个 ID 用逗号分隔。',
+    description: '获取指定日志的原始内容（多文件日志返回主文件）。支持多个 ID 用逗号分隔。',
     params: [
       { name: 'id', type: 'string', required: true, desc: '日志 ID（支持多个 ID，用逗号分隔）' }
     ],
@@ -179,7 +193,7 @@ print_r($result);`,
       error: {
         example: `{
     "success": false,
-    "message": "Log not found.",
+    "error": "Log not found.",
     "code": 404
 }`
       }
@@ -209,6 +223,93 @@ curl https://api.logshare.cn/v1/raw/abc1234,def5678`
   {
     method: 'GET',
     methodType: 'get',
+    path: '/v1/raw/{id}/{filename}',
+    title: '获取附加文件',
+    description:
+      '获取日志附加文件的原文（text/plain）。filename 支持子路径并需 URL 编码；路径会做遍历防护（拒绝 ../ 与绝对路径）。文件不存在返回 404。',
+    params: [
+      { name: 'id', type: 'string', required: true, desc: '日志 ID' },
+      { name: 'filename', type: 'string', required: true, desc: '文件名（含子路径，需 URL 编码）' }
+    ],
+    response: {
+      success: {
+        code: 200,
+        type: 'text/plain',
+        example: `---- Minecraft Crash Report ----
+// Don't blame me for this crash report...`
+      },
+      error: {
+        example: `{
+    "success": false,
+    "error": "File not found.",
+    "code": 404
+}`
+      }
+    },
+    examples: {
+      js: `const response = await fetch(
+    'https://api.logshare.cn/v1/raw/abc1234/' +
+    encodeURIComponent('crash-reports/crash-01.txt')
+);
+const text = await response.text();
+console.log(text);`,
+      php: `<?php
+$text = file_get_contents(
+    'https://api.logshare.cn/v1/raw/abc1234/' .
+    urlencode('crash-reports/crash-01.txt')
+);
+echo $text;`,
+      curl: `curl 'https://api.logshare.cn/v1/raw/abc1234/crash-reports/crash-01.txt'`
+    }
+  },
+  {
+    method: 'GET',
+    methodType: 'get',
+    path: '/v1/log/{id}',
+    title: '获取日志元信息与文件列表',
+    description:
+      '获取日志元信息及附加文件列表（不含内容）。多文件上传时可通过 files 字段获知全部附加文件。',
+    params: [{ name: 'id', type: 'string', required: true, desc: '日志 ID' }],
+    response: {
+      success: {
+        code: 200,
+        example: `{
+    "success": true,
+    "message": "Log metadata retrieved successfully",
+    "id": "abc123",
+    "size": 4096,
+    "lines": 120,
+    "created": 1755200000,
+    "expires": 1755804800,
+    "metadata": [],
+    "source": "minecraft-server",
+    "files": [
+        { "name": "crash-reports/crash-01.txt", "size": 2048 }
+    ],
+    "raw": "https://api.logshare.cn/v1/raw/abc123"
+}`
+      },
+      error: {
+        example: `{
+    "success": false,
+    "error": "Log not found.",
+    "code": 404
+}`
+      }
+    },
+    examples: {
+      js: `const response = await fetch('https://api.logshare.cn/v1/log/abc1234');
+const data = await response.json();
+console.log(data.files);`,
+      php: `<?php
+$data = json_decode(file_get_contents('https://api.logshare.cn/v1/log/abc1234'), true);
+print_r($data['files']);`,
+      curl: `curl https://api.logshare.cn/v1/log/abc1234`
+    }
+  },
+  {
+    method: 'GET',
+    methodType: 'get',
     path: '/v1/insights/{id}',
     title: t('get_insights'),
     description: '获取已存储日志的分析洞察，包括服务器软件类型、版本和问题检测。',
@@ -217,19 +318,17 @@ curl https://api.logshare.cn/v1/raw/abc1234,def5678`
       success: {
         code: 200,
         example: `{
-    "success": true,
-    "data": {
-        "id": "log-id",
-        "name": "Minecraft",
-        "type": "ServerLog",
-        "insights": [
-            {
-                "message": "错误描述",
-                "level": "ERROR",
-                "counter": 1,
-                "tags": ["error", "crash"],
-                "entry": {...}
-            }
+    "id": "vanilla/server",
+    "name": "Vanilla",
+    "type": "Server Log",
+    "version": "1.21.9",
+    "title": "Vanilla 1.21.9 Server Log",
+    "analysis": {
+        "problems": [
+            { "message": "...", "counter": 1, "solutions": ["..."] }
+        ],
+        "information": [
+            { "message": "Minecraft version: 1.21.9", "counter": 1, "label": "Minecraft version", "value": "1.21.9" }
         ]
     }
 }`
@@ -270,7 +369,7 @@ print_r($data);`,
       error: {
         example: `{
     "success": false,
-    "message": "Missing token in Authorization header.",
+    "error": "Missing token in Authorization header.",
     "code": 401
 }`
       }
@@ -334,9 +433,9 @@ curl -X DELETE https://api.logshare.cn/v1/log/abc1234,def5678 \\
       success: {
         code: 200,
         example: `{
-    "storageTime": 7776000,
-    "maxLength": 10000000,
-    "maxLines": 50000
+    "maxLength": 10485760,
+    "maxLines": 50000,
+    "storageTime": 604800
 }`
       }
     },
@@ -364,7 +463,7 @@ print_r($data);`,
     "success": true,
     "filters": [
         { "type": "trim", "data": null },
-        { "type": "limit-bytes", "data": { "limit": 10000000 } },
+        { "type": "limit-bytes", "data": { "limit": 10485760 } },
         { "type": "limit-lines", "data": { "limit": 50000 } },
         {
             "type": "regex",
@@ -372,8 +471,14 @@ print_r($data);`,
                 "patterns": [
                     { "pattern": "IPv4", "replacement": "**.**.**.**" },
                     { "pattern": "IPv6", "replacement": "****:****:****:****:****:****:****:****" },
-                    { "pattern": "Username", "replacement": "********" },
-                    { "pattern": "AccessToken", "replacement": "********" }
+                    { "pattern": "IPv6Short", "replacement": "****:****:****:****:****:****:****:****" },
+                    { "pattern": "Uuid", "replacement": "********-****-****-****-************" },
+                    { "pattern": "Xuid", "replacement": "xuid:\\"****************\\"" },
+                    { "pattern": "SessionToken", "replacement": "accessToken:\\"********\\"" },
+                    { "pattern": "ClientId", "replacement": "clientId:\\"********\\"" },
+                    { "pattern": "Coordinate", "replacement": "BlockPos(*****, *****, *****)" },
+                    { "pattern": "Username", "replacement": "C:\\\\Users\\\\********\\\\" },
+                    { "pattern": "AccessToken", "replacement": "accessToken:\\"********\\"" }
                 ]
             }
         }
@@ -395,89 +500,106 @@ print_r($data);`,
     method: 'GET',
     methodType: 'get',
     path: '/v1/ai/{id}',
-    title: 'AI 分析已存储日志 🔵',
+    title: 'AI 分析已存储日志',
     description:
-      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出，以纯文本/Markdown 形式返回，30 分钟内缓存命中通过 SSE 回放。',
+      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出：data: 为正文增量（OpenAI 兼容格式），event: status 推送思维链与工具调用事件，event: done 结束。AI 关闭时统一返回 HTTP 404。',
     isSSE: true,
     params: [{ name: 'id', type: 'string', required: true, desc: '日志 ID' }],
     response: {
       success: {
         code: 200,
-        example: `// SSE 流式数据（逐块返回纯文本/Markdown）
-data: # 服务器启动失败分析
-data:
-data: ## 问题摘要
-data: 服务器因为端口被占用而启动失败...
+        example: `// 正文增量（OpenAI 兼容格式）
+data: {"choices":[{"delta":{"content":"# 分析结果\\n..."}}]}
+
+// LogAgent 模式额外输出 status 事件
+event: status
+data: {"type":"thinking","delta":"用户日志显示端口被占用..."}
+event: status
+data: {"type":"tool","name":"web_search_exa","arguments":{"query":"..."}}
+event: status
+data: {"type":"tool_result","name":"web_search_exa","summary":"...","truncated":true}
 
 // 流结束
 event: done
-data: [DONE]`
+data: {"status":"completed"}`
       },
       error: {
         example: `{
     "success": false,
-    "message": "Log not found.",
+    "error": "AI analysis is disabled.",
     "code": 404
 }`
       }
     },
     examples: {
-      js: `// SSE 流式方式（推荐）
-const response = await fetch('https://api.logshare.cn/v1/ai/abc1234');
+      js: `const response = await fetch('https://api.logshare.cn/v1/ai/abc1234');
 const reader = response.body.getReader();
 const decoder = new TextDecoder();
 let fullText = '';
+let currentEvent = '';
 
 while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    
-    const text = decoder.decode(value);
-    const lines = text.split('\\n');
-    for (const line of lines) {
-        if (line.startsWith('event: done')) break;
-        if (line.startsWith('data: ')) {
-            fullText += line.slice(6);
-        }
+    for (const line of decoder.decode(value).split('\\n')) {
+        if (line.startsWith('event:')) { currentEvent = line.slice(6).trim(); continue; }
+        if (currentEvent === 'done') break;
+        if (!line.startsWith('data: ')) continue;
+        const payload = JSON.parse(line.slice(6));
+        if (currentEvent === 'status') { console.log('status:', payload); continue; }
+        fullText += payload.choices?.[0]?.delta?.content || '';
     }
 }
 console.log(fullText);`,
       php: `<?php
 // PHP 不支持 SSE 客户端流式读取，建议使用 curl -N 直接查看
-// 或等待完整响应后输出
 $ch = curl_init('https://api.logshare.cn/v1/ai/abc1234');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
 curl_close($ch);
 echo $response;`,
       curl: `# SSE 流式方式
-curl -N https://api.logshare.cn/v1/ai/abc1234
-
-# 或直接等待完整结果
-curl https://api.logshare.cn/v1/ai/abc1234`
+curl -N https://api.logshare.cn/v1/ai/abc1234`
     }
   },
   {
     method: 'POST',
     methodType: 'post',
     path: '/v1/ai/analyse',
-    title: 'AI 分析日志内容 🔵',
+    title: 'AI 分析日志内容',
     description:
-      '直接提交日志内容，使用 AI 分析，不存储到数据库。SSE 流式输出，基于内容哈希缓存（30 分钟 TTL），缓存命中通过 SSE 回放。',
+      '直接提交内容给 AI 分析，不落盘。SSE 流式输出（协议同上），缓存基于内容哈希（30 分钟 TTL）。可选传 id 绑定已存在日志：Agent 获得该日志附加文件的访问权（可用于多文件对比），content 可省略。',
     isSSE: true,
-    contentType: 'text/plain 或 application/json',
-    params: [{ name: 'content', type: 'string', required: true, desc: '日志原始内容' }],
+    contentType: 'application/json',
+    params: [
+      {
+        name: 'content',
+        type: 'string',
+        required: false,
+        desc: '日志内容（传入 id 时可省略，缺省读取该 ID 主文件）'
+      },
+      {
+        name: 'id',
+        type: 'string',
+        required: false,
+        desc: '已存在的日志 ID，绑定后 Agent 可读取其附加文件'
+      }
+    ],
     response: {
       success: {
         code: 200,
-        example: `// SSE 流式数据（逐块返回纯文本/Markdown）
-data: # 崩溃分析
-data:
-data: 服务器因内存不足崩溃...
+        example: `// SSE 流式数据，协议同 GET /v1/ai/{id}
+data: {"choices":[{"delta":{"content":"# 崩溃分析..."}}]}
 
-// 流结束
 event: done
-data: [DONE]`
+data: {"status":"completed"}`
+      },
+      error: {
+        example: `{
+    "success": false,
+    "error": "AI analysis is disabled.",
+    "code": 404
+}`
       }
     },
     examples: {
@@ -488,23 +610,7 @@ data: [DONE]`
         content: "[Server thread/ERROR]: Could not bind to port 25565..."
     })
 });
-const reader = response.body.getReader();
-const decoder = new TextDecoder();
-let fullText = '';
-
-while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const text = decoder.decode(value);
-    const lines = text.split('\\n');
-    for (const line of lines) {
-        if (line.startsWith('event: done')) break;
-        if (line.startsWith('data: ')) {
-            fullText += line.slice(6);
-        }
-    }
-}
-console.log(fullText);`,
+// SSE 流式读取同 GET /v1/ai/{id}`,
       php: `<?php
 $data = ['content' => "[Server thread/ERROR]: Could not bind to port 25565..."];
 $ch = curl_init('https://api.logshare.cn/v1/ai/analyse');
@@ -514,7 +620,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 $response = curl_exec($ch);
 curl_close($ch);
 echo $response;`,
-      curl: `curl -X POST https://api.logshare.cn/v1/ai/analyse \\
+      curl: `curl -N -X POST https://api.logshare.cn/v1/ai/analyse \\
   -H "Content-Type: application/json" \\
   -d '{
     "content": "[Server thread/ERROR]: Could not bind to port 25565..."
@@ -693,6 +799,24 @@ const isSSEEndpoint = (endpoint: any) => {
                 </td>
                 <td class="p-3 font-mono text-xs">/v1/insights/{id}</td>
                 <td class="p-3 text-muted-foreground">获取日志分析结果</td>
+              </tr>
+              <tr class="border-t border-border hover:bg-muted/30 transition-colors">
+                <td class="p-3">
+                  <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('get')"
+                    >GET</span
+                  >
+                </td>
+                <td class="p-3 font-mono text-xs">/v1/raw/{id}/{filename}</td>
+                <td class="p-3 text-muted-foreground">获取日志附加文件</td>
+              </tr>
+              <tr class="border-t border-border hover:bg-muted/30 transition-colors">
+                <td class="p-3">
+                  <span class="px-2 py-1 rounded text-xs font-bold" :class="methodTypeClass('get')"
+                    >GET</span
+                  >
+                </td>
+                <td class="p-3 font-mono text-xs">/v1/log/{id}</td>
+                <td class="p-3 text-muted-foreground">获取日志元信息与文件列表</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
                 <td class="p-3">
@@ -950,7 +1074,7 @@ const isSSEEndpoint = (endpoint: any) => {
     <!-- SDKs -->
     <div v-if="activeTab === 'sdks'" class="space-y-6">
       <p class="text-sm text-muted-foreground">
-        我们为您提供了开箱即用的本地 SDK，支持 SSE 流式 AI 分析，您可以直接下载并集成到您的项目中。
+        我们为您提供了开箱即用的本地 SDK，您可以直接下载并集成到您的项目中。
       </p>
       <div class="grid gap-4 sm:grid-cols-2">
         <a
@@ -978,7 +1102,7 @@ const isSSEEndpoint = (endpoint: any) => {
             >
           </div>
           <p class="text-sm text-muted-foreground mb-4">
-            高性能 cURL 封装，支持 SSE 流式 AI 分析、批量上传、完整错误处理。PHP 7.4+
+            高性能 cURL 封装，支持批量上传、完整错误处理。PHP 7.4+
           </p>
           <div
             class="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all"
@@ -1027,7 +1151,7 @@ const isSSEEndpoint = (endpoint: any) => {
             >
           </div>
           <p class="text-sm text-muted-foreground mb-4">
-            基于 Fetch API + ReadableStream，支持浏览器和 Node.js 环境，SSE 流式解析。
+            基于 Fetch API + ReadableStream，支持浏览器和 Node.js 环境。
           </p>
           <div
             class="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all"
@@ -1076,7 +1200,7 @@ const isSSEEndpoint = (endpoint: any) => {
             >
           </div>
           <p class="text-sm text-muted-foreground mb-4">
-            基于 java.net.http.HttpClient，无第三方依赖，支持 SSE 流式 AI 分析。Java 11+
+            基于 java.net.http.HttpClient，无第三方依赖。Java 11+
           </p>
           <div
             class="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all"
@@ -1125,7 +1249,7 @@ const isSSEEndpoint = (endpoint: any) => {
             >
           </div>
           <p class="text-sm text-muted-foreground mb-4">
-            基于 System.Net.Http.HttpClient，完整异步支持，SSE 流式解析。.NET 6+
+            基于 System.Net.Http.HttpClient，完整异步支持。.NET 6+
           </p>
           <div
             class="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all"
@@ -1175,25 +1299,12 @@ require_once 'mclogs.php';
 use LogShare\LogShareSDK;
 
 $sdk = new LogShareSDK([
-    'timeout' => 120  // AI 分析需要更长时间
+    'timeout' => 120
 ]);
 
 // 上传日志
 $result = $sdk->paste("[Server thread/INFO]: Starting minecraft server");
-$id = $result['data']['id'];
-
-// SSE 流式 AI 分析
-$analysis = $sdk->streamAiAnalysis(
-    $id,
-    function ($text) {
-        // 实时处理每个数据块
-        echo $text;
-    },
-    function ($fullText) {
-        // 分析完成
-        echo "\n分析完成！\n";
-    }
-);</code></pre>
+$id = $result['id'];</code></pre>
           </div>
 
           <!-- JavaScript 示例 -->
@@ -1215,21 +1326,7 @@ const sdk = new LogShareSDK({ timeout: 120000 });
 
 // 上传日志
 const result = await sdk.paste('[Server thread/INFO]: Starting...');
-const id = result.data.id;
-
-// SSE 流式 AI 分析
-const analysis = await sdk.streamAiAnalysis(id, {
-    onChunk: (text) => {
-        // 实时处理每个数据块
-        process.stdout.write(text);
-    },
-    onDone: (fullText) => {
-        console.log('\n分析完成！');
-    },
-    onError: (error) => {
-        console.error('SSE 错误:', error);
-    }
-});</code></pre>
+const id = result.id;</code></pre>
           </div>
 
           <!-- Java 示例 -->
@@ -1256,23 +1353,7 @@ public class Example {
         try {
             // 上传日志
             Map&lt;String, Object&gt; result = sdk.paste("[Server thread/INFO]: Starting...");
-            Map&lt;String, Object&gt; data = (Map&lt;String, Object&gt;) result.get("data");
-            String id = (String) data.get("id");
-
-            // SSE 流式 AI 分析
-            String analysis = sdk.streamAiAnalysis(
-                id,
-                text -> {
-                    // 实时处理每个数据块
-                    System.out.print(text);
-                },
-                fullText -> {
-                    System.out.println("\n分析完成！");
-                },
-                error -> {
-                    System.err.println("SSE 错误: " + error);
-                }
-            );
+            String id = (String) result.get("id");
         } catch (LogShareException e) {
             System.err.println("错误: " + e.getMessage());
         }
@@ -1308,22 +1389,7 @@ class Program
         {
             // 上传日志
             var result = await sdk.PasteAsync("[Server thread/INFO]: Starting...");
-            var id = result.GetProperty("data").GetProperty("id").GetString();
-
-            // SSE 流式 AI 分析
-            var analysis = await sdk.StreamAiAnalysisAsync(
-                id,
-                onChunk: text => {
-                    // 实时处理每个数据块
-                    Console.Write(text);
-                },
-                onDone: fullText => {
-                    Console.WriteLine("\n分析完成！");
-                },
-                onError: error => {
-                    Console.Error.WriteLine($"SSE 错误: {error}");
-                }
-            );
+            var id = result.GetProperty("id").GetString();
         }
         catch (LogShareException ex)
         {
@@ -1357,8 +1423,7 @@ class Program
           <li class="flex items-start gap-3">
             <span class="text-primary font-medium min-w-fit">{{ t('storage_time') }}：</span>
             <span class="text-muted-foreground"
-              >日志在最后一次查看后至少保留
-              <strong class="text-foreground">90 天</strong>（7,776,000 秒）</span
+              >日志保留 <strong class="text-foreground">7 天</strong>（604,800 秒）</span
             >
           </li>
           <li class="flex items-start gap-3">
@@ -1388,59 +1453,109 @@ class Program
 
       <div class="rounded-lg border border-border bg-card p-5">
         <h2 class="text-lg font-semibold mb-4">隐私保护过滤器</h2>
-        <p class="text-sm text-muted-foreground mb-4">所有提交的日志会自动应用以下过滤器（按执行顺序）：</p>
+        <p class="text-sm text-muted-foreground mb-4">
+          所有提交的日志会自动应用以下过滤器（按执行顺序）：
+        </p>
         <ul class="space-y-2 text-sm">
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">Trim</strong> — 去除日志首尾空白</span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">Trim</strong> — 去除日志首尾空白</span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">LimitBytes</strong> — 超过 10 MiB 拒绝上传</span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">LimitBytes</strong> — 超过 10 MiB 拒绝上传</span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">LimitLines</strong> — 超过 50,000 行拒绝上传</span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">LimitLines</strong> — 超过 50,000 行拒绝上传</span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">IPv4</strong> — 替换为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">**.**.**.**</code>（豁免 127.x、0.0.0.0、1.x、8.8.8.8）</span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">IPv4</strong> — 替换为
+              <code class="bg-muted px-1.5 py-0.5 rounded text-xs">**.**.**.**</code>（豁免
+              127.x、0.0.0.0、1.x、8.8.8.8）</span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">IPv6</strong> — 完整 IPv6 替换为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">****:****:****:****:****:****:****:****</code>（豁免 ::1、::）</span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">IPv6</strong> — 完整 IPv6 替换为
+              <code class="bg-muted px-1.5 py-0.5 rounded text-xs"
+                >****:****:****:****:****:****:****:****</code
+              >（豁免 ::1、::）</span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">IPv6Short</strong> — 简写 IPv6（含 ::ffff: 映射）替换为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">****:****:****:****:****:****:****:****</code></span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">IPv6Short</strong> — 简写 IPv6（含 ::ffff:
+              映射）替换为
+              <code class="bg-muted px-1.5 py-0.5 rounded text-xs"
+                >****:****:****:****:****:****:****:****</code
+              ></span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">UUID</strong> — 替换标准/无连字符/花括号/urn:uuid 格式为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">********-****-****-****-************</code></span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">UUID</strong> — 替换标准/无连字符/花括号/urn:uuid
+              格式为
+              <code class="bg-muted px-1.5 py-0.5 rounded text-xs"
+                >********-****-****-****-************</code
+              ></span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">XUID</strong> — 替换 Xbox User ID 为 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">****************</code></span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">XUID</strong> — 替换 Xbox User ID 为
+              <code class="bg-muted px-1.5 py-0.5 rounded text-xs">****************</code></span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">SessionToken</strong> — 替换 access token、Bearer token、session ID</span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">SessionToken</strong> — 替换 access token、Bearer
+              token、session ID</span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">ClientId</strong> — 替换 clientId / deviceId / instanceId / launcherId</span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">ClientId</strong> — 替换 clientId / deviceId /
+              instanceId / launcherId</span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">Coordinate</strong> — 替换 Minecraft 坐标（BlockPos / Vec3d / at() 等）</span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">Coordinate</strong> — 替换 Minecraft 坐标（BlockPos /
+              Vec3d / at() 等）</span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">Username</strong> — 替换用户路径中的用户名及 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">USERNAME=</code> 环境变量</span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">Username</strong> — 替换用户路径中的用户名及
+              <code class="bg-muted px-1.5 py-0.5 rounded text-xs">USERNAME=</code> 环境变量</span
+            >
           </li>
           <li class="flex items-start gap-2">
             <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-muted-foreground"><strong class="text-foreground">AccessToken</strong> — 替换 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">accessToken</code> / <code class="bg-muted px-1.5 py-0.5 rounded text-xs">access_token</code> 字段值及 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">X-Access-Token</code> 请求头</span>
+            <span class="text-muted-foreground"
+              ><strong class="text-foreground">AccessToken</strong> — 替换
+              <code class="bg-muted px-1.5 py-0.5 rounded text-xs">accessToken</code> /
+              <code class="bg-muted px-1.5 py-0.5 rounded text-xs">access_token</code> 字段值及
+              <code class="bg-muted px-1.5 py-0.5 rounded text-xs">X-Access-Token</code>
+              请求头</span
+            >
           </li>
         </ul>
       </div>

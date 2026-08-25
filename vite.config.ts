@@ -5,6 +5,8 @@ import { gzipSync } from 'node:zlib'
 import { statSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
+const APP_VERSION: string = JSON.parse(readFileSync('./package.json', 'utf-8')).version
+
 /**
  * ASCII 艺术猫爪
  */
@@ -227,9 +229,21 @@ function customBuildReportPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [vue(), customBuildReportPlugin()],
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION)
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  },
+  server: {
+    proxy: {
+      // 本地后端（Hyperf），仅 dev 生效
+      '/v1': {
+        target: 'http://127.0.0.1:9501',
+        changeOrigin: true
+      }
     }
   },
   build: {
@@ -240,20 +254,16 @@ export default defineConfig({
             if (id.includes('markdown-it')) {
               return 'markdown'
             }
-            if (id.includes('vue') || id.includes('vue-router')) {
+            if (/node_modules[\\/](@vue|vue|vue-router)[\\/]/.test(id)) {
               return 'vue-core'
             }
             if (id.includes('axios')) {
               return 'axios'
             }
-            if (id.includes('radix-vue') || id.includes('lucide-vue-next')) {
+            if (/node_modules[\\/](radix-vue|reka-ui|lucide-vue-next)[\\/]/.test(id)) {
               return 'ui-components'
             }
-            if (
-              id.includes('class-variance-authority') ||
-              id.includes('clsx') ||
-              id.includes('tailwind-merge')
-            ) {
+            if (/node_modules[\\/](class-variance-authority|clsx|tailwind-merge)[\\/]/.test(id)) {
               return 'utils'
             }
             return 'vendor'

@@ -36,6 +36,12 @@ const router = createRouter({
       meta: { title: 'tutorialArticle' }
     },
     {
+      path: '/groups',
+      name: 'groups',
+      component: () => import('../views/GroupListView.vue'),
+      meta: { title: 'groups' }
+    },
+    {
       path: '/:id',
       name: 'log',
       component: () => import('../views/LogView.vue'),

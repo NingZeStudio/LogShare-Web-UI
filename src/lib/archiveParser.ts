@@ -1,6 +1,6 @@
 import JSZip from 'jszip'
 
-const TEXT_EXTENSIONS = [
+export const TEXT_EXTENSIONS = [
   '.txt',
   '.log',
   '.yml',

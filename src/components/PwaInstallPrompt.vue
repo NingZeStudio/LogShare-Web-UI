@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { X, Download } from 'lucide-vue-next'
+import { APP_VERSION } from '@/lib/version'
+
+const DISMISS_KEY = 'pwa_install_dismissed_ver'
 
 const showInstallPrompt = ref(false)
 let deferredPrompt: any = null
@@ -12,7 +15,7 @@ const installApp = () => {
   deferredPrompt.userChoice.then((choiceResult: any) => {
     if (choiceResult.outcome === 'accepted') {
       showInstallPrompt.value = false
-      localStorage.setItem('pwa_install_dismissed', 'true')
+      localStorage.setItem(DISMISS_KEY, APP_VERSION)
     }
     deferredPrompt = null
   })
@@ -20,14 +23,15 @@ const installApp = () => {
 
 const dismissPrompt = () => {
   showInstallPrompt.value = false
-  localStorage.setItem('pwa_install_dismissed', 'true')
+  localStorage.setItem(DISMISS_KEY, APP_VERSION)
 }
 
 const handleBeforeInstallPrompt = (event: Event) => {
   event.preventDefault()
   deferredPrompt = event
 
-  if (!localStorage.getItem('pwa_install_dismissed')) {
+  // 每个新版本允许重新提示一次
+  if (localStorage.getItem(DISMISS_KEY) !== APP_VERSION) {
     showInstallPrompt.value = true
   }
 }

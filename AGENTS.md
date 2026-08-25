@@ -5,7 +5,8 @@ Vue 3 + TypeScript 5 + Vite 7 前端，Minecraft/Hytale 日志分享与分析平
 ## 开发环境
 
 - **Termux/Android：** 使用 `nub run <script>` 替代 `npm run`（见 `~/.config/opencode/NUBDOC.md`）。运行 `.ts` 文件时，用 `node --experimental-strip-types` 或 `tsx`，`nub <file.ts>` 会报错。
-- **无测试框架。** 验证改动只用 `npm run build`（含 `vue-tsc -b` 类型检查），风格检查另跑 `npm run lint`。
+- **无测试框架。** 验证改动只用 `npm run build`（含 `vue-tsc -b` 类型检查），风格检查另跑 `npm run lint`（含 `--fix`，会自动修改文件）。
+- **不要主动构建。** 改完代码即停止；仅在用户明确要求时才运行 build/lint 验证。
 
 ## 编码约定
 
@@ -23,30 +24,34 @@ Vue 3 + TypeScript 5 + Vite 7 前端，Minecraft/Hytale 日志分享与分析平
 - `src/components/MobileNav.vue` — 移动端导航
 - `src/lib/pageTitle.ts` — `pageTitleTemplates` 和 `getCurrentPageTemplate()` 的 switch
 
-### PWA 更新链路（3 个文件）
+### PWA 更新链路（2 个文件）
 涉及 `public/sw.js`、`src/main.ts`、`src/components/PwaUpdateToast.vue`。修改后必须验证：
-- `BroadcastChannel('pwa-update')` — SW 与主线程通信
-- `window.dispatchEvent(new CustomEvent('pwa-update-available'))` — Vue 组件监听
-- `public/sw.js` **不会被 ESLint 检查和修复**
+- 唯一生效链路：main.ts `updatefound` → `window.dispatchEvent(new CustomEvent('pwa-update-available'))` → PwaUpdateToast 监听
+- `public/sw.js` **不会被 ESLint 检查和修复**；缓存策略分三档（导航 network-first + 离线兜底、`/assets/` cache-first、其余同源 GET network-first）
 
 ### 日志解析与 CSS 耦合
-`src/lib/logParser.ts` 输出 HTML 字符串（非 Vue 组件）。`formatContent()` 中的 `styleMap` 颜色映射必须与 `src/assets/LogsAnalysis.css` 中的 `.format-*` 类名保持同步。
+`src/lib/logParser.ts` 通过 Web Worker 解析：`new Worker(new URL('./logParser.worker.ts', import.meta.url), { type: 'module' })`。真正的解析逻辑在 `logParser.worker.ts`，它输出 HTML 字符串（非 Vue 组件）。其 `COLOR_STYLE_MAP` 颜色映射必须与 `src/assets/LogsAnalysis.css` 中的 `.format-*` 类名保持同步。
 ### API 层
 
 - 所有 HTTP 请求统一通过 `src/lib/ApiClient.ts`，`baseURL = 'https://api.logshare.cn'`（硬编码）。
-- 后端已弃用 `/1/` 端点，前端统一使用 `/v1/` 路径（`/v1/log`、`/v1/raw/{id}`、`/v1/insights/{id}`、`/v1/ai/{id}`、`/v1/ai/analyse`、`/v1/limits`、`/v1/filters`）。
-- AI 分析 SSE 使用原生 `fetch`（非 Axios），OpenAI 兼容格式：`choices[0].delta.content`。
-- 敏感信息脱敏由后端 `/v1/filters` 配置，前端不处理。
-- `apiDocsUtils.ts` 中的代码示例硬编码，更新 API 时同步修改。
+- 后端已弃用 `/1/` 端点，前端统一使用 `/v1/` 路径（`/v1/log`、`/v1/log/{id}` 元信息、`/v1/raw/{id}`、`/v1/raw/{id}/{filename}` 附加文件、`/v1/insights/{id}`、`/v1/ai/{id}`、`/v1/ai/analyse`、`/v1/limits`、`/v1/filters`）。
+- 错误响应字段为 `error`（非 `message`）；前端读取时保留 `error || message` 兜底。
+- AI 分析 SSE：`data:` 为正文增量（OpenAI 兼容），LogAgent 模式额外输出 `event: status`（thinking/tool/tool_result/limit），`event: done` 结束；AI 关闭时返回 HTTP 404。解析逻辑集中在 `ApiClient.consumeSse()`。
+- insights 响应为扁平结构（无 `success/data` 包装）：`title` + `analysis.problems/information`。
+- 上游后端仓库位于 `~/LogShare/`，其 `API.md` 为权威文档；本仓库 `API.md` 为其副本，更新 API 时同步。
+- `ApiDocsView.vue` 中的端点与代码示例硬编码，更新 API 时同步修改（`apiDocsUtils.ts` 已删除）。
+- 无引用依赖已清理（radix-vue / cva / clsx / tailwind-merge）；新增 UI 依赖前先确认确有使用。
 
 ### i18n
 - **自定义实现**，非 vue-i18n。文案在 `src/lib/i18nConfig.ts`（`zhCN`/`zhTW`），运行时用 `src/lib/i18n.ts` 的 `t(key)`。
 - 语言切换后**必须刷新页面**才能生效（存在 `localStorage.preferred_language`）。
 
 ### 硬编码数据
-- `src/lib/apiDocsUtils.ts` — API 代码示例硬编码，更新 API 时同步修改。
+- `src/views/ApiDocsView.vue` — API 端点与代码示例硬编码，更新 API 时同步修改。
 - `src/views/TutorialArticleView.vue` — 教程数据硬编码在组件中。
 - `src/data/sponsors.ts` — 赞助者数据硬编码。
+- `src/lib/announcementConfig.ts` — 公告与日志更新提示硬编码。
+- 版本号由 vite.config.ts 构建时从 package.json 注入（`__APP_VERSION__`），无需手动同步。
 
 ## 样式系统
 

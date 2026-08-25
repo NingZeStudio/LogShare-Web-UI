@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, provide } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
-import { Heart, BookOpen, FileText, Github, Palette, Sun, Moon, X } from 'lucide-vue-next'
+import { Heart, BookOpen, FileText, Users, Sun, Moon, X } from 'lucide-vue-next'
 import PwaUpdateToast from '@/components/PwaUpdateToast.vue'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt.vue'
 import AnnouncementDialog from '@/components/AnnouncementDialog.vue'
 import MobileNav from '@/components/MobileNav.vue'
-import ThemeSettings from '@/components/ThemeSettings.vue'
 import LanguageMenu from '@/components/LanguageMenu.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 import { t } from '@/lib/i18n'
@@ -14,14 +13,13 @@ import { APP_VERSION } from '@/lib/version'
 
 const route = useRoute()
 const isDark = ref(false)
-const isThemeSettingsOpen = ref(false)
 const showEasterEgg = ref(false)
 const announcementDialogRef = ref<InstanceType<typeof AnnouncementDialog> | null>(null)
-const themeSettingsRef = ref<InstanceType<typeof ThemeSettings> | null>(null)
 
 provide('announcementDialog', announcementDialogRef)
 
 const navLinks = [
+  { name: () => t('group_list'), path: '/groups', icon: Users },
   { name: () => t('sponsor'), path: '/sponsor', icon: Heart },
   { name: () => t('tutorials'), path: '/tutorials', icon: BookOpen },
   { name: () => t('api_docs'), path: '/api-docs', icon: FileText }
@@ -41,7 +39,28 @@ const toggleDark = () => {
   isDark.value = !isDark.value
   document.documentElement.classList.toggle('dark', isDark.value)
   localStorage.setItem('display_mode', isDark.value ? 'dark' : 'light')
-  themeSettingsRef.value?.applyDisplayMode(isDark.value ? 'dark' : 'light')
+}
+
+// 用户未显式设置显示模式时，跟随系统深浅色变化
+const applySystemTheme = (dark: boolean) => {
+  isDark.value = dark
+  document.documentElement.classList.toggle('dark', dark)
+}
+
+// 彩蛋：连点页脚版本号 5 次触发
+let easterEggClicks = 0
+let easterEggTimer: ReturnType<typeof setTimeout> | null = null
+
+const onVersionClick = () => {
+  easterEggClicks++
+  if (easterEggTimer) clearTimeout(easterEggTimer)
+  easterEggTimer = setTimeout(() => {
+    easterEggClicks = 0
+  }, 2000)
+  if (easterEggClicks >= 5) {
+    easterEggClicks = 0
+    showEasterEgg.value = true
+  }
 }
 
 onMounted(() => {
@@ -54,6 +73,13 @@ onMounted(() => {
   if (isDark.value) {
     document.documentElement.classList.add('dark')
   }
+
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  mediaQuery.addEventListener('change', event => {
+    if (!localStorage.getItem('display_mode')) {
+      applySystemTheme(event.matches)
+    }
+  })
 })
 </script>
 
@@ -61,13 +87,13 @@ onMounted(() => {
   <div
     class="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased transition-colors duration-500"
   >
-    <header
-      class="z-30 mx-auto w-full max-w-full"
-    >
+    <header class="z-30 mx-auto w-full max-w-full">
       <div class="flex h-14 items-center gap-3 px-4">
         <RouterLink to="/" class="flex shrink-0 items-center font-semibold">
           <span class="inline"
-            >LogShare.CN<sup class="text-xs text-muted-foreground ml-0.5">v{{ APP_VERSION }}</sup></span
+            >LogShare.CN<sup class="text-xs text-muted-foreground ml-0.5"
+              >v{{ APP_VERSION }}</sup
+            ></span
           >
         </RouterLink>
 
@@ -99,25 +125,7 @@ onMounted(() => {
           <Moon v-else class="h-4 w-4" />
         </button>
 
-        <button
-          class="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-          @click="isThemeSettingsOpen = true"
-          aria-label="主题设置"
-        >
-          <Palette class="h-4 w-4" />
-        </button>
-
         <LanguageMenu compact class="hidden md:flex" />
-
-        <a
-          href="https://github.com/NingZeStudio/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="hidden md:inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-          aria-label="GitHub"
-        >
-          <Github class="h-4 w-4" />
-        </a>
 
         <MobileNav />
       </div>
@@ -134,7 +142,13 @@ onMounted(() => {
         <div class="flex flex-wrap items-center justify-center gap-3">
           <span>&copy; 2026 LogShare.CN</span>
           <span class="hidden sm:inline">|</span>
-          <span>v{{ APP_VERSION }}</span>
+          <button
+            class="cursor-pointer select-none hover:text-foreground transition-colors"
+            aria-label="版本号"
+            @click="onVersionClick"
+          >
+            v{{ APP_VERSION }}
+          </button>
         </div>
         <div class="flex flex-wrap items-center justify-center gap-2">
           <span>{{ t('friend_links') }}:</span>
@@ -184,7 +198,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <ThemeSettings ref="themeSettingsRef" v-model:open="isThemeSettingsOpen" />
     <PwaUpdateToast />
     <PwaInstallPrompt />
     <AnnouncementDialog ref="announcementDialogRef" />

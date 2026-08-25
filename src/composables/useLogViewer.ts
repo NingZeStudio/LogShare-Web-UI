@@ -1,6 +1,6 @@
 import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { apiClient } from '@/lib/ApiClient'
+import { apiClient, type LogMetaResponse } from '@/lib/ApiClient'
 import { parseLog } from '@/lib/logParser'
 import { setPageTitle } from '@/lib/pageTitle'
 import { t } from '@/lib/i18n'
@@ -14,6 +14,7 @@ export interface Notification {
 export function useLogViewer(logId: string) {
   const router = useRouter()
   const log = ref<any>(null)
+  const logMeta = ref<LogMetaResponse | null>(null)
   const logContent = ref('')
   const loading = ref(true)
   const error = ref('')
@@ -29,6 +30,7 @@ export function useLogViewer(logId: string) {
   const fontSizeInputEl = ref<HTMLInputElement | null>(null)
   const notifications = ref<Notification[]>([])
   const originalLogText = ref('')
+  const mainRawText = ref('')
   const problemsSection = ref<HTMLElement | null>(null)
 
   let notificationId = 0
@@ -58,28 +60,61 @@ export function useLogViewer(logId: string) {
 
   const loadLog = async () => {
     try {
-      const [rawRes, insightsRes] = await Promise.all([
-        apiClient.get(`/v1/raw/${logId}`),
-        apiClient.get(`/v1/insights/${logId}`)
-      ])
-
-      log.value = insightsRes.data
+      const rawRes = await apiClient.get(`/v1/raw/${logId}`)
       const rawText = typeof rawRes.data === 'string' ? rawRes.data : JSON.stringify(rawRes.data)
 
+      mainRawText.value = rawText
       originalLogText.value = rawText
       logContent.value = await parseLog(rawText)
+
+      // 分析结果为可选增强，失败时静默降级（正文照常展示）
+      try {
+        const insightsRes = await apiClient.get(`/v1/insights/${logId}`)
+        log.value = insightsRes.data
+      } catch (e) {
+        console.warn('Failed to load insights:', e)
+        log.value = null
+      }
 
       if (log.value?.title) {
         setPageTitle('log', { title: log.value.title, id: logId })
       } else {
         setPageTitle('log', { id: logId })
       }
+
+      // 附加元信息与文件列表（独立请求，失败不阻塞正文展示）
+      try {
+        logMeta.value = await apiClient.getLogMeta(logId)
+      } catch (e) {
+        console.warn('Failed to load log meta:', e)
+      }
     } catch (e: any) {
       console.error('Failed to load log:', e)
-      error.value = e.response?.data?.message || t('log_not_found')
+      const status = e.response?.status
+      if (status === 404) {
+        error.value = t('log_not_found')
+      } else if (status === 429) {
+        error.value = t('log_rate_limited')
+      } else {
+        error.value = e.response?.data?.error || e.response?.data?.message || t('log_load_failed')
+      }
     } finally {
       loading.value = false
     }
+  }
+
+  /** 切换正文渲染为指定文本（附加文件查看） */
+  const applyRawText = async (text: string) => {
+    originalLogText.value = text
+    logContent.value = await parseLog(text)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  /** 恢复渲染主文件 */
+  const restoreMain = async () => {
+    if (!mainRawText.value) return
+    originalLogText.value = mainRawText.value
+    logContent.value = await parseLog(mainRawText.value)
   }
 
   const toggleErrors = () => {
@@ -98,7 +133,9 @@ export function useLogViewer(logId: string) {
         } else {
           addNotification(
             'error',
-            t('delete_log_failed') + ': ' + (result.failed[0]?.message || '')
+            t('delete_log_failed') +
+              ': ' +
+              (result.failed[0]?.error || result.failed[0]?.message || '')
           )
         }
       } else {
@@ -106,7 +143,10 @@ export function useLogViewer(logId: string) {
       }
     } catch (e: any) {
       console.error('Delete error:', e)
-      addNotification('error', e.response?.data?.message || t('delete_log_failed'))
+      addNotification(
+        'error',
+        e.response?.data?.error || e.response?.data?.message || t('delete_log_failed')
+      )
     } finally {
       isDeleting.value = false
     }
@@ -212,6 +252,7 @@ export function useLogViewer(logId: string) {
 
   return {
     log,
+    logMeta,
     logContent,
     loading,
     error,
@@ -230,6 +271,8 @@ export function useLogViewer(logId: string) {
     problemsSection,
     init,
     loadLog,
+    applyRawText,
+    restoreMain,
     toggleErrors,
     deleteLog,
     copyShareMessage,

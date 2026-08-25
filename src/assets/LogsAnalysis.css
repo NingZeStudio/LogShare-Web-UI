@@ -247,6 +247,28 @@
   font-weight: bold;
 }
 
+.format-obfuscated {
+  animation: format-obfuscated-shake 0.25s steps(2) infinite;
+}
+
+@keyframes format-obfuscated-shake {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .format-obfuscated {
+    animation: none;
+  }
+}
+
 .format-underline {
   text-decoration: underline;
 }

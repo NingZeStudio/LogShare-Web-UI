@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Menu, X, Heart, BookOpen, FileText, Github, Languages } from 'lucide-vue-next'
+import { Menu, X, Heart, BookOpen, FileText, Users, Languages, Github } from 'lucide-vue-next'
+import { t } from '@/lib/i18n'
 
 const route = useRoute()
 const isOpen = ref(false)
 const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
+const rootEl = ref<HTMLElement | null>(null)
 
 const toggleNav = () => {
   isOpen.value = !isOpen.value
@@ -15,24 +17,34 @@ const closeNav = () => {
   isOpen.value = false
 }
 
+const onDocumentClick = (event: MouseEvent) => {
+  if (isOpen.value && rootEl.value && !rootEl.value.contains(event.target as Node)) {
+    closeNav()
+  }
+}
+
+onMounted(() => document.addEventListener('click', onDocumentClick))
+onUnmounted(() => document.removeEventListener('click', onDocumentClick))
+
 const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
   localStorage.setItem('preferred_language', lang)
   window.location.reload()
 }
 
 const navLinks = [
-  { name: '赞助支持', path: '/sponsor', icon: Heart },
-  { name: '教程中心', path: '/tutorials', icon: BookOpen },
-  { name: 'API 文档', path: '/api-docs', icon: FileText }
+  { name: () => t('group_list'), path: '/groups', icon: Users },
+  { name: () => t('sponsor'), path: '/sponsor', icon: Heart },
+  { name: () => t('tutorials'), path: '/tutorials', icon: BookOpen },
+  { name: () => t('api_docs'), path: '/api-docs', icon: FileText }
 ]
 </script>
 
 <template>
-  <div class="relative md:hidden">
+  <div ref="rootEl" class="relative md:hidden">
     <button
       class="rounded-md p-2 transition-colors hover:bg-accent"
       aria-label="菜单"
-      @click="toggleNav"
+      @click.stop="toggleNav"
     >
       <Menu v-if="!isOpen" class="h-5 w-5" />
       <X v-else class="h-5 w-5" />
@@ -64,7 +76,7 @@ const navLinks = [
             @click="closeNav"
           >
             <component :is="link.icon" class="h-4 w-4" />
-            {{ link.name }}
+            {{ link.name() }}
           </RouterLink>
 
           <div class="border-t my-1" />
@@ -72,7 +84,7 @@ const navLinks = [
           <div class="px-3 py-2 space-y-1.5">
             <div class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <Languages class="h-3.5 w-3.5" />
-              语言
+              {{ t('mobile_language') }}
             </div>
             <div class="flex gap-1">
               <button
@@ -110,27 +122,7 @@ const navLinks = [
             @click="closeNav"
           >
             <Github class="h-4 w-4" />
-            团队主页
-          </a>
-          <a
-            href="https://github.com/NingZeStudio/McLogs-Next-UI"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-accent-foreground"
-            @click="closeNav"
-          >
-            <Github class="h-4 w-4" />
-            前端开源
-          </a>
-          <a
-            href="https://github.com/NingZeStudio/LogShare-V1"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-accent-foreground"
-            @click="closeNav"
-          >
-            <Github class="h-4 w-4" />
-            后端开源
+            {{ t('team_homepage') }}
           </a>
         </div>
       </div>

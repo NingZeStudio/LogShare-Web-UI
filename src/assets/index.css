@@ -4,64 +4,32 @@
 
 /* 字体定义 */
 @font-face {
-  font-family: 'Maple Mono';
-  src: url('./fonts/MapleMono-Regular.woff2') format('woff2');
+  font-family: 'SauceCode Mono';
+  src: url('./fonts/SauceCodeMono-400.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Maple Mono';
-  src: url('./fonts/MapleMono-Medium.woff2') format('woff2');
+  font-family: 'SauceCode Mono';
+  src: url('./fonts/SauceCodeMono-500.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Maple Mono';
-  src: url('./fonts/MapleMono-SemiBold.woff2') format('woff2');
+  font-family: 'SauceCode Mono';
+  src: url('./fonts/SauceCodeMono-600.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Maple Mono';
-  src: url('./fonts/MapleMono-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Fira Code';
-  src: url('./fonts/FiraCode-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Fira Code';
-  src: url('./fonts/FiraCode-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Fira Code';
-  src: url('./fonts/FiraCode-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Fira Code';
-  src: url('./fonts/FiraCode-Bold.woff2') format('woff2');
+  font-family: 'SauceCode Mono';
+  src: url('./fonts/SauceCodeMono-700.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -72,9 +40,11 @@
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
-    --font-mono: Fira Code, Maple Mono, Cascadia Code, SF Mono, Monaco, Consolas, monospace;
+    --font-mono:
+      SauceCode Mono, Fira Code, Maple Mono, Cascadia Code, SF Mono, Monaco, Consolas, monospace;
     --font-sans:
-      Fira Code, PingFang SC, Microsoft YaHei, Noto Sans CJK SC, Source Han Sans SC, sans-serif;
+      SauceCode Mono, Fira Code, PingFang SC, Microsoft YaHei, Noto Sans CJK SC, Source Han Sans SC,
+      sans-serif;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;

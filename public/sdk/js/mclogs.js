@@ -2,7 +2,12 @@
  * LogShare.CNᴺᵉˣᵀ JavaScript SDK
  * 高性能 Minecraft/Hytale 日志分享与分析 API 封装
  * 支持浏览器和 Node.js 环境
- * 
+ *
+ * ⚠️ 已过时：本 SDK 基于旧版 /1/ 端点实现（上游处于过渡兼容期，仍可用）。
+ * v1 端点已将响应扁平化（id/url/raw/token 直接位于顶层，无 data 包装），
+ * 且 insights/analyse 返回 Codex 结构化分析（analysis.problems/information）。
+ * 新集成请参考 API.md 使用 /v1/ 端点；本 SDK 将在后续版本重写。
+ *
  * @version 2.0.0
  */
 class LogShareSDK {
@@ -132,10 +137,10 @@ class LogShareSDK {
 
     /**
      * 粘贴/上传日志文件
-     * @param {string} content - 原始日志内容（最大 1MiB 或 50k 行）
+     * @param {string} content - 原始日志内容
      * @param {Object} [metadata] - 可选元数据
      * @param {string} [source] - 可选来源标识
-     * @returns {Promise<{success: boolean, data: {id: string, url: string, raw: string, token: string}}>}
+     * @returns {Promise<{success: boolean, message: string, id: string, url: string, raw: string, token: string}>}
      */
     async paste(content, metadata = null, source = null) {
         try {
@@ -168,7 +173,7 @@ class LogShareSDK {
     /**
      * 即时分析日志（本地 Codex，不保存到数据库）
      * @param {string} content - 原始日志内容
-     * @returns {Promise<{success: boolean, data: {id: string, name: string, type: string, entries: array, insights: array}}>}
+     * @returns {Promise<{id: string, name: string, type: string, title: string, analysis: {problems: array, information: array}}>}
      */
     async analyse(content) {
         try {
@@ -196,7 +201,7 @@ class LogShareSDK {
     /**
      * 获取日志洞察分析
      * @param {string} id - 日志 ID
-     * @returns {Promise<{success: boolean, data: {id: string, name: string, type: string, insights: array}}>}
+     * @returns {Promise<{id: string, name: string, type: string, title: string, analysis: {problems: array, information: array}}>}
      */
     async getInsights(id) {
         try {
