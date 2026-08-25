@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.7.2-hotfix.2
+
+- 前端无功能变更，版本号随配套后端热修复递增
+- 配套后端修复：SSE 流式响应缺失 CORS 头导致生产环境跨域调用 LogAgent 被浏览器拦截（空响应 status 0）；SSE 补发 `X-Accel-Buffering: no` 防止反代缓冲
+
 ## v1.7.1
 
 适配后端 v1 大版本重构，前端仅作接口适配与界面调优。
