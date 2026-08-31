@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { apiClient } from '@/lib/ApiClient'
 import { useRouter } from 'vue-router'
 import { t } from '@/lib/i18n'
@@ -18,7 +18,12 @@ import {
   AlertCircle,
   Loader2,
   BookText,
-  Upload
+  Upload,
+  FolderArchive,
+  Undo2,
+  Square,
+  SquareCheckBig,
+  Trash2
 } from 'lucide-vue-next'
 
 const content = ref('')
@@ -44,6 +49,103 @@ const removeNotification = (id: number) => {
 
 const extractedFiles = ref<ExtractedFile[]>([])
 const uploadProgress = ref<{ current: number; total: number; uploading: string } | null>(null)
+
+/** 多选删除：当前勾选的文件 key（path） */
+const selectedPaths = ref<Set<string>>(new Set())
+const selectedCount = computed(() => selectedPaths.value.size)
+const isAllSelected = computed(
+  () =>
+    extractedFiles.value.length > 0 &&
+    selectedPaths.value.size === extractedFiles.value.length
+)
+
+const toggleSelectAll = () => {
+  selectedPaths.value = isAllSelected.value
+    ? new Set()
+    : new Set(extractedFiles.value.map(f => f.path))
+}
+
+/** 删除撤销：5 秒内可整批还原 */
+const undoMessage = ref('')
+const undoRestore = ref<(() => void) | null>(null)
+let undoTimer: ReturnType<typeof setTimeout> | null = null
+
+/** 大小自适应格式化：KB < 1024，否则 MB（一位小数） */
+const formatSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
+/** 文件来源分组：zip 展开的文件按压缩包归属聚为一组，直接选择的散文件各自一组 */
+interface FileGroup {
+  /** 空字符串 = 无压缩包来源的散文件 */
+  origin: string
+  files: ExtractedFile[]
+}
+
+const fileGroups = computed<FileGroup[]>(() => {
+  const groups: FileGroup[] = []
+  const byOrigin = new Map<string, FileGroup>()
+  for (const file of extractedFiles.value) {
+    // archiveParser 以「压缩包名/内部路径」生成 path；首段即来源压缩包名
+    const slash = file.path.indexOf('/')
+    const origin = slash > 0 ? file.path.slice(0, slash) : ''
+    let group = byOrigin.get(origin)
+    if (!group) {
+      group = { origin, files: [] }
+      byOrigin.set(origin, group)
+      groups.push(group)
+    }
+    group.files.push(file)
+  }
+  return groups
+})
+
+/** 展示用路径尾段：无来源组显示完整 path（保持目录层级语义），有来源组显示包内相对路径 */
+const displayPath = (file: ExtractedFile, origin: string): string =>
+  origin && file.path.startsWith(origin + '/')
+    ? file.path.slice(origin.length + 1)
+    : file.path
+
+const toggleSelect = (path: string) => {
+  const next = new Set(selectedPaths.value)
+  if (next.has(path)) next.delete(path)
+  else next.add(path)
+  selectedPaths.value = next
+}
+
+const clearSelection = () => {
+  selectedPaths.value = new Set()
+}
+
+/** 删除（含撤销）：记录被删项与位置快照，5 秒内可整批还原 */
+const deleteFiles = (paths: string[]) => {
+  if (paths.length === 0) return
+  const removed = extractedFiles.value.filter(f => paths.includes(f.path))
+  if (removed.length === 0) return
+  const snapshot = [...extractedFiles.value]
+  extractedFiles.value = extractedFiles.value.filter(f => !paths.includes(f.path))
+  selectedPaths.value = new Set([...selectedPaths.value].filter(p => !paths.includes(p)))
+  undoMessage.value =
+    removed.length === 1
+      ? `已移除 ${removed[0]!.name}`
+      : `已移除 ${removed.length} 个文件`
+  undoRestore.value = () => {
+    extractedFiles.value = snapshot
+    undoMessage.value = ''
+  }
+  if (undoTimer) clearTimeout(undoTimer)
+  undoTimer = setTimeout(() => {
+    undoMessage.value = ''
+    undoRestore.value = null
+  }, 5000)
+}
+
+const undoDelete = () => {
+  undoRestore.value?.()
+  undoRestore.value = null
+}
 
 const triggerFileSelect = () => {
   fileInput.value?.click()
@@ -134,9 +236,7 @@ const handleDrop = async (event: DragEvent) => {
   await handleFile(file)
 }
 
-const removeFile = (path: string) => {
-  extractedFiles.value = extractedFiles.value.filter(f => f.path !== path)
-}
+const removeFile = (path: string) => deleteFiles([path])
 
 const saveLogToken = (id: string | null, token: string | null | undefined) => {
   if (id && token) {
@@ -280,30 +380,58 @@ const save = async () => {
             </div>
           </div>
 
-          <div class="space-y-2 flex-1 min-h-0 overflow-y-auto">
-            <div
-              v-for="file in extractedFiles"
-              :key="file.path"
-              class="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-            >
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <FileText class="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                <div class="flex-1 min-w-0">
-                  <div class="text-sm font-medium truncate">{{ file.name }}</div>
-                  <div class="text-xs text-muted-foreground">{{ file.path }}</div>
-                </div>
-                <div class="text-xs text-muted-foreground">
-                  {{ (file.size / 1024).toFixed(1) }} KB
-                </div>
+          <div class="space-y-4 flex-1 min-h-0 overflow-y-auto">
+            <div v-for="group in fileGroups" :key="group.origin || '__loose__'">
+              <!-- 组头：仅压缩包来源显示（散文件不占组头） -->
+              <div
+                v-if="group.origin"
+                class="flex items-center gap-2 mb-1.5 px-0.5 text-xs text-muted-foreground"
+              >
+                <FolderArchive class="h-3.5 w-3.5 flex-shrink-0" />
+                <span class="font-medium text-foreground">{{ group.origin }}</span>
+                <span>·</span>
+                <span>{{ t('files_count').replace('{count}', group.files.length.toString()) }}</span>
               </div>
-              <div class="flex items-center gap-2 ml-4">
-                <button
-                  v-if="!uploadProgress"
-                  class="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-                  @click="removeFile(file.path)"
+
+              <div class="space-y-2">
+                <div
+                  v-for="file in group.files"
+                  :key="file.path"
+                  class="flex items-start justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  :class="{ 'ring-1 ring-primary bg-primary/5': selectedPaths.has(file.path) }"
                 >
-                  <X class="h-4 w-4" />
-                </button>
+                  <!-- 勾选：整行点击切换（删除按钮除外） -->
+                  <button
+                    class="flex items-start gap-3 flex-1 min-w-0 text-left"
+                    :aria-label="selectedPaths.has(file.path) ? '取消选择' : '选择'"
+                    @click="toggleSelect(file.path)"
+                  >
+                    <component
+                      :is="selectedPaths.has(file.path) ? SquareCheckBig : Square"
+                      class="h-4 w-4 mt-0.5 flex-shrink-0"
+                      :class="selectedPaths.has(file.path) ? 'text-primary' : 'text-muted-foreground'"
+                    />
+                    <FileText class="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0 hidden sm:block" />
+                    <!-- 双行布局：名称一行，路径尾段 + 大小一行 -->
+                    <span class="flex-1 min-w-0 block">
+                      <span class="block text-sm font-medium truncate">{{ file.name }}</span>
+                      <span
+                        class="block text-xs text-muted-foreground truncate mt-0.5"
+                        :title="file.path"
+                      >
+                        {{ displayPath(file, group.origin) }}
+                        <span class="mx-1">·</span>{{ formatSize(file.size) }}
+                      </span>
+                    </span>
+                  </button>
+                  <button
+                    class="p-1.5 ml-2 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+                    :aria-label="t('remove')"
+                    @click.stop="removeFile(file.path)"
+                  >
+                    <X class="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -311,16 +439,66 @@ const save = async () => {
           <div
             class="mt-4 pt-4 border-t flex items-center justify-between text-sm text-muted-foreground"
           >
-            <span>{{ t('files_count').replace('{count}', extractedFiles.length.toString()) }}</span>
-            <button
-              :disabled="loading || uploadProgress !== null"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-              @click="uploadAllFiles"
-            >
-              <CheckCircle class="h-3.5 w-3.5" />
-              {{ loading ? t('saving') : t('batch_upload') }}
-            </button>
+            <span v-if="selectedCount > 0" class="text-foreground font-medium">
+              {{ t('selected_count').replace('{count}', selectedCount.toString()).replace('{total}', extractedFiles.length.toString()) }}
+              <button
+                class="ml-1 underline underline-offset-2 hover:text-foreground"
+                @click="clearSelection"
+              >
+                {{ t('clear_selection') }}
+              </button>
+            </span>
+            <span v-else>{{ t('files_count').replace('{count}', extractedFiles.length.toString()) }}</span>
+            <div class="flex items-center gap-2">
+              <button
+                v-if="extractedFiles.length > 0"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted text-foreground text-xs font-medium hover:bg-accent transition-colors"
+                @click="toggleSelectAll"
+              >
+                <SquareCheckBig v-if="isAllSelected" class="h-3.5 w-3.5" />
+                <Square v-else class="h-3.5 w-3.5" />
+                {{ isAllSelected ? t('clear_selection') : t('select_all') }}
+              </button>
+              <button
+                v-if="selectedCount > 0"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground text-xs font-medium hover:bg-destructive/90 transition-colors"
+                @click="deleteFiles([...selectedPaths])"
+              >
+                <Trash2 class="h-3.5 w-3.5" />
+                {{ t('delete_selected').replace('{count}', selectedCount.toString()) }}
+              </button>
+              <button
+                :disabled="loading || uploadProgress !== null"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                @click="uploadAllFiles"
+              >
+                <CheckCircle class="h-3.5 w-3.5" />
+                {{ loading ? t('saving') : t('batch_upload') }}
+              </button>
+            </div>
           </div>
+
+          <!-- 删除撤销 Toast -->
+          <Transition
+            enter-active-class="transition-all duration-200"
+            enter-from-class="opacity-0 translate-y-1"
+            leave-active-class="transition-all duration-150"
+            leave-to-class="opacity-0 translate-y-1"
+          >
+            <div
+              v-if="undoMessage"
+              class="mt-3 px-4 py-2.5 rounded-lg border bg-card shadow-sm flex items-center justify-between text-sm"
+            >
+              <span class="text-foreground">{{ undoMessage }}</span>
+              <button
+                class="inline-flex items-center gap-1 text-primary font-medium hover:underline"
+                @click="undoDelete"
+              >
+                <Undo2 class="h-3.5 w-3.5" />
+                {{ t('undo') }}
+              </button>
+            </div>
+          </Transition>
         </div>
 
         <div v-else class="relative flex flex-col flex-1 min-h-0">
