@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
+import { isWafBlockHtml, showWafBlock } from '@/lib/wafBlock'
 
-// 生产直连线上 API；开发走 vite.config.ts 的 server.proxy（同源转发到 127.0.0.1:9501，规避跨域）
+// 生产直连线上 API；开发走 vite.config.ts 的 server.proxy（同源转发到线上，规避跨域）
 const baseURL = import.meta.env.DEV ? '' : 'https://api.logshare.cn'
 
 export interface LogSubmitFile {
@@ -142,6 +143,18 @@ export class ApiClient {
             }
           })
         }
+
+        // OpenLiteWaf 拦截卡片（403 + HTML 组件）：弹出展示，并把响应体
+        // 替换为结构化 JSON，让调用方按普通错误路径提示简短文案
+        if (error.response?.status === 403 && isWafBlockHtml(error.response.data)) {
+          showWafBlock(error.response.data)
+          error.response.data = {
+            success: false,
+            error: '您的请求已被安全系统拦截',
+            code: 403
+          }
+        }
+
         return Promise.reject(error)
       }
     )
@@ -192,6 +205,17 @@ export class ApiClient {
       if (!response.ok) {
         // 保留原始响应体用于前端透传展示，同时尽力解析结构化字段
         const rawBody = await response.text().catch(() => '')
+        // OpenLiteWaf 拦截卡片（403 + HTML 组件）：弹出展示，错误降级为通用文案
+        if (response.status === 403 && isWafBlockHtml(rawBody)) {
+          showWafBlock(rawBody)
+          callbacks.onError?.({
+            success: false,
+            message: '您的请求已被安全系统拦截',
+            code: 403,
+            type: 'server_error'
+          })
+          return
+        }
         let errorData: any = null
         try {
           errorData = JSON.parse(rawBody)

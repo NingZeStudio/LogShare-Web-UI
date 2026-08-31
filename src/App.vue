@@ -5,6 +5,7 @@ import { Heart, BookOpen, FileText, Users, Sun, Moon, X } from 'lucide-vue-next'
 import PwaUpdateToast from '@/components/PwaUpdateToast.vue'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt.vue'
 import AnnouncementDialog from '@/components/AnnouncementDialog.vue'
+import WafBlockDialog from '@/components/WafBlockDialog.vue'
 import MobileNav from '@/components/MobileNav.vue'
 import LanguageMenu from '@/components/LanguageMenu.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
@@ -201,6 +202,7 @@ onMounted(() => {
     <PwaUpdateToast />
     <PwaInstallPrompt />
     <AnnouncementDialog ref="announcementDialogRef" />
+    <WafBlockDialog />
   </div>
 </template>
 
