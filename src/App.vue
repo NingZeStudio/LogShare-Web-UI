@@ -10,7 +10,7 @@ import MobileNav from '@/components/MobileNav.vue'
 import LanguageMenu from '@/components/LanguageMenu.vue'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 import { t } from '@/lib/i18n'
-import { APP_VERSION } from '@/lib/version'
+import { DEPLOY_HASH } from '@/lib/deployInfo'
 
 const route = useRoute()
 const isDark = ref(false)
@@ -91,11 +91,7 @@ onMounted(() => {
     <header class="z-30 mx-auto w-full max-w-full">
       <div class="flex h-14 items-center gap-3 px-4">
         <RouterLink to="/" class="flex shrink-0 items-center font-semibold">
-          <span class="inline"
-            >LogShare.CN<sup class="text-xs text-muted-foreground ml-0.5"
-              >v{{ APP_VERSION }}</sup
-            ></span
-          >
+          <span class="inline">LogShare.CN</span>
         </RouterLink>
 
         <nav class="ml-4 hidden items-center gap-1 md:flex">
@@ -145,10 +141,10 @@ onMounted(() => {
           <span class="hidden sm:inline">|</span>
           <button
             class="cursor-pointer select-none hover:text-foreground transition-colors"
-            aria-label="版本号"
+            aria-label="彩蛋"
             @click="onVersionClick"
           >
-            v{{ APP_VERSION }}
+            {{ t('edgeone_distribution') }} &middot; {{ DEPLOY_HASH }}
           </button>
         </div>
         <div class="flex flex-wrap items-center justify-center gap-2">

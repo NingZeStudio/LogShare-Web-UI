@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -5,7 +6,14 @@ import { gzipSync } from 'node:zlib'
 import { statSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const APP_VERSION: string = JSON.parse(readFileSync('./package.json', 'utf-8')).version
+// 部署标识：构建时的 commit hash 前 7 位（网页与发布 tag 均以此为准，不再使用语义化版本号）
+const DEPLOY_HASH: string = (() => {
+  try {
+    return execSync('git rev-parse --short=7 HEAD').toString().trim()
+  } catch {
+    return 'unknown'
+  }
+})()
 
 /**
  * ASCII 艺术猫爪
@@ -230,7 +238,7 @@ function customBuildReportPlugin(): Plugin {
 export default defineConfig({
   plugins: [vue(), customBuildReportPlugin()],
   define: {
-    __APP_VERSION__: JSON.stringify(APP_VERSION)
+    __DEPLOY_HASH__: JSON.stringify(DEPLOY_HASH)
   },
   resolve: {
     alias: {
@@ -241,7 +249,7 @@ export default defineConfig({
     proxy: {
       // 本地后端（Hyperf），仅 dev 生效
       '/v1': {
-        target: 'http://127.0.0.1:9501',
+        target: 'https://api.test.logshare.cn',
         changeOrigin: true
       }
     }

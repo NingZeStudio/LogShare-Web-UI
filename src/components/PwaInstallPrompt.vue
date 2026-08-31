@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { X, Download } from 'lucide-vue-next'
-import { APP_VERSION } from '@/lib/version'
+import { DEPLOY_HASH } from '@/lib/deployInfo'
 
 const DISMISS_KEY = 'pwa_install_dismissed_ver'
 
@@ -15,7 +15,7 @@ const installApp = () => {
   deferredPrompt.userChoice.then((choiceResult: any) => {
     if (choiceResult.outcome === 'accepted') {
       showInstallPrompt.value = false
-      localStorage.setItem(DISMISS_KEY, APP_VERSION)
+      localStorage.setItem(DISMISS_KEY, DEPLOY_HASH)
     }
     deferredPrompt = null
   })
@@ -23,7 +23,7 @@ const installApp = () => {
 
 const dismissPrompt = () => {
   showInstallPrompt.value = false
-  localStorage.setItem(DISMISS_KEY, APP_VERSION)
+  localStorage.setItem(DISMISS_KEY, DEPLOY_HASH)
 }
 
 const handleBeforeInstallPrompt = (event: Event) => {
@@ -31,7 +31,7 @@ const handleBeforeInstallPrompt = (event: Event) => {
   deferredPrompt = event
 
   // 每个新版本允许重新提示一次
-  if (localStorage.getItem(DISMISS_KEY) !== APP_VERSION) {
+  if (localStorage.getItem(DISMISS_KEY) !== DEPLOY_HASH) {
     showInstallPrompt.value = true
   }
 }

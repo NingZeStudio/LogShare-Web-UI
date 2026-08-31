@@ -63,3 +63,5 @@ Vue 3 + TypeScript 5 + Vite 7 前端，Minecraft/Hytale 日志分享与分析平
 ## 部署
 
 - 当前无 CI 配置。
+- **版本号体系**：不再使用语义化版本，基于 `{年}.{月}.{commit hash-7}`，仅用于 Releases 与 tag（例：`2026.8.0f6c096`）；页面不显示版本号，全局页脚显示「前端分发由腾讯 EdgeONE 提供 · {deployed hash-7}」。
+- 部署方式：构建产物（`dist/`）上传腾讯 EdgeONE。

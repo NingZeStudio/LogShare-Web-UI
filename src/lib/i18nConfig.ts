@@ -21,6 +21,7 @@ export const zhCN = {
   results: '结果',
   no_results: '未找到结果',
   friend_links: '友情链接',
+  edgeone_distribution: '前端分发由腾讯 EdgeONE 提供',
 
   home_title: 'LogShare.CN',
   home_subtitle: '轻松粘贴或上传您的 Minecraft/Hytale 日志以进行分享和分析。',
@@ -265,6 +266,7 @@ export const zhTW = {
   results: '結果',
   no_results: '未找到結果',
   friend_links: '友情連結',
+  edgeone_distribution: '前端分發由騰訊 EdgeONE 提供',
 
   home_title: 'LogShare.CN',
   home_subtitle: '輕鬆貼上或上傳您的 Minecraft/Hytale 記錄以進行分享和分析。',
