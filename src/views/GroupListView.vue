@@ -16,10 +16,10 @@ const sections: Array<{ title: string; groups: QqGroup[] }> = [
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-6 max-w-3xl">
-    <header class="mb-6">
+  <div class="container mx-auto px-4 py-8 max-w-3xl">
+    <header class="mb-8">
       <h1 class="text-3xl font-bold mb-2">群列表</h1>
-      <p class="text-sm text-muted-foreground mt-1">
+      <p class="text-muted-foreground">
         遇到问题？加入对应的群获取帮助。加群前请先阅读教程中心的提问技巧。
       </p>
     </header>
