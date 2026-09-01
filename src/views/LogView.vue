@@ -8,22 +8,25 @@ import { useAiAnalysis } from '@/composables/useAiAnalysis'
 import { useLogSearch } from '@/composables/useLogSearch'
 import '@/assets/LogsAnalysis.css'
 import MarkdownIt from 'markdown-it'
+import AppButton from '@/components/ui/AppButton.vue'
+import AppDialog from '@/components/ui/AppDialog.vue'
+import FontSizeControl from '@/components/ui/FontSizeControl.vue'
 import {
-  WrapText,
-  Search,
-  Download,
-  Maximize2,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  AlertTriangle,
-  ArrowUp,
-  Code,
-  Trash2,
-  RefreshCw,
-  Loader2,
-  X
-} from 'lucide-vue-next'
+  PhTextColumns as WrapText,
+  PhMagnifyingGlass as Search,
+  PhDownload as Download,
+  PhCornersOut as Maximize2,
+  PhCaretLeft as ChevronLeft,
+  PhCaretRight as ChevronRight,
+  PhCheck as Check,
+  PhWarning as AlertTriangle,
+  PhArrowUp as ArrowUp,
+  PhCode as Code,
+  PhTrash as Trash2,
+  PhArrowsClockwise as RefreshCw,
+  PhCircleNotch as Loader2,
+  PhX as X
+} from '@phosphor-icons/vue'
 
 declare global {
   interface HTMLElement {
@@ -167,515 +170,443 @@ const onFileChange = async () => {
     fileSwitching.value = false
   }
 }
-
-onMounted(() => {
-  viewer.init()
-  viewer.loadLog()
-})
 </script>
 
 <template>
-  <div v-if="viewer.loading.value" class="container mx-auto px-4 py-12 text-center">
-    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-    <p class="mt-4 text-muted-foreground">{{ t('loading_log') }}</p>
-  </div>
+  <div class="flex flex-col flex-1">
+    <div v-if="viewer.loading.value" class="container mx-auto px-4 py-12 text-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+      <p class="mt-4 text-muted-foreground">{{ t('loading_log') }}</p>
+    </div>
 
-  <div v-else-if="viewer.error.value" class="container mx-auto px-4 py-12 text-center">
-    <h2 class="text-2xl font-bold text-destructive">{{ t('error_title') }}</h2>
-    <p class="text-muted-foreground">{{ viewer.error.value }}</p>
-  </div>
+    <div
+      v-else-if="viewer.error.value"
+      class="container mx-auto px-4 py-12 text-center"
+      role="alert"
+    >
+      <h2 class="text-2xl font-bold text-destructive">{{ t('error_title') }}</h2>
+      <p class="text-muted-foreground">{{ viewer.error.value }}</p>
+    </div>
 
-  <div
-    v-else
-    :class="
-      viewer.isFullscreen.value
-        ? 'fixed inset-0 z-50 bg-background transition-all duration-300'
-        : 'w-full'
-    "
-  >
-    <div :class="viewer.isFullscreen.value ? 'h-full flex flex-col' : 'flex flex-col'">
-      <!-- 标题栏 -->
-      <div
-        v-if="!viewer.isFullscreen.value"
-        class="flex items-start justify-between gap-4 px-4 py-3"
-      >
-        <div class="min-w-0 flex-1">
-          <h1 class="text-3xl font-bold break-all">{{ viewer.log.value?.title }}</h1>
-          <p v-if="logSummary" class="text-sm text-muted-foreground mt-1">{{ logSummary }}</p>
-          <div v-if="attachedFiles.length > 1" class="flex items-center gap-1.5 text-sm mt-1">
-            <span class="text-muted-foreground">{{ t('show_current_file') }}:</span>
-            <select
-              v-model="selectedFile"
-              :disabled="fileSwitching"
-              class="max-w-56 truncate bg-muted px-1.5 py-0.5 rounded text-xs font-mono cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
-              @change="onFileChange"
-            >
-              <option v-for="file in attachedFiles" :key="file.name" :value="file.name">
-                {{ file.name }} ({{ formatBytes(file.size) }})
-              </option>
-            </select>
-            <Loader2 v-if="fileSwitching" class="h-3.5 w-3.5 animate-spin text-primary" />
+    <div
+      v-else
+      :class="
+        viewer.isFullscreen.value
+          ? 'fixed inset-0 z-50 bg-background transition-all duration-300'
+          : 'w-full'
+      "
+    >
+      <div :class="viewer.isFullscreen.value ? 'h-full flex flex-col' : 'flex flex-col'">
+        <!-- 标题栏 -->
+        <div
+          v-if="!viewer.isFullscreen.value"
+          class="flex items-start justify-between gap-4 px-4 py-3"
+        >
+          <div class="min-w-0 flex-1">
+            <h1 class="text-3xl font-bold break-all">{{ viewer.log.value?.title }}</h1>
+            <p v-if="logSummary" class="text-sm text-muted-foreground mt-1">{{ logSummary }}</p>
+            <div v-if="attachedFiles.length > 1" class="flex items-center gap-1.5 text-sm mt-1">
+              <span class="text-muted-foreground">{{ t('show_current_file') }}:</span>
+              <select
+                v-model="selectedFile"
+                :disabled="fileSwitching"
+                class="max-w-56 truncate bg-muted px-1.5 py-0.5 rounded text-xs font-mono cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                @change="onFileChange"
+              >
+                <option v-for="file in attachedFiles" :key="file.name" :value="file.name">
+                  {{ file.name }} ({{ formatBytes(file.size) }})
+                </option>
+              </select>
+              <Loader2
+                v-if="fileSwitching"
+                weight="duotone"
+                class="h-3.5 w-3.5 animate-spin text-primary"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 信息卡片区域 -->
-      <div v-if="!viewer.isFullscreen.value" class="grid gap-4 md:grid-cols-2 px-4">
-        <!-- 问题统计 -->
-        <div v-if="viewer.log.value?.analysis?.problems?.length > 0" class="bg-card p-4">
-          <div class="flex items-center gap-2 mb-3 pb-3 border-b">
-            <AlertTriangle class="h-5 w-5 text-destructive" />
-            <h2 class="font-semibold">{{ t('problems_detected') }}</h2>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <div
-              class="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20"
-            >
-              <AlertTriangle class="h-4 w-4 text-destructive" />
-              <span class="text-sm font-medium">{{
-                t('problems_count').replace(
-                  '{count}',
-                  viewer.log.value.analysis.problems.length.toString()
-                )
-              }}</span>
+        <!-- 信息卡片区域 -->
+        <div v-if="!viewer.isFullscreen.value" class="grid gap-4 md:grid-cols-2 px-4">
+          <!-- 问题统计 -->
+          <div v-if="viewer.log.value?.analysis?.problems?.length > 0" class="bg-card p-4">
+            <div class="flex items-center gap-2 mb-3 pb-3 border-b">
+              <AlertTriangle weight="duotone" class="h-5 w-5 text-destructive" />
+              <h2 class="font-semibold">{{ t('problems_detected') }}</h2>
             </div>
-            <div
-              class="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning/10 border border-warning/20"
-            >
-              <AlertTriangle class="h-4 w-4 text-warning" />
-              <span class="text-sm font-medium">{{
-                t('warnings_count').replace(
-                  '{count}',
-                  viewer.log.value.analysis.problems
-                    .filter((p: any) => p.severity === 'warning')
-                    .length.toString()
-                )
-              }}</span>
+            <div class="flex flex-wrap gap-2">
+              <div
+                class="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20"
+              >
+                <AlertTriangle weight="duotone" class="h-4 w-4 text-destructive" />
+                <span class="text-sm font-medium">{{
+                  t('problems_count').replace(
+                    '{count}',
+                    viewer.log.value.analysis.problems.length.toString()
+                  )
+                }}</span>
+              </div>
+              <div
+                class="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning/10 border border-warning/20"
+              >
+                <AlertTriangle weight="duotone" class="h-4 w-4 text-warning" />
+                <span class="text-sm font-medium">{{
+                  t('warnings_count').replace(
+                    '{count}',
+                    viewer.log.value.analysis.problems
+                      .filter((p: any) => p.severity === 'warning')
+                      .length.toString()
+                  )
+                }}</span>
+              </div>
+              <div
+                class="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20"
+              >
+                <Check weight="duotone" class="h-4 w-4 text-green-500" />
+                <span class="text-sm font-medium">{{
+                  t('solvable_count').replace(
+                    '{count}',
+                    viewer.log.value.analysis.problems
+                      .filter((p: any) => p.solutions?.length)
+                      .length.toString()
+                  )
+                }}</span>
+              </div>
             </div>
-            <div
-              class="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20"
-            >
-              <Check class="h-4 w-4 text-green-500" />
-              <span class="text-sm font-medium">{{
-                t('solvable_count').replace(
-                  '{count}',
-                  viewer.log.value.analysis.problems
-                    .filter((p: any) => p.solutions?.length)
-                    .length.toString()
-                )
-              }}</span>
-            </div>
-          </div>
-          <button
-            class="w-full mt-3 py-2 text-sm text-primary hover:bg-primary/5 rounded-lg transition-colors"
-            @click="
-              viewer.problemsSection.value?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-              })
-            "
-          >
-            {{ t('view_details') }} ↓
-          </button>
-        </div>
-      </div>
-
-      <!-- 帮助提示（可关闭 Tips） -->
-      <div
-        v-if="!viewer.isFullscreen.value && showHelpTip"
-        class="px-4 mt-3 mb-3 text-sm"
-      >
-        <div class="relative bg-muted/50 rounded-lg px-4 py-2.5 pr-9 space-y-1.5">
-          <span class="font-medium">{{ t('log_help_card_title') }}</span>
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <button
-              :class="
-                viewer.isCopySuccess.value
-                  ? 'bg-green-500 text-white hover:bg-green-600'
-                  : 'bg-primary/10 text-primary hover:bg-primary/20'
+              class="w-full mt-3 py-2 text-sm text-primary hover:bg-primary/5 rounded-lg transition-colors"
+              @click="
+                viewer.problemsSection.value?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'start'
+                })
               "
-              class="inline-flex items-center rounded-md px-3.5 py-2 font-medium transition-colors"
-              @click="viewer.copyShareMessage()"
             >
-              {{ viewer.isCopySuccess.value ? t('copied') : t('copy_share') }}
+              {{ t('view_details') }} ↓
             </button>
-            <RouterLink
-              to="/groups"
-              class="inline-flex items-center rounded-md bg-primary/10 text-primary px-3.5 py-2 font-medium transition-colors hover:bg-primary/20"
-            >
-              {{ t('go_group_list') }}
-            </RouterLink>
           </div>
-          <button
-            class="absolute right-2 top-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            :aria-label="t('close')"
-            @click="dismissHelpTip"
-          >
-            <X class="h-4 w-4" />
-          </button>
         </div>
-      </div>
 
-      <!-- 日志查看器 -->
-      <div :class="viewer.isFullscreen.value ? 'flex-1 flex flex-col min-h-0' : ''">
-        <!-- 工具栏 -->
-        <div class="border-b bg-muted/30">
-          <!-- 主工具栏：功能按钮区 -->
-          <div class="flex items-center justify-between gap-2 p-2 border-b border-muted">
-            <!-- 左侧：视图控制 -->
-            <div class="flex items-center gap-1">
+        <!-- 帮助提示（可关闭 Tips）：PC 端工具栏直接可见，仅移动端展示 -->
+        <div
+          v-if="!viewer.isFullscreen.value && showHelpTip"
+          class="mt-3 mb-3 px-4 text-sm sm:hidden"
+        >
+          <div class="relative bg-muted/50 rounded-lg px-4 py-2.5 pr-9 space-y-1.5">
+            <span class="font-medium">{{ t('log_help_card_title') }}</span>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <button
                 :class="
-                  viewer.showErrorsOnly.value
-                    ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                    : 'bg-secondary/80 hover:bg-secondary text-secondary-foreground'
+                  viewer.isCopySuccess.value
+                    ? 'bg-green-500 text-white hover:bg-green-600'
+                    : 'bg-primary/10 text-primary hover:bg-primary/20'
                 "
-                class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium"
-                :title="viewer.showErrorsOnly.value ? t('show_all') : t('show_errors_only')"
-                @click="viewer.toggleErrors()"
+                class="inline-flex items-center rounded-md px-3.5 py-2 font-medium transition-colors"
+                @click="viewer.copyShareMessage()"
               >
-                <AlertTriangle class="h-5 w-5" />
-                <span class="hidden sm:inline">{{
-                  viewer.showErrorsOnly.value ? t('show_all') : t('show_errors_only')
-                }}</span>
+                {{ viewer.isCopySuccess.value ? t('copied') : t('copy_share') }}
               </button>
+              <AppButton as="router-link" variant="soft" to="/groups">
+                {{ t('go_group_list') }}
+              </AppButton>
+            </div>
+            <button
+              class="absolute right-2 top-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              :aria-label="t('close')"
+              @click="dismissHelpTip"
+            >
+              <X weight="duotone" class="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <!-- 日志查看器 -->
+        <div :class="viewer.isFullscreen.value ? 'flex-1 flex flex-col min-h-0' : ''">
+          <!-- 工具栏 -->
+          <div class="border-b bg-muted/30">
+            <!-- 主工具栏：功能按钮区 -->
+            <div class="flex items-center justify-between gap-2 p-2 border-b border-muted">
+              <!-- 左侧：视图控制 -->
+              <div class="flex items-center gap-1">
+                <AppButton
+                  :variant="viewer.showErrorsOnly.value ? 'destructive' : 'secondary'"
+                  class="px-4 py-2"
+                  :title="viewer.showErrorsOnly.value ? t('show_all') : t('show_errors_only')"
+                  @click="viewer.toggleErrors()"
+                >
+                  <AlertTriangle weight="duotone" class="h-5 w-5" />
+                  <span class="hidden sm:inline">{{
+                    viewer.showErrorsOnly.value ? t('show_all') : t('show_errors_only')
+                  }}</span>
+                </AppButton>
+                <AppButton
+                  :variant="viewer.wrapLines.value ? 'primary' : 'secondary'"
+                  class="px-4 py-2"
+                  :title="t('toggle_wrap')"
+                  @click="viewer.wrapLines.value = !viewer.wrapLines.value"
+                >
+                  <WrapText weight="duotone" class="h-5 w-5" />
+                  <span class="hidden sm:inline">{{
+                    viewer.wrapLines.value ? t('wrap_lines_on') : t('wrap_lines_off')
+                  }}</span>
+                </AppButton>
+                <button
+                  class="log-analysis-trigger hidden items-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors sm:inline-flex"
+                  @click="ai.openAiPanel()"
+                >
+                  {{ t('ai_analysis') }}
+                </button>
+              </div>
+
+              <!-- 右侧：操作按钮 -->
+              <div class="flex items-center gap-1">
+                <AppButton
+                  variant="secondary"
+                  class="px-4 py-2"
+                  :title="t('download')"
+                  @click="viewer.downloadLog()"
+                >
+                  <Download weight="duotone" class="h-5 w-5" />
+                  <span class="hidden sm:inline">{{ t('download') }}</span>
+                </AppButton>
+                <AppButton
+                  as="a"
+                  variant="secondary"
+                  class="px-4 py-2"
+                  :href="getApiUrl(`/v1/raw/${id}`)"
+                  :title="t('view_raw_log')"
+                >
+                  <Code weight="duotone" class="h-5 w-5" />
+                  <span class="hidden sm:inline">{{ t('view_raw_log') }}</span>
+                </AppButton>
+                <AppButton
+                  variant="soft-destructive"
+                  class="px-4 py-2"
+                  :disabled="viewer.isDeleting.value"
+                  :title="t('delete')"
+                  @click="showDeleteDialog = true"
+                >
+                  <Trash2 weight="duotone" class="h-5 w-5" />
+                  <span class="hidden sm:inline">{{
+                    viewer.isDeleting.value ? t('deleting') : t('delete')
+                  }}</span>
+                </AppButton>
+
+                <!-- 删除确认对话框 -->
+                <AppDialog :open="showDeleteDialog" @close="showDeleteDialog = false">
+                  <div class="p-5 sm:p-6">
+                    <div class="mb-4 flex items-start gap-3">
+                      <div
+                        class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-destructive/10"
+                      >
+                        <AlertTriangle weight="duotone" class="h-5 w-5 text-destructive" />
+                      </div>
+                      <div>
+                        <h2 class="text-lg font-semibold text-foreground">{{ t('delete_log') }}</h2>
+                        <p class="mt-1 text-sm text-muted-foreground">
+                          此操作不可撤销，确定要删除这个日志吗？
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2">
+                      <AppButton
+                        variant="secondary"
+                        :disabled="viewer.isDeleting.value"
+                        @click="showDeleteDialog = false"
+                      >
+                        {{ t('cancel') }}
+                      </AppButton>
+                      <AppButton
+                        variant="destructive"
+                        :disabled="viewer.isDeleting.value"
+                        @click="confirmDelete"
+                      >
+                        {{ viewer.isDeleting.value ? t('deleting') : t('delete') }}
+                      </AppButton>
+                    </div>
+                  </div>
+                </AppDialog>
+                <AppButton
+                  v-if="!viewer.isFullscreen.value"
+                  variant="secondary"
+                  class="ml-1 px-4 py-2"
+                  :title="t('fullscreen')"
+                  @click="viewer.enterFullscreen()"
+                >
+                  <Maximize2 weight="duotone" class="h-5 w-5" />
+                  <span class="hidden sm:inline">{{ t('fullscreen') }}</span>
+                </AppButton>
+                <AppButton
+                  v-else
+                  variant="destructive"
+                  class="ml-1 px-4 py-2"
+                  :title="t('exit_fullscreen')"
+                  @click="viewer.exitFullscreen()"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="h-5 w-5"
+                  >
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+                    <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+                    <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+                    <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+                  </svg>
+                  <span class="hidden sm:inline">{{ t('exit_fullscreen') }}</span>
+                </AppButton>
+                <div class="ml-1 hidden items-center sm:flex">
+                  <FontSizeControl
+                    :font-size="viewer.logFontSize.value"
+                    :is-editing="viewer.isEditingFontSize.value"
+                    :input="viewer.fontSizeInput.value"
+                    @decrease="viewer.decreaseFontSize()"
+                    @increase="viewer.increaseFontSize()"
+                    @start-edit="viewer.startEditFontSize()"
+                    @commit="viewer.applyFontSize()"
+                    @cancel="viewer.cancelFontSizeEdit()"
+                    @update:input="viewer.fontSizeInput.value = $event"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 移动端专用行：字体调节和LogAnalysis按钮 -->
+            <div
+              class="flex items-center justify-between gap-1 border-b border-muted p-2 sm:hidden"
+            >
+              <FontSizeControl
+                compact
+                :font-size="viewer.logFontSize.value"
+                :is-editing="viewer.isEditingFontSize.value"
+                :input="viewer.fontSizeInput.value"
+                @decrease="viewer.decreaseFontSize()"
+                @increase="viewer.increaseFontSize()"
+                @start-edit="viewer.startEditFontSize()"
+                @commit="viewer.applyFontSize()"
+                @cancel="viewer.cancelFontSizeEdit()"
+                @update:input="viewer.fontSizeInput.value = $event"
+              />
               <button
-                :class="
-                  viewer.wrapLines.value
-                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                    : 'bg-secondary/80 hover:bg-secondary text-secondary-foreground'
-                "
-                class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium"
-                :title="t('toggle_wrap')"
-                @click="viewer.wrapLines.value = !viewer.wrapLines.value"
-              >
-                <WrapText class="h-5 w-5" />
-                <span class="hidden sm:inline">{{
-                  viewer.wrapLines.value ? t('wrap_lines_on') : t('wrap_lines_off')
-                }}</span>
-              </button>
-              <button
-                class="log-analysis-trigger hidden sm:inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+                class="log-analysis-trigger inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
                 @click="ai.openAiPanel()"
               >
                 {{ t('ai_analysis') }}
               </button>
             </div>
 
-            <!-- 右侧：操作按钮 -->
-            <div class="flex items-center gap-1">
-              <button
-                class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground"
-                :title="t('download')"
-                @click="viewer.downloadLog()"
-              >
-                <Download class="h-5 w-5" />
-                <span class="hidden sm:inline">{{ t('download') }}</span>
-              </button>
-              <a
-                :href="getApiUrl(`/v1/raw/${id}`)"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground"
-                :title="t('view_raw_log')"
-              >
-                <Code class="h-5 w-5" />
-                <span class="hidden sm:inline">{{ t('view_raw_log') }}</span>
-              </a>
-              <button
-                :disabled="viewer.isDeleting.value"
-                class="inline-flex items-center gap-1.5 text-sm rounded-md transition-colors px-4 py-2 font-medium bg-destructive/10 hover:bg-destructive/20 text-destructive disabled:opacity-50"
-                :title="t('delete')"
-                @click="showDeleteDialog = true"
-              >
-                <Trash2 class="h-5 w-5" />
-                <span class="hidden sm:inline">{{
-                  viewer.isDeleting.value ? t('deleting') : t('delete')
-                }}</span>
-              </button>
-
-              <!-- 删除确认对话框 -->
-              <Teleport to="body">
-                <Transition
-                  enter-active-class="transition ease-out duration-200"
-                  enter-from-class="opacity-0"
-                  enter-to-class="opacity-100"
-                  leave-active-class="transition ease-in duration-150"
-                  leave-from-class="opacity-100"
-                  leave-to-class="opacity-0"
-                >
-                  <div
-                    v-if="showDeleteDialog"
-                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4"
-                    @click.self="showDeleteDialog = false"
-                  >
-                    <Transition
-                      enter-active-class="transition ease-out duration-200"
-                      enter-from-class="opacity-0 scale-95"
-                      enter-to-class="opacity-100 scale-100"
-                      leave-active-class="transition ease-in duration-150"
-                      leave-from-class="opacity-100 scale-100"
-                      leave-to-class="opacity-0 scale-95"
-                    >
-                      <div
-                        class="bg-card text-card-foreground rounded-lg shadow-2xl max-w-sm w-full overflow-hidden"
-                      >
-                        <div class="p-5 sm:p-6">
-                          <div class="flex items-start gap-3 mb-4">
-                            <div
-                              class="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0"
-                            >
-                              <AlertTriangle class="h-5 w-5 text-destructive" />
-                            </div>
-                            <div>
-                              <h2 class="text-lg font-semibold text-foreground">
-                                {{ t('delete_log') }}
-                              </h2>
-                              <p class="text-sm text-muted-foreground mt-1">
-                                此操作不可撤销，确定要删除这个日志吗？
-                              </p>
-                            </div>
-                          </div>
-
-                          <div class="flex items-center justify-end gap-2">
-                            <button
-                              class="px-4 py-2 text-sm font-medium rounded-md transition-colors bg-muted hover:bg-muted/80 text-muted-foreground"
-                              :disabled="viewer.isDeleting.value"
-                              @click="showDeleteDialog = false"
-                            >
-                              {{ t('cancel') }}
-                            </button>
-                            <button
-                              class="px-4 py-2 text-sm font-medium rounded-md transition-colors bg-destructive hover:bg-destructive/90 text-destructive-foreground disabled:opacity-50"
-                              :disabled="viewer.isDeleting.value"
-                              @click="confirmDelete"
-                            >
-                              {{ viewer.isDeleting.value ? t('deleting') : t('delete') }}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </Transition>
-                  </div>
-                </Transition>
-              </Teleport>
-              <button
-                v-if="!viewer.isFullscreen.value"
-                class="inline-flex items-center gap-1.5 text-sm rounded-md transition-all duration-300 px-4 py-2 font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground"
-                :title="t('fullscreen')"
-                @click="viewer.enterFullscreen()"
-              >
-                <Maximize2 class="h-5 w-5" />
-                <span class="hidden sm:inline">{{ t('fullscreen') }}</span>
-              </button>
-              <button
-                v-else
-                class="inline-flex items-center gap-1.5 text-sm rounded-md transition-all duration-300 px-4 py-2 font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                :title="t('exit_fullscreen')"
-                @click="viewer.exitFullscreen()"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="h-5 w-5"
-                >
-                  <path d="M8 3v3a2 2 0 0 1-2 2H3" />
-                  <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
-                  <path d="M3 16h3a2 2 0 0 1 2 2v3" />
-                  <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
-                </svg>
-                <span class="hidden sm:inline">{{ t('exit_fullscreen') }}</span>
-              </button>
-              <div class="hidden sm:flex items-center gap-0.5 ml-1">
-                <button
-                  class="inline-flex items-center justify-center h-9 w-9 rounded-md text-sm font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-colors"
-                  :class="{ 'opacity-40': viewer.logFontSize.value <= 10 }"
-                  :disabled="viewer.logFontSize.value <= 10"
-                  @click="viewer.decreaseFontSize()"
-                >
-                  −
-                </button>
-                <input
-                  v-if="viewer.isEditingFontSize.value"
-                  ref="viewer.fontSizeInputEl"
-                  v-model="viewer.fontSizeInput.value"
-                  type="number"
-                  min="8"
-                  max="48"
-                  class="w-14 text-center text-sm font-mono bg-background border border-primary rounded px-1 py-0.5 focus:outline-none"
-                  @blur="viewer.applyFontSize()"
-                  @keydown="viewer.handleFontSizeKeydown($event)"
-                />
-                <button
-                  v-else
-                  class="w-10 text-center text-sm font-mono text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors cursor-pointer"
-                  @click="viewer.startEditFontSize()"
-                >
-                  {{ viewer.logFontSize.value }}
-                </button>
-                <button
-                  class="inline-flex items-center justify-center h-9 w-9 rounded-md text-sm font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-colors"
-                  :class="{ 'opacity-40': viewer.logFontSize.value >= 24 }"
-                  :disabled="viewer.logFontSize.value >= 24"
-                  @click="viewer.increaseFontSize()"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 移动端专用行：字体调节和LogAnalysis按钮 -->
-          <div class="flex items-center gap-1 justify-between p-2 border-b border-muted sm:hidden">
-            <div class="flex items-center gap-0.5">
-              <button
-                class="inline-flex items-center justify-center h-8 w-8 rounded-md text-sm font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-colors"
-                :class="{ 'opacity-40': viewer.logFontSize.value <= 10 }"
-                :disabled="viewer.logFontSize.value <= 10"
-                @click="viewer.decreaseFontSize()"
-              >
-                −
-              </button>
-              <input
-                v-if="viewer.isEditingFontSize.value"
-                v-model="viewer.fontSizeInput.value"
-                type="number"
-                min="8"
-                max="48"
-                class="w-12 text-center text-sm font-mono bg-background border border-primary rounded px-1 py-0.5 focus:outline-none"
-                @blur="viewer.applyFontSize()"
-                @keydown="viewer.handleFontSizeKeydown($event)"
-              />
-              <button
-                v-else
-                class="w-8 text-center text-sm font-mono text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors cursor-pointer"
-                @click="viewer.startEditFontSize()"
-              >
-                {{ viewer.logFontSize.value }}
-              </button>
-              <button
-                class="inline-flex items-center justify-center h-8 w-8 rounded-md text-sm font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-colors"
-                :class="{ 'opacity-40': viewer.logFontSize.value >= 24 }"
-                :disabled="viewer.logFontSize.value >= 24"
-                @click="viewer.increaseFontSize()"
-              >
-                +
-              </button>
-            </div>
-            <button
-              class="log-analysis-trigger inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-              @click="ai.openAiPanel()"
-            >
-              {{ t('ai_analysis') }}
-            </button>
-          </div>
-
-          <!-- 搜索栏 -->
-          <div class="flex items-center gap-2 p-2">
-            <div class="flex-1 min-w-0">
-              <div class="relative">
-                <Search
-                  class="h-4 w-4 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2"
-                />
-                <input
-                  v-model="search.searchTerm.value"
-                  :placeholder="t('search') + ' (Ctrl+F)'"
-                  class="w-full bg-background border border-border rounded-md pl-9 pr-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
-                  @keyup="search.handleSearchInput($event)"
-                />
-              </div>
-            </div>
-
-            <div v-if="search.searchResults.value.length > 0" class="flex items-center gap-1">
-              <span class="text-xs text-muted-foreground font-mono min-w-[60px] text-center"
-                >{{ search.searchIndex.value + 1 }}/{{ search.searchResults.value.length }}</span
-              >
-              <button
-                class="p-2 rounded-md hover:bg-secondary transition-colors"
-                :title="t('previous_result')"
-                @click="search.goToPrevResult()"
-              >
-                <ChevronLeft class="h-4 w-4" />
-              </button>
-              <button
-                class="p-2 rounded-md hover:bg-secondary transition-colors"
-                :title="t('next_result')"
-                @click="search.goToNextResult()"
-              >
-                <ChevronRight class="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 日志内容 -->
-        <div :class="viewer.isFullscreen.value ? 'flex-1 flex flex-col min-h-0' : ''">
-          <div
-            :class="
-              viewer.isFullscreen.value ? 'flex-1 overflow-y-auto' : 'overflow-x-auto relative'
-            "
-            class="bg-[#2a2a2a] py-2"
-          >
-            <div
-              class="log-content font-mono text-gray-100"
-              :style="{ fontSize: viewer.logFontSize.value + 'px' }"
-              :class="{
-                'show-errors-only': viewer.showErrorsOnly.value,
-                'log-wrap': viewer.wrapLines.value,
-                'log-no-wrap': !viewer.wrapLines.value
-              }"
-              v-html="viewer.logContent.value"
-            ></div>
-            <button
-              class="fixed bottom-4 right-4 inline-flex items-center gap-1.5 text-xs bg-[#3d3d3d] hover:bg-[#4a4a4a] text-gray-100 px-4 py-2 rounded-md transition-colors shadow-lg"
-              @click="viewer.scrollToTop()"
-            >
-              <ArrowUp class="h-3.5 w-3.5" />
-              {{ t('scroll_top') }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 问题详情 -->
-      <div
-        v-if="viewer.log.value?.analysis?.problems?.length > 0"
-        ref="viewer.problemsSection"
-        class="bg-card p-4"
-      >
-        <div class="flex items-center gap-2 mb-4 pb-3 border-b">
-          <AlertTriangle class="h-5 w-5 text-destructive" />
-          <h2 class="font-semibold">{{ t('problem_details') }}</h2>
-        </div>
-        <div class="space-y-3">
-          <div
-            v-for="(prob, idx) in viewer.log.value.analysis.problems"
-            :key="idx"
-            class="p-3 rounded-lg border bg-destructive/5 border-destructive/20"
-          >
-            <div class="flex items-start gap-2">
-              <AlertTriangle class="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            <!-- 搜索栏 -->
+            <div class="flex items-center gap-2 p-2">
               <div class="flex-1 min-w-0">
-                <p class="font-medium text-sm">{{ prob.message }}</p>
-                <p v-if="prob.line" class="text-xs text-muted-foreground mt-1">
-                  {{ t('line_number') }}: {{ prob.line }}
-                </p>
-                <div v-if="prob.solutions?.length" class="mt-3 space-y-2">
-                  <p class="text-xs font-medium text-green-600">{{ t('solution') }}:</p>
-                  <div
-                    v-for="sol in prob.solutions"
-                    :key="sol.message"
-                    class="flex items-start gap-2 text-sm text-muted-foreground"
-                  >
-                    <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span>{{ sol.message }}</span>
+                <div class="relative">
+                  <Search
+                    weight="duotone"
+                    class="h-4 w-4 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2"
+                  />
+                  <input
+                    v-model="search.searchTerm.value"
+                    :placeholder="t('search') + ' (Ctrl+F)'"
+                    class="w-full bg-background border border-border rounded-md pl-9 pr-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
+                    @keyup="search.handleSearchInput($event)"
+                  />
+                </div>
+              </div>
+
+              <div v-if="search.searchResults.value.length > 0" class="flex items-center gap-1">
+                <span class="text-xs text-muted-foreground font-mono min-w-[60px] text-center"
+                  >{{ search.searchIndex.value + 1 }}/{{ search.searchResults.value.length }}</span
+                >
+                <button
+                  class="p-2 rounded-md hover:bg-secondary transition-colors"
+                  :title="t('previous_result')"
+                  @click="search.goToPrevResult()"
+                >
+                  <ChevronLeft weight="duotone" class="h-4 w-4" />
+                </button>
+                <button
+                  class="p-2 rounded-md hover:bg-secondary transition-colors"
+                  :title="t('next_result')"
+                  @click="search.goToNextResult()"
+                >
+                  <ChevronRight weight="duotone" class="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 日志内容 -->
+          <div :class="viewer.isFullscreen.value ? 'flex-1 flex flex-col min-h-0' : ''">
+            <div
+              :class="
+                viewer.isFullscreen.value ? 'flex-1 overflow-y-auto' : 'overflow-x-auto relative'
+              "
+              class="bg-[--log-bg] py-2"
+            >
+              <div
+                class="log-content text-gray-100"
+                :style="{ fontSize: viewer.logFontSize.value + 'px' }"
+                :class="{
+                  'show-errors-only': viewer.showErrorsOnly.value,
+                  'log-wrap': viewer.wrapLines.value,
+                  'log-no-wrap': !viewer.wrapLines.value
+                }"
+                v-html="viewer.logContent.value"
+              ></div>
+              <button
+                class="fixed bottom-4 right-4 inline-flex items-center gap-1.5 rounded-md bg-[--log-bg-hover] px-4 py-2 text-xs text-gray-100 shadow-lg transition-colors hover:bg-[--log-border]"
+                @click="viewer.scrollToTop()"
+              >
+                <ArrowUp weight="duotone" class="h-3.5 w-3.5" />
+                {{ t('scroll_top') }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 问题详情 -->
+        <div
+          v-if="viewer.log.value?.analysis?.problems?.length > 0"
+          ref="viewer.problemsSection"
+          class="bg-card p-4"
+        >
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b">
+            <AlertTriangle weight="duotone" class="h-5 w-5 text-destructive" />
+            <h2 class="font-semibold">{{ t('problem_details') }}</h2>
+          </div>
+          <div class="space-y-3">
+            <div
+              v-for="(prob, idx) in viewer.log.value.analysis.problems"
+              :key="idx"
+              class="p-3 rounded-lg border bg-destructive/5 border-destructive/20"
+            >
+              <div class="flex items-start gap-2">
+                <AlertTriangle
+                  weight="duotone"
+                  class="h-5 w-5 text-destructive flex-shrink-0 mt-0.5"
+                />
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium text-sm">{{ prob.message }}</p>
+                  <p v-if="prob.line" class="text-xs text-muted-foreground mt-1">
+                    {{ t('line_number') }}: {{ prob.line }}
+                  </p>
+                  <div v-if="prob.solutions?.length" class="mt-3 space-y-2">
+                    <p class="text-xs font-medium text-green-600">{{ t('solution') }}:</p>
+                    <div
+                      v-for="sol in prob.solutions"
+                      :key="sol.message"
+                      class="flex items-start gap-2 text-sm text-muted-foreground"
+                    >
+                      <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>{{ sol.message }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -684,128 +615,110 @@ onMounted(() => {
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- AI 分析面板 -->
-  <div v-if="ai.showAiPanel.value" class="fixed inset-0 z-50">
-    <div
-      class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-      @click="ai.closeAiPanel()"
-    ></div>
-
-    <div
-      class="relative ml-auto h-full w-full md:w-[42rem] lg:w-[48rem] bg-background border-l border-border shadow-2xl flex flex-col"
-    >
-      <div class="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
-        <div class="min-w-0">
-          <h2 class="font-semibold flex items-center gap-2">
-            {{ t('ai_analysis') }}
-            <span v-if="ai.aiIsCached.value" class="text-xs text-blue-500 font-normal">
-              {{ t('ai_cached_result') }}
-            </span>
-          </h2>
-        </div>
-        <button
-          class="p-2 rounded-md hover:bg-secondary transition-colors"
-          @click="ai.closeAiPanel()"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <div v-if="ai.aiIsStreaming.value" class="border-b bg-primary/5 px-4 py-3 text-sm">
-        <div class="flex items-center gap-2">
-          <div class="flex gap-1">
-            <div class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></div>
-            <div
-              class="h-1.5 w-1.5 rounded-full bg-primary/70 animate-pulse animation-delay-200"
-            ></div>
-            <div
-              class="h-1.5 w-1.5 rounded-full bg-primary/50 animate-pulse animation-delay-400"
-            ></div>
-          </div>
-          <p class="font-medium">{{ t('ai_analyzing_streaming') }}</p>
-        </div>
-        <p class="mt-1 text-muted-foreground">
-          {{ t('ai_streaming_partial').replace('{count}', ai.aiStreamingLength.value.toString()) }}
-        </p>
-      </div>
+    <!-- AI 分析面板：无遮罩压暗，面板本身毛玻璃悬浮（同顶栏配方） -->
+    <div v-if="ai.showAiPanel.value" class="fixed inset-0 z-50">
+      <div class="absolute inset-0" @click="ai.closeAiPanel()"></div>
 
       <div
-        ref="aiScrollEl"
-        class="flex-1 overflow-y-auto p-4 space-y-3"
-        @scroll="onAiScroll"
+        class="absolute inset-y-0 right-0 flex w-full flex-col border-l border-border bg-background/80 shadow-2xl backdrop-blur-xl md:w-[42rem] lg:w-[48rem]"
       >
-        <!-- 分析步骤：与正文同一滚动流 -->
-        <div
-          v-if="ai.aiStatusBlocks.value.length"
-          class="bg-muted/40 rounded-lg px-3 py-2.5 space-y-1.5"
-        >
-          <div v-for="block in ai.aiStatusBlocks.value" :key="block.id">
-            <button
-              class="w-full flex items-center gap-2 text-left text-sm text-muted-foreground hover:text-foreground transition-colors"
-              :aria-expanded="block.expanded"
-              @click="ai.toggleStatusBlock(block.id)"
-            >
-              <span
-                class="h-2 w-2 rounded-full flex-shrink-0"
-                :class="block.completed ? 'bg-green-500' : 'bg-primary animate-pulse'"
-              ></span>
-              <span class="flex-1">{{ block.title }}</span>
-              <span class="text-xs">{{ block.expanded ? '收起' : '展开' }}</span>
-            </button>
-            <div
-              v-show="block.expanded"
-              class="mt-1 ml-4 rounded-md bg-background/60 px-3 py-2 text-xs text-muted-foreground whitespace-pre-wrap break-words"
-            >
-              {{ block.detail || '暂无详细信息' }}
+        <div class="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
+          <div class="min-w-0">
+            <h2 class="font-semibold flex items-center gap-2">
+              {{ t('ai_analysis') }}
+              <span v-if="ai.aiIsCached.value" class="text-xs text-blue-500 font-normal">
+                {{ t('ai_cached_result') }}
+              </span>
+            </h2>
+          </div>
+          <AppButton
+            variant="ghost"
+            size="icon"
+            :aria-label="t('close')"
+            @click="ai.closeAiPanel()"
+          >
+            <X weight="duotone" class="h-5 w-5" />
+          </AppButton>
+        </div>
+
+        <div v-if="ai.aiIsStreaming.value" class="border-b bg-primary/5 px-4 py-3 text-sm">
+          <div class="flex items-center gap-2">
+            <div class="flex gap-1">
+              <div class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></div>
+              <div
+                class="h-1.5 w-1.5 rounded-full bg-primary/70 animate-pulse animation-delay-200"
+              ></div>
+              <div
+                class="h-1.5 w-1.5 rounded-full bg-primary/50 animate-pulse animation-delay-400"
+              ></div>
+            </div>
+            <p class="font-medium">{{ t('ai_analyzing_streaming') }}</p>
+          </div>
+          <p class="mt-1 text-muted-foreground">
+            {{
+              t('ai_streaming_partial').replace('{count}', ai.aiStreamingLength.value.toString())
+            }}
+          </p>
+        </div>
+
+        <div ref="aiScrollEl" class="flex-1 overflow-y-auto p-4 space-y-3" @scroll="onAiScroll">
+          <!-- 分析步骤：与正文同一滚动流 -->
+          <div
+            v-if="ai.aiStatusBlocks.value.length"
+            class="bg-muted/40 rounded-lg px-3 py-2.5 space-y-1.5"
+          >
+            <div v-for="block in ai.aiStatusBlocks.value" :key="block.id">
+              <button
+                class="w-full flex items-center gap-2 text-left text-sm text-muted-foreground hover:text-foreground transition-colors"
+                :aria-expanded="block.expanded"
+                @click="ai.toggleStatusBlock(block.id)"
+              >
+                <span
+                  class="h-2 w-2 rounded-full flex-shrink-0"
+                  :class="block.completed ? 'bg-green-500' : 'bg-primary animate-pulse'"
+                ></span>
+                <span class="flex-1">{{ block.title }}</span>
+                <span class="text-xs">{{ block.expanded ? '收起' : '展开' }}</span>
+              </button>
+              <div
+                v-show="block.expanded"
+                class="mt-1 ml-4 rounded-md bg-background/60 px-3 py-2 text-xs text-muted-foreground whitespace-pre-wrap break-words"
+              >
+                {{ block.detail || '暂无详细信息' }}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div v-if="ai.aiLoading.value && !ai.aiIsStreaming.value" class="flex flex-col items-center justify-center min-h-[300px]">
-          <div class="relative w-16 h-16">
-            <div
-              class="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin"
-            ></div>
-            <div
-              class="absolute inset-2 rounded-full border-4 border-transparent border-b-primary animate-spin-reverse"
-            ></div>
+          <div
+            v-if="ai.aiLoading.value && !ai.aiIsStreaming.value"
+            class="flex flex-col items-center justify-center min-h-[300px]"
+          >
+            <div class="relative w-16 h-16">
+              <div
+                class="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin"
+              ></div>
+              <div
+                class="absolute inset-2 rounded-full border-4 border-transparent border-b-primary animate-spin-reverse"
+              ></div>
+            </div>
+            <p class="mt-6 text-muted-foreground text-sm">{{ t('ai_analyzing') }}</p>
           </div>
-          <p class="mt-6 text-muted-foreground text-sm">{{ t('ai_analyzing') }}</p>
-        </div>
 
-        <div v-else-if="ai.aiError.value" class="py-8 text-center">
-          <p class="text-sm text-red-500">{{ ai.aiError.value }}</p>
-          <pre
-            v-if="ai.aiRawError.value"
-            class="mt-4 max-h-48 overflow-auto rounded-lg bg-[#1e1e1e] p-3 text-left text-xs text-gray-100 font-mono whitespace-pre-wrap break-all leading-relaxed"
-            >{{ ai.aiRawError.value }}</pre
-          >
-          <button
-            class="mt-4 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted/60 transition-colors"
-            @click="ai.loadAiAnalysis()"
-          >
-            <RefreshCw class="h-3.5 w-3.5" />
-            {{ t('ai_analysis_retry') }}
-          </button>
-        </div>
+          <div v-else-if="ai.aiError.value" class="py-8 text-center">
+            <p class="text-sm text-red-500">{{ ai.aiError.value }}</p>
+            <pre
+              v-if="ai.aiRawError.value"
+              class="mt-4 max-h-48 overflow-auto rounded-lg bg-[--log-code-bg] p-3 text-left font-mono text-xs text-gray-100 leading-relaxed whitespace-pre-wrap break-all"
+              >{{ ai.aiRawError.value }}</pre
+            >
+            <AppButton variant="outline" class="mt-4" @click="ai.loadAiAnalysis()">
+              <RefreshCw weight="duotone" class="h-3.5 w-3.5" />
+              {{ t('ai_analysis_retry') }}
+            </AppButton>
+          </div>
 
-        <div v-else-if="ai.hasAiContent.value">
-          <div class="rounded-xl border bg-card p-3">
+          <div v-else-if="ai.hasAiContent.value">
             <div
               class="ai-markdown-body prose prose-sm dark:prose-invert max-w-none break-words"
               v-html="
@@ -821,51 +734,15 @@ onMounted(() => {
               aria-hidden="true"
             ></span>
           </div>
-        </div>
 
-        <div v-else-if="!ai.aiLoading.value" class="py-12 text-center">
-          <p class="text-muted-foreground text-sm">{{ t('ai_empty_result') }}</p>
+          <div v-else-if="!ai.aiLoading.value" class="py-12 text-center">
+            <p class="text-muted-foreground text-sm">{{ t('ai_empty_result') }}</p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- 通知组件 -->
-  <div class="fixed top-24 right-4 z-50 space-y-2">
-    <TransitionGroup name="notification">
-      <div
-        v-for="notification in viewer.notifications.value"
-        :key="notification.id"
-        class="flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg bg-card min-w-[300px]"
-        :class="notification.type === 'success' ? 'border-green-500/50' : 'border-destructive/50'"
-      >
-        <Check
-          v-if="notification.type === 'success'"
-          class="h-5 w-5 text-green-500 flex-shrink-0"
-        />
-        <AlertTriangle v-else class="h-5 w-5 text-destructive flex-shrink-0" />
-        <span class="text-sm flex-1">{{ notification.message }}</span>
-        <button
-          class="text-gray-400 hover:text-white"
-          @click="viewer.removeNotification(notification.id)"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-          </svg>
-        </button>
-      </div>
-    </TransitionGroup>
+    <!-- 通知由全局 ToastHost 渲染 -->
   </div>
 </template>
 
@@ -923,7 +800,7 @@ onMounted(() => {
   overflow-x: auto;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  background-color: #1e1e1e;
+  background-color: var(--log-code-bg);
 }
 
 .ai-markdown-body code:not(pre code) {
@@ -955,7 +832,7 @@ onMounted(() => {
   color: #6b7280;
   line-height: inherit;
   padding-right: 8px;
-  border-right: 1px solid #3d3d3d;
+  border-right: 1px solid var(--log-border);
   margin-right: 8px;
   user-select: none;
 }
@@ -1058,13 +935,19 @@ mark {
 }
 
 .log-content {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  line-height: 1.15;
+  font-family:
+    'HarmonyOS Sans SC',
+    system-ui,
+    -apple-system,
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
+  font-weight: 400;
+  line-height: 1.25;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   word-break: break-all;
   overflow-wrap: anywhere;
 }
@@ -1094,21 +977,6 @@ mark {
     padding-right: 10px;
     margin-right: 10px;
   }
-}
-
-.notification-enter-active,
-.notification-leave-active {
-  transition: all 0.3s ease;
-}
-
-.notification-enter-from {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-.notification-leave-to {
-  opacity: 0;
-  transform: translateX(100%);
 }
 
 .animation-delay-200 {

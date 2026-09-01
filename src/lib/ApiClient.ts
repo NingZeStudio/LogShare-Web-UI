@@ -222,7 +222,8 @@ export class ApiClient {
         } catch {
           errorData = null
         }
-        const detail = errorData?.error || errorData?.message || rawBody || `HTTP ${response.status}`
+        const detail =
+          errorData?.error || errorData?.message || rawBody || `HTTP ${response.status}`
         const disabled = errorData?.error === 'AI analysis is disabled.'
         callbacks.onError?.({
           success: false,
@@ -390,10 +391,7 @@ export class ApiClient {
    * 注意：子路径分隔符不可编码（后端按原始路径段路由），仅对各段做 URI 编码
    */
   async getRawFile(id: string, filename: string): Promise<string> {
-    const path = filename
-      .split('/')
-      .map(encodeURIComponent)
-      .join('/')
+    const path = filename.split('/').map(encodeURIComponent).join('/')
     const response = await this.get<string>(`/v1/raw/${id}/${path}`, {
       headers: { Accept: 'text/plain' }
     })

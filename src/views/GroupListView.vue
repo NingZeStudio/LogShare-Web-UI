@@ -6,6 +6,7 @@ import {
   channelGroups,
   type QqGroup
 } from '@/data/groups'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const sections: Array<{ title: string; groups: QqGroup[] }> = [
   { title: '官方群', groups: officialGroups },
@@ -38,20 +39,13 @@ const sections: Array<{ title: string; groups: QqGroup[] }> = [
               {{ group.description }}
             </div>
           </div>
-          <a
-            :href="group.url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center justify-center rounded-md bg-primary/10 text-primary px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary/20 shrink-0"
-          >
+          <AppButton as="a" variant="soft" size="sm" :href="group.url" class="shrink-0">
             加入群聊
-          </a>
+          </AppButton>
         </div>
       </div>
     </section>
 
-    <p class="text-xs text-muted-foreground">
-      想收录你的启动器官方群？联系我们。
-    </p>
+    <p class="text-xs text-muted-foreground">想收录你的启动器官方群？联系我们。</p>
   </div>
 </template>

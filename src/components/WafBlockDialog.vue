@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { X } from 'lucide-vue-next'
 import { ref } from 'vue'
+import AppDialog from '@/components/ui/AppDialog.vue'
 import { wafBlockState, hideWafBlock } from '@/lib/wafBlock'
 
 const iframeRef = ref<HTMLIFrameElement | null>(null)
@@ -22,41 +22,17 @@ const close = () => hideWafBlock()
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition
-      enter-active-class="transition-opacity duration-200"
-      enter-from-class="opacity-0"
-      leave-active-class="transition-opacity duration-150"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="wafBlockState.open"
-        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-label="请求被安全系统拦截"
-        @click.self="close"
-      >
-        <div class="relative w-full max-w-[560px]">
-          <button
-            type="button"
-            class="absolute -top-10 right-0 rounded-md p-1.5 text-white/70 transition-colors hover:text-white"
-            aria-label="关闭"
-            @click="close"
-          >
-            <X class="size-5" />
-          </button>
-          <!-- WAF 卡片自带全部样式，iframe srcdoc 原样渲染（无 allow-scripts，卡片为纯静态内容） -->
-          <iframe
-            ref="iframeRef"
-            class="w-full bg-white"
-            :srcdoc="wafBlockState.html"
-            sandbox="allow-same-origin"
-            title="OpenLiteWaf 安全提示"
-            @load="syncHeight"
-          ></iframe>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+  <AppDialog :open="wafBlockState.open" width="2xl" @close="close">
+    <div class="p-4">
+      <!-- WAF 卡片自带全部样式，iframe srcdoc 原样渲染（无 allow-scripts，卡片为纯静态内容） -->
+      <iframe
+        ref="iframeRef"
+        class="w-full bg-white"
+        :srcdoc="wafBlockState.html"
+        sandbox="allow-same-origin"
+        title="OpenLiteWaf 安全提示"
+        @load="syncHeight"
+      ></iframe>
+    </div>
+  </AppDialog>
 </template>

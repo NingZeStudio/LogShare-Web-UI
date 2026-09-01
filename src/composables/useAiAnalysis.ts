@@ -213,8 +213,7 @@ export function useAiAnalysis(logId: string) {
       const data = e.response?.data
       if (data != null) {
         try {
-          aiRawError.value =
-            typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+          aiRawError.value = typeof data === 'string' ? data : JSON.stringify(data, null, 2)
         } catch {
           aiRawError.value = ''
         }

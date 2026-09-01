@@ -8,6 +8,35 @@
 
 ---
 
+## 快速接入
+
+接入「日志上传 + AI 分析」的最小流程：
+
+```bash
+# 1. 上传日志（source 填启动器名/版本，用于匹配对应生态的知识库）
+curl -X POST https://api.logshare.cn/v1/log \
+     -H 'Content-Type: application/json' \
+     -d '{"content":"<日志全文>","source":"your-launcher/1.0.0"}'
+# → {"success":true,"id":"sAbCdEf","token":"...","raw":"...","url":"..."}
+
+# 2. 获取原始日志或结构化解析（可选）
+curl https://api.logshare.cn/v1/raw/sAbCdEf          # 日志原文
+curl https://api.logshare.cn/v1/insights/sAbCdEf     # Codex 结构化分析
+
+# 3. AI 深度分析（SSE 流式，读超时建议 ≥300s）
+curl -N https://api.logshare.cn/v1/ai/sAbCdEf
+```
+
+接入时需要注意以下几点：
+
+- 上传响应中的 `token` 是删除日志的唯一凭证，丢失后无法找回，请自行持久化保存。
+- `source` 字段建议填写启动器名与版本（如 `fcl/1.2.0`）。知识库收录了 Pojav、FCL、ZL2、Amethyst、PGW、MobileGlues 等启动器生态的问题案例，该字段用于让 AI 分析优先匹配对应来源的案例。
+- AI 分析使用 SSE 流式协议，解析方式见「SSE 事件协议」一节，注意 `event:` 行与 `data:` 行的配对关系。
+- 移动端建议开启 gzip 上传（`Content-Encoding: gzip`）以减小大日志的传输体积。
+- 客户端 HTTP 读超时应设置为 300 秒以上，Agent 的多轮工具分析可能持续数十秒。
+
+---
+
 ## 日志管理
 
 ### 上传日志
@@ -26,8 +55,8 @@ POST /v1/log
 |------|------|------|------|
 | `content` | string | 是* | 日志内容（多文件上传时可为空，见下） |
 | `files` | array | 否 | 附加文件数组，每个元素 `{name, content}` |
-| `metadata[]` | array | 否 | 元数据 |
-| `source` | string | 否 | 来源标识（最长 64 字符） |
+| `metadata[]` | array | 否 | 元数据，每项 `{key, value, label?, visible?}`；`value` 为字符串时直接存储，其他类型会 JSON 序列化；单项最长 value 1024 / label 128 / key 64 字符 |
+| `source` | string | 否 | 来源标识（最长 64 字符），建议填写，格式如 `fcl/1.2.0`、`pojavlauncher/3.4.1`。知识库按启动器生态组织了问题案例（FCL/ZL2/PGW/Amethyst/MobileGlues），该字段用于让 AI 分析优先匹配对应来源的案例 |
 
 \* 当提供 `files` 时 `content` 可省略，主文件取 `files[0]`。
 
@@ -197,6 +226,8 @@ POST /v1/analyse
 
 ## AI 分析
 
+> **推荐的使用方式：** 先调用 `GET /v1/insights/{id}` 展示结构化错误摘要（该接口不消耗 AI 资源），再在用户主动触发时调用 `GET /v1/ai/{id}` 进行流式分析。这样可以避免为每次页面展示都执行一次 AI 分析。
+
 > **禁用开关**：配置 `ai.enabled = false`（或环境变量 `AI_ENABLED=false`）时，所有 `/v1/ai/*` 接口统一返回 HTTP 404（`{"success":false,"error":"AI analysis is disabled.","code":404}`）。默认 `true` 启用。
 
 当配置 `ai.agent.enabled` 为 `true` 时，AI 接口走 LogAgent（模型驱动工具循环）；否则保持旧版直连分析。SSE 事件协议见下。
@@ -210,6 +241,8 @@ GET /v1/ai/{id}
 
 SSE（Server-Sent Events）流式输出。LogAgent 模式下，Agent 可读取该日志 ID 下的所有文件（`list_log_files` / `read_log_file` 工具，作用域限定在当前 ID）。`GET /v1/ai/{id}` 会绑定该 ID；`POST /v1/ai/analyse` 只有请求 JSON 提供 `id` 时才会开放文件工具。
 
+> **缓存行为：** `GET /v1/ai/{id}` 的分析结论按日志 ID 缓存 30 分钟——同一 ID 重复请求会直接返回上次结论（不再执行工具调用）；调试时如需强制重新分析，重新上传一份新日志即可。
+
 ### 直接提交内容
 
 ```
@@ -218,6 +251,8 @@ POST /v1/ai/analyse
 ```
 
 不落盘，直接提交内容给 AI 分析。请求格式同 `POST /log`。SSE 流式输出，缓存基于内容哈希（30 分钟 TTL）。
+
+> **脱敏差异：** 已存储日志的分析路径（`/v1/ai/{id}`）读取的是上传时经过 `filter.pre` 脱敏过滤链处理后的内容；而本端点直传的内容**不经过**脱敏链，原文会直接发送给 AI 网关。用户提交含敏感信息（token、IP 等）的日志时，请自行确认可接受该差异，或先走 `POST /v1/log` 再分析。
 
 **可选字段 `id`：** 传入已存在的日志 ID 时，Agent 获得该日志文件的访问权（会话作用域），可用于多文件对比；`content` 可省略（缺省读取该 ID 主文件）。缓存键基于该 ID。
 
@@ -250,7 +285,7 @@ LogAgent 模式（`ai.agent.enabled`）会输出额外的 `event: status` 事件
 | `rag_search` | `ai.mcp.rag.url` 非空 | `query: string`（必填）；`k: number`（可选，默认 5，服务端限制 1–20） | SQLite FTS5/BM25 知识库结果，包含标题、来源、片段和分数 |
 | `list_topics` | `ai.mcp.rag.url` 非空 | 无参数，`properties: {}` | 知识库主题目录、文档数量和示例文件名 |
 | `list_log_files` | 当前会话绑定日志 ID | 无参数，`properties: {}` | 主文件 `main` 及附加文件的名称、字节数、行数 |
-| `read_log_file` | 当前会话绑定日志 ID | `filename: string`（必填）；`start_line: number`（可选，默认 1）；`end_line: number`（可选，默认文件末尾） | 指定文件行区间，含总行数、实际范围和截断提示；单次默认上限 50,000 行 / 512 KiB |
+| `read_log_file` | 当前会话绑定日志 ID | `filename: string`（必填） | 返回该文件的**完整内容**（无行区间参数）；单次字节上限由 `ai.agent.maxFileBytes` 控制（默认 512 KiB），超出时截断并附提示；同一会话内重复读取同一文件会被拒绝并返回提示 |
 
 ### 工具定义示例
 
@@ -260,25 +295,47 @@ LogAgent 模式（`ai.agent.enabled`）会输出额外的 `event: status` 事件
   {"type":"function","function":{"name":"rag_search","description":"在内部知识库中检索相关文档片段。用于查找已知错误与解决方案。","parameters":{"type":"object","properties":{"query":{"type":"string","description":"检索关键词"},"k":{"type":"number","description":"返回片段数量，默认 5"}},"required":["query"]}}},
   {"type":"function","function":{"name":"list_topics","description":"列出内部知识库涵盖的主题与文档分布。在不知道检索方向、或搜索无结果时，先调用本工具了解知识库有什么，再针对性搜索。","parameters":{"type":"object","properties":{}}}},
   {"type":"function","function":{"name":"list_log_files","description":"列出当前日志 ID 下的所有文件（含主文件与附加文件）。","parameters":{"type":"object","properties":{}}}},
-  {"type":"function","function":{"name":"read_log_file","description":"读取当前日志下指定文件。默认应一次读取从 start_line 到文件末尾；为获得完整上下文，优先省略 end_line 或将其设为文件总行数，尽量一次读完。主文件名为 main。只有内容过大时才分段读取。","parameters":{"type":"object","properties":{"filename":{"type":"string","description":"文件名（主文件为 main，或使用 list_log_files 列出的名称）"},"start_line":{"type":"number","description":"起始行号（1 开始），默认 1"},"end_line":{"type":"number","description":"结束行号，默认文件末尾；优先省略此参数以一次读取完整文件"}},"required":["filename"]}}}
+  {"type":"function","function":{"name":"read_log_file","description":"读取当前日志下指定文件的完整内容（不设行区间，直接返回全文）。为避免重复调用，仅对未读取过的文件调用；已读过的文件使用已内容进行分析，不要再次读取。主文件名为 main。","parameters":{"type":"object","properties":{"filename":{"type":"string","description":"文件名（主文件为 main，或使用 list_log_files 列出的名称）"}},"required":["filename"]}}}
 ]
 ```
 
 工具执行失败不会终止整个 Agent 循环：错误文本会作为 `role: tool` 消息返回模型，由模型决定重试、换工具或直接给出结论。
 
-> RAG 为内置服务（`rag/` 目录），SQLite FTS5 纯本地检索。构建索引 `php bin/hyperf.php rag:build`；RAG MCP server 整合进 Hyperf 主进程的 `/rag` 路径，默认 `ai.mcp.rag.url = http://127.0.0.1:9501/rag`，数据库路径由 `ai.mcp.rag.db` 指定。
+**重复读取防护：** 同一分析会话内，模型对同一文件的第二次 `read_log_file` 调用不会返回文件内容，而是收到提示「文件 X 已读取（共 N 行，M 字节），其内容已在上文中提供，请直接基于已有内容进行分析，不要重复调用本工具」。`filename` 缺省与 `main` 视为同一文件。该机制在服务端强制执行，用于消除模型反复查看同一日志的循环行为。
+
+**工具结果截断规则：**
+
+- `read_log_file` 的全文结果**不受**通用 12KB 工具截断限制，完整进入模型上下文（仅受 `ai.agent.maxFileBytes` 字节上限约束，超限时有明确截断提示）。
+- 其他工具（搜索/知识库检索）的单次结果超过 12KB 时会截断，且截断处附带可见标记 `[...工具结果过长，已截断至 N 字节...]`，模型可据此决定调整参数重新查询。
+- 用户消息中的内联日志同样按 12KB 截断，并提示模型可用文件工具读取完整内容。
+
+**工具调用兼容细节：**
+
+- 服务端会过滤没有 `name` 的空工具调用，避免将无效 tool call 转发给模型网关。
+- 无参数工具（`list_topics`、`list_log_files`）发送给上游时，`function.arguments` 统一为 JSON 字符串 `{}`，不是空字符串。
+- `tool_call_id` 会原样用于后续 `role: tool` 消息；前端无需自行生成或修改该字段。
+- 同一 Agent 请求内，相同 MCP endpoint 会复用已初始化的 MCP 会话；不同请求不会共享会话。
+- `maxToolRounds` 是完整 Agent 轮次上限；达到上限时发送 `event: status`，其 `data` 为 `{"type":"limit","rounds":N}`，随后仍发送 `event: done`。
+- `reasoning_content` 只有上游模型实际返回时才会产生 `thinking` 事件；模型不返回推理增量时不会人为生成思考内容。
+
+
+> RAG 为内置服务（`rag/` 目录），SQLite FTS5 纯本地检索。构建索引 `php bin/hyperf.php rag:build`；RAG MCP server 整合进 Hyperf 主进程的 `/rag` 路径，默认 `ai.mcp.rag.url = http://127.0.0.1:9501/rag`，数据库路径由 `ai.mcp.rag.db` 指定。索引先在临时数据库中完整构建，再原子替换正式索引，构建失败会保留旧索引。MCP 请求体不设应用层大小限制，这是有意设计；`rag_search.query` 仍受服务端限制。
 
 ---
 
 ## RAG MCP 服务（内置知识库检索）
 
-内置于 Hyperf 主进程的 **Streamable HTTP MCP 服务**（JSON-RPC 2.0），提供纯本地 SQLite FTS5 知识库检索（零网络、零 embedding）。数据库路径由 `ai.mcp.rag.db` 指定（默认 `rag/index.db`），构建索引：`php bin/hyperf.php rag:build`。
+内置于 Hyperf 主进程的 **Streamable HTTP MCP 服务**（JSON-RPC 2.0），提供本地知识库检索。知识库覆盖：Forge/NeoForge/Fabric 官方开发者文档，PaperMC 全家桶（Paper/Velocity/Waterfall/Folia）、Purpur/Glowstone/Geyser/Quilt 服务端文档，以及 Android 启动器生态的问题案例与错误签名文档。
+
+检索管线：词法召回（FTS5 BM25 + LIKE，AND→OR 逐级降级，CJK 自动二元切分）∪ 可选 bge-m3 向量召回；向量结果按余弦相似度优先，词法结果去重后补充。数据库路径由 `ai.mcp.rag.db` 指定（默认 `rag/index.db`），构建索引：`php bin/hyperf.php rag:build`。
 
 ### 端点
 
 ```
 POST /rag   （同时接受 GET）
 ```
+
+访问控制：默认仅允许 Hyperf 本机回环请求。通过反向代理或外部客户端访问时，在 `Config.inc.php` 设置 `ai.mcp.rag.authToken`，并发送 `Authorization: Bearer <authToken>`；未设置 token 时不要将 `/rag` 暴露到公网。请求体不设应用层大小限制，这是 MCP transport 的有意设计；`rag_search.query` 由服务端单独限制长度。
 
 ### JSON-RPC 方法
 
@@ -306,7 +363,7 @@ POST /rag   （同时接受 GET）
     "result": {
         "protocolVersion": "2025-03-26",
         "capabilities": { "tools": { "listChanged": false } },
-        "serverInfo": { "name": "logshare-rag", "version": "1.7.0" }
+        "serverInfo": { "name": "logshare-rag", "version": "1.7.1" }
     }
 }
 ```
@@ -408,8 +465,9 @@ POST /rag   （同时接受 GET）
 | 错误码 | 含义 |
 |--------|------|
 | `-32700` | 请求不是合法 JSON-RPC |
+| `-32601` | 方法不存在 |
 | `-32602` | 工具不存在 / 参数错误 |
-| `-32603` | 数据库不可用 |
+| `-32603` | 内部错误（含数据库不可用） |
 
 ---
 
@@ -447,6 +505,8 @@ GET /v1/limits
     "storageTime": 604800
 }
 ```
+
+> **限流口径：** 全局限流按 `IP + method + 归一化路径` 计数（动态资源段如 `/v1/raw/{id}` 共享同一桶），默认每 IP 每方法每路径 36,000 次/60 秒，触发返回 HTTP 429。正常集成远达不到该阈值；若你的应用有高并发拉取需求请联系部署方调整。
 
 ### 过滤器列表
 

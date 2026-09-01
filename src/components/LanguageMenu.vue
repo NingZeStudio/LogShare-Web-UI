@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Languages, ChevronDown } from 'lucide-vue-next'
+import { PhGlobe as Languages, PhCaretDown as ChevronDown } from '@phosphor-icons/vue'
 
 defineProps({
   compact: { type: Boolean, default: false }
@@ -28,10 +28,10 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
       aria-label="切换语言"
       @click="toggleMenu"
     >
-      <Languages class="h-4 w-4" />
+      <Languages weight="duotone" class="h-4 w-4" />
       <template v-if="!compact">
         <span class="ml-1.5 text-sm">{{ currentLang === 'zh-CN' ? '简体' : '繁體' }}</span>
-        <ChevronDown class="h-3.5 w-3.5 ml-0.5" />
+        <ChevronDown weight="duotone" class="h-3.5 w-3.5 ml-0.5" />
       </template>
     </button>
 
@@ -45,7 +45,7 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
     >
       <div
         v-if="showMenu"
-        class="absolute right-0 top-full mt-1 w-32 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50"
+        class="absolute right-0 top-full mt-1 w-32 bg-card/90 border border-border rounded-lg shadow-lg overflow-hidden z-50 backdrop-blur-md"
       >
         <button
           class="w-full text-left px-4 py-2.5 text-sm hover:bg-secondary/80 transition-colors"

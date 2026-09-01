@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { X, RefreshCw } from 'lucide-vue-next'
+import { PhX as X, PhArrowsClockwise as RefreshCw } from '@phosphor-icons/vue'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const showUpdateToast = ref(false)
 const updateMessage = ref('')
@@ -32,25 +33,23 @@ onUnmounted(() => {
     <Transition name="slide-up">
       <div
         v-if="showUpdateToast"
-        class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-2rem)] sm:w-auto max-w-sm flex items-center gap-3 bg-card border border-border rounded-lg shadow-2xl px-4 py-3 animate-in fade-in slide-in-from-bottom-4"
+        class="fixed bottom-4 left-1/2 z-50 flex w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 items-center gap-3 rounded-lg border border-border bg-card/90 px-4 py-3 shadow-2xl backdrop-blur-md sm:w-auto"
       >
         <div class="flex items-center gap-3">
-          <RefreshCw class="h-5 w-5 text-primary animate-spin-slow flex-shrink-0" />
+          <RefreshCw
+            weight="duotone"
+            class="h-5 w-5 flex-shrink-0 animate-spin-slow text-primary"
+          />
           <span class="text-sm font-medium">{{ updateMessage }}</span>
         </div>
-        <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="flex flex-shrink-0 items-center gap-2">
+          <AppButton size="sm" @click="refreshPage">立即刷新</AppButton>
           <button
-            class="text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-md transition-colors font-medium whitespace-nowrap"
-            @click="refreshPage"
-          >
-            立即刷新
-          </button>
-          <button
-            class="p-1 hover:bg-muted rounded transition-colors flex-shrink-0"
+            class="rounded p-1 transition-colors hover:bg-muted"
             aria-label="关闭"
             @click="closeToast"
           >
-            <X class="h-4 w-4 text-muted-foreground" />
+            <X weight="duotone" class="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
       </div>

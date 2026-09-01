@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronRight } from 'lucide-vue-next'
+import { PhCaretRight as ChevronRight } from '@phosphor-icons/vue'
 import { t } from '@/lib/i18n'
 
 const tutorials = [
@@ -70,6 +70,7 @@ const tutorials = [
             </div>
           </div>
           <ChevronRight
+            weight="duotone"
             class="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0"
           />
         </div>

@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Heart, QrCode, DollarSign, Pin, Zap } from 'lucide-vue-next'
+import {
+  PhHeart as Heart,
+  PhQrCode as QrCode,
+  PhCurrencyCny as DollarSign,
+  PhPushPin as Pin,
+  PhLightning as Zap
+} from '@phosphor-icons/vue'
 import {
   sponsors,
   sponsorConfig,
@@ -41,7 +47,7 @@ const sortedSponsors = computed(() => {
       <div class="group block bg-card border border-border rounded-lg p-4">
         <div class="flex items-center gap-3">
           <div class="p-2 bg-red-500/10 rounded-md">
-            <Heart class="h-4 w-4 text-red-500" />
+            <Heart weight="duotone" class="h-4 w-4 text-red-500" />
           </div>
           <div>
             <p class="text-xs text-muted-foreground">{{ t('sponsor_count') }}</p>
@@ -52,7 +58,7 @@ const sortedSponsors = computed(() => {
       <div class="group block bg-card border border-border rounded-lg p-4">
         <div class="flex items-center gap-3">
           <div class="p-2 bg-green-500/10 rounded-md">
-            <DollarSign class="h-4 w-4 text-green-500" />
+            <DollarSign weight="duotone" class="h-4 w-4 text-green-500" />
           </div>
           <div>
             <p class="text-xs text-muted-foreground">{{ t('total_amount') }}</p>
@@ -63,7 +69,7 @@ const sortedSponsors = computed(() => {
       <div class="group block bg-card border border-border rounded-lg p-4">
         <div class="flex items-center gap-3">
           <div class="p-2 bg-blue-500/10 rounded-md">
-            <QrCode class="h-4 w-4 text-blue-500" />
+            <QrCode weight="duotone" class="h-4 w-4 text-blue-500" />
           </div>
           <div>
             <p class="text-xs text-muted-foreground">{{ t('support_methods') }}</p>
@@ -74,7 +80,7 @@ const sortedSponsors = computed(() => {
       <div class="group block bg-card border border-border rounded-lg p-4">
         <div class="flex items-center gap-3">
           <div class="p-2 bg-purple-500/10 rounded-md">
-            <Heart class="h-4 w-4 text-purple-500" />
+            <Heart weight="duotone" class="h-4 w-4 text-purple-500" />
           </div>
           <div>
             <p class="text-xs text-muted-foreground">{{ t('thanks_message') }}</p>
@@ -92,7 +98,7 @@ const sortedSponsors = computed(() => {
       >
         <div class="flex items-center gap-3 mb-4">
           <div class="p-2 bg-blue-500/10 rounded-md">
-            <QrCode class="h-4 w-4 text-blue-500" />
+            <QrCode weight="duotone" class="h-4 w-4 text-blue-500" />
           </div>
           <h2 class="text-base font-semibold">{{ t('sponsor_alipay') }}</h2>
         </div>
@@ -123,7 +129,7 @@ const sortedSponsors = computed(() => {
       >
         <div class="flex items-center gap-3 mb-4">
           <div class="p-2 bg-green-500/10 rounded-md">
-            <QrCode class="h-4 w-4 text-green-500" />
+            <QrCode weight="duotone" class="h-4 w-4 text-green-500" />
           </div>
           <h2 class="text-base font-semibold">{{ t('sponsor_wechat') }}</h2>
         </div>
@@ -162,7 +168,7 @@ const sortedSponsors = computed(() => {
           <span
             class="flex w-full items-center justify-center gap-3 rounded-[calc(var(--radius-xl)-2px)] bg-black py-3 transition-colors hover:bg-gray-900"
           >
-            <Zap class="h-5 w-5 text-white" />
+            <Zap weight="duotone" class="h-5 w-5 text-white" />
             <span>{{ t('sponsor_afdian') }}</span>
           </span>
         </a>
@@ -178,7 +184,7 @@ const sortedSponsors = computed(() => {
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="p-2 bg-amber-500/10 rounded-md">
-              <Heart class="h-4 w-4 text-amber-500" />
+              <Heart weight="duotone" class="h-4 w-4 text-amber-500" />
             </div>
             <h2 class="text-base font-semibold">{{ t('sponsor_list') }}</h2>
           </div>
@@ -222,7 +228,7 @@ const sortedSponsors = computed(() => {
                 v-if="sponsor.pinned"
                 class="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-500 flex items-center gap-1"
               >
-                <Pin class="h-3 w-3" />
+                <Pin weight="duotone" class="h-3 w-3" />
                 置顶
               </span>
             </div>
@@ -243,7 +249,7 @@ const sortedSponsors = computed(() => {
       </div>
 
       <div v-else class="text-center py-8">
-        <Heart class="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+        <Heart weight="duotone" class="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
         <p class="text-sm text-muted-foreground">{{ t('sponsor_no_sponsors') }}</p>
       </div>
     </div>
@@ -260,7 +266,7 @@ const sortedSponsors = computed(() => {
       class="mt-6 p-4 bg-muted/30 rounded-lg border border-border text-center text-sm text-muted-foreground"
     >
       <div class="flex items-center justify-center gap-2 mb-1">
-        <Heart class="h-4 w-4 text-red-500" />
+        <Heart weight="duotone" class="h-4 w-4 text-red-500" />
         <span class="font-medium">{{ t('sponsor_footer_thanks') }}</span>
       </div>
       <p>{{ t('sponsor_footer_note') }}</p>

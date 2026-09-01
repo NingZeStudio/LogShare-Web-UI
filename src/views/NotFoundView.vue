@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
-import { FileQuestion, Home, ArrowLeft } from 'lucide-vue-next'
+import {
+  PhQuestion as FileQuestion,
+  PhHouse as Home,
+  PhArrowLeft as ArrowLeft
+} from '@phosphor-icons/vue'
 import { setPageTitle } from '@/lib/pageTitle'
 import { t } from '@/lib/i18n'
 import { onMounted } from 'vue'
+import AppButton from '@/components/ui/AppButton.vue'
 
 onMounted(() => {
   setPageTitle('404')
@@ -24,7 +28,7 @@ onMounted(() => {
         <div
           class="relative bg-card border border-primary/20 rounded-2xl p-8 inline-block shadow-2xl"
         >
-          <FileQuestion class="h-24 w-24 text-primary" />
+          <FileQuestion weight="duotone" class="h-24 w-24 text-primary" />
         </div>
       </div>
 
@@ -36,21 +40,15 @@ onMounted(() => {
         </p>
       </div>
 
-      <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-        <RouterLink
-          to="/"
-          class="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-medium hover:bg-primary/90 transition-colors shadow-lg hover:shadow-xl"
-        >
-          <Home class="h-5 w-5" />
+      <div class="flex flex-col justify-center gap-4 pt-4 sm:flex-row">
+        <AppButton as="router-link" to="/" size="lg" class="shadow-lg hover:shadow-xl">
+          <Home weight="duotone" class="h-5 w-5" />
           {{ t('back_to_home') }}
-        </RouterLink>
-        <button
-          class="inline-flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-6 py-3 rounded-xl font-medium hover:bg-secondary/80 transition-colors border border-border"
-          @click="$router.back()"
-        >
-          <ArrowLeft class="h-5 w-5" />
+        </AppButton>
+        <AppButton variant="secondary" size="lg" @click="$router.back()">
+          <ArrowLeft weight="duotone" class="h-5 w-5" />
           {{ t('back_to_previous') }}
-        </button>
+        </AppButton>
       </div>
 
       <div class="pt-8 border-t border-border">

@@ -1,15 +1,10 @@
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiClient, type LogMetaResponse } from '@/lib/ApiClient'
 import { parseLog } from '@/lib/logParser'
 import { setPageTitle } from '@/lib/pageTitle'
 import { t } from '@/lib/i18n'
-
-export interface Notification {
-  id: number
-  type: 'success' | 'error'
-  message: string
-}
+import { toast } from '@/lib/toast'
 
 export function useLogViewer(logId: string) {
   const router = useRouter()
@@ -27,24 +22,13 @@ export function useLogViewer(logId: string) {
   const logFontSize = ref(12)
   const isEditingFontSize = ref(false)
   const fontSizeInput = ref('12')
-  const fontSizeInputEl = ref<HTMLInputElement | null>(null)
-  const notifications = ref<Notification[]>([])
   const originalLogText = ref('')
   const mainRawText = ref('')
   const problemsSection = ref<HTMLElement | null>(null)
 
-  let notificationId = 0
-
   const addNotification = (type: 'success' | 'error', message: string) => {
-    const id = ++notificationId
-    notifications.value.push({ id, type, message })
-    setTimeout(() => {
-      notifications.value = notifications.value.filter(n => n.id !== id)
-    }, 5000)
-  }
-
-  const removeNotification = (id: number) => {
-    notifications.value = notifications.value.filter(n => n.id !== id)
+    if (type === 'success') toast.success(message)
+    else toast.error(message)
   }
 
   const init = () => {
@@ -224,12 +208,13 @@ export function useLogViewer(logId: string) {
     }
   }
 
-  const startEditFontSize = async () => {
+  const startEditFontSize = () => {
     fontSizeInput.value = String(logFontSize.value)
     isEditingFontSize.value = true
-    await nextTick()
-    fontSizeInputEl.value?.focus()
-    fontSizeInputEl.value?.select()
+  }
+
+  const cancelFontSizeEdit = () => {
+    isEditingFontSize.value = false
   }
 
   const applyFontSize = () => {
@@ -239,11 +224,6 @@ export function useLogViewer(logId: string) {
       saveFontSize()
     }
     isEditingFontSize.value = false
-  }
-
-  const handleFontSizeKeydown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter') applyFontSize()
-    if (e.key === 'Escape') isEditingFontSize.value = false
   }
 
   const saveFontSize = () => {
@@ -265,8 +245,6 @@ export function useLogViewer(logId: string) {
     logFontSize,
     isEditingFontSize,
     fontSizeInput,
-    fontSizeInputEl,
-    notifications,
     originalLogText,
     problemsSection,
     init,
@@ -283,9 +261,8 @@ export function useLogViewer(logId: string) {
     increaseFontSize,
     decreaseFontSize,
     startEditFontSize,
+    cancelFontSizeEdit,
     applyFontSize,
-    handleFontSizeKeydown,
-    addNotification,
-    removeNotification
+    addNotification
   }
 }

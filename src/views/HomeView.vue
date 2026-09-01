@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import { apiClient } from '@/lib/ApiClient'
 import { useRouter } from 'vue-router'
 import { t } from '@/lib/i18n'
+import { toast } from '@/lib/toast'
+import AppButton from '@/components/ui/AppButton.vue'
 import {
   parseArchive,
   isArchiveFile,
@@ -11,20 +13,19 @@ import {
   type ExtractedFile
 } from '@/lib/archiveParser'
 import {
-  Archive,
-  FileText,
-  X,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  BookText,
-  Upload,
-  FolderArchive,
-  Undo2,
-  Square,
-  SquareCheckBig,
-  Trash2
-} from 'lucide-vue-next'
+  PhArchive as Archive,
+  PhFileText as FileText,
+  PhX as X,
+  PhCheckCircle as CheckCircle,
+  PhCircleNotch as Loader2,
+  PhBookOpenText as BookText,
+  PhUpload as Upload,
+  PhFileZip as FolderArchive,
+  PhArrowCounterClockwise as Undo2,
+  PhSquare as Square,
+  PhCheckSquare as SquareCheckBig,
+  PhTrash as Trash2
+} from '@phosphor-icons/vue'
 
 const content = ref('')
 const loading = ref(false)
@@ -32,20 +33,8 @@ const error = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const router = useRouter()
 const isDragging = ref(false)
-const notifications = ref<{ id: number; type: 'success' | 'error'; message: string }[]>([])
-let notificationId = 0
-
-const addNotification = (type: 'success' | 'error', message: string) => {
-  const id = ++notificationId
-  notifications.value.push({ id, type, message })
-  setTimeout(() => {
-    notifications.value = notifications.value.filter(n => n.id !== id)
-  }, 3000)
-}
-
-const removeNotification = (id: number) => {
-  notifications.value = notifications.value.filter(n => n.id !== id)
-}
+/** 单文件直接填入输入框时记录原始文件名，上传时随 metadata 提交 */
+const pendingFileName = ref('')
 
 const extractedFiles = ref<ExtractedFile[]>([])
 const uploadProgress = ref<{ current: number; total: number; uploading: string } | null>(null)
@@ -54,9 +43,7 @@ const uploadProgress = ref<{ current: number; total: number; uploading: string }
 const selectedPaths = ref<Set<string>>(new Set())
 const selectedCount = computed(() => selectedPaths.value.size)
 const isAllSelected = computed(
-  () =>
-    extractedFiles.value.length > 0 &&
-    selectedPaths.value.size === extractedFiles.value.length
+  () => extractedFiles.value.length > 0 && selectedPaths.value.size === extractedFiles.value.length
 )
 
 const toggleSelectAll = () => {
@@ -104,9 +91,7 @@ const fileGroups = computed<FileGroup[]>(() => {
 
 /** 展示用路径尾段：无来源组显示完整 path（保持目录层级语义），有来源组显示包内相对路径 */
 const displayPath = (file: ExtractedFile, origin: string): string =>
-  origin && file.path.startsWith(origin + '/')
-    ? file.path.slice(origin.length + 1)
-    : file.path
+  origin && file.path.startsWith(origin + '/') ? file.path.slice(origin.length + 1) : file.path
 
 const toggleSelect = (path: string) => {
   const next = new Set(selectedPaths.value)
@@ -128,9 +113,7 @@ const deleteFiles = (paths: string[]) => {
   extractedFiles.value = extractedFiles.value.filter(f => !paths.includes(f.path))
   selectedPaths.value = new Set([...selectedPaths.value].filter(p => !paths.includes(p)))
   undoMessage.value =
-    removed.length === 1
-      ? `已移除 ${removed[0]!.name}`
-      : `已移除 ${removed.length} 个文件`
+    removed.length === 1 ? `已移除 ${removed[0]!.name}` : `已移除 ${removed.length} 个文件`
   undoRestore.value = () => {
     extractedFiles.value = snapshot
     undoMessage.value = ''
@@ -182,12 +165,17 @@ const handleFile = async (file: File) => {
         return
       }
 
+      if (files.length === 1) {
+        // 压缩包内仅一个文件：直接填入输入框
+        content.value = files[0]!.content
+        pendingFileName.value = files[0]!.name
+        loading.value = false
+        return
+      }
+
       extractedFiles.value = files
       loading.value = false
-      addNotification(
-        'success',
-        t('files_parsed_success').replace('{count}', files.length.toString())
-      )
+      toast.success(t('files_parsed_success').replace('{count}', files.length.toString()))
     } catch (e: any) {
       console.error('Failed to parse archive:', e)
       error.value = e.message || t('parse_archive_failed')
@@ -196,16 +184,10 @@ const handleFile = async (file: File) => {
   } else if (isTextFile(file.name)) {
     try {
       const text = await file.text()
+      // 单文件直接填入输入框，不进入文件列表视图
       content.value = text
-      extractedFiles.value = [
-        {
-          name: file.name,
-          content: text,
-          size: text.length,
-          path: file.name
-        }
-      ]
-      addNotification('success', t('file_loaded_success'))
+      pendingFileName.value = file.name
+      toast.success(t('file_loaded_success'))
     } catch {
       error.value = t('file_read_error')
     }
@@ -310,7 +292,12 @@ const save = async () => {
     const result = await apiClient.submitLog({
       content: content.value,
       metadata: [
-        { key: 'filename', value: 'log.txt', label: '文件名', visible: false },
+        {
+          key: 'filename',
+          value: pendingFileName.value || 'log.txt',
+          label: '文件名',
+          visible: false
+        },
         { key: 'size', value: content.value.length, label: '文件大小', visible: false }
       ],
       source: 'web-upload'
@@ -318,6 +305,7 @@ const save = async () => {
 
     if (result.success && result.id) {
       saveLogToken(result.id, result.token)
+      pendingFileName.value = ''
       router.push(`/${result.id}`)
     } else {
       throw new Error(result.message || t('unknown_error'))
@@ -333,7 +321,7 @@ const save = async () => {
 </script>
 
 <template>
-  <div class="flex flex-col flex-1 min-h-0 bg-transparent">
+  <div class="flex min-h-[calc(100vh-3.5rem)] flex-col flex-1 bg-transparent">
     <div class="flex flex-col flex-1 min-h-0">
       <div
         class="flex flex-col flex-1 min-h-0 bg-card/80 backdrop-blur-xl text-card-foreground shadow-sm overflow-hidden"
@@ -354,7 +342,7 @@ const save = async () => {
           class="absolute inset-0 bg-primary/5 border-2 border-dashed border-primary rounded-lg flex items-center justify-center z-10 pointer-events-none"
         >
           <div class="text-center">
-            <Upload class="h-12 w-12 mx-auto text-primary mb-2" />
+            <Upload weight="duotone" class="h-12 w-12 mx-auto text-primary mb-2" />
             <p class="text-lg font-medium text-primary">{{ t('release_to_upload') }}</p>
           </div>
         </div>
@@ -362,7 +350,7 @@ const save = async () => {
         <div v-if="extractedFiles.length > 0" class="flex-1 min-h-0 flex flex-col p-4">
           <div v-if="uploadProgress" class="mb-4 p-3 rounded-lg border bg-muted/50">
             <div class="flex items-center gap-2 mb-2">
-              <Loader2 class="h-4 w-4 animate-spin text-primary" />
+              <Loader2 weight="duotone" class="h-4 w-4 animate-spin text-primary" />
               <span class="text-sm text-muted-foreground">
                 {{
                   t('uploading_progress')
@@ -387,10 +375,12 @@ const save = async () => {
                 v-if="group.origin"
                 class="flex items-center gap-2 mb-1.5 px-0.5 text-xs text-muted-foreground"
               >
-                <FolderArchive class="h-3.5 w-3.5 flex-shrink-0" />
+                <FolderArchive weight="duotone" class="h-3.5 w-3.5 flex-shrink-0" />
                 <span class="font-medium text-foreground">{{ group.origin }}</span>
                 <span>·</span>
-                <span>{{ t('files_count').replace('{count}', group.files.length.toString()) }}</span>
+                <span>{{
+                  t('files_count').replace('{count}', group.files.length.toString())
+                }}</span>
               </div>
 
               <div class="space-y-2">
@@ -408,10 +398,16 @@ const save = async () => {
                   >
                     <component
                       :is="selectedPaths.has(file.path) ? SquareCheckBig : Square"
+                      weight="duotone"
                       class="h-4 w-4 mt-0.5 flex-shrink-0"
-                      :class="selectedPaths.has(file.path) ? 'text-primary' : 'text-muted-foreground'"
+                      :class="
+                        selectedPaths.has(file.path) ? 'text-primary' : 'text-muted-foreground'
+                      "
                     />
-                    <FileText class="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0 hidden sm:block" />
+                    <FileText
+                      weight="duotone"
+                      class="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0 hidden sm:block"
+                    />
                     <!-- 双行布局：名称一行，路径尾段 + 大小一行 -->
                     <span class="flex-1 min-w-0 block">
                       <span class="block text-sm font-medium truncate">{{ file.name }}</span>
@@ -429,7 +425,7 @@ const save = async () => {
                     :aria-label="t('remove')"
                     @click.stop="removeFile(file.path)"
                   >
-                    <X class="h-4 w-4" />
+                    <X weight="duotone" class="h-4 w-4" />
                   </button>
                 </div>
               </div>
@@ -440,7 +436,11 @@ const save = async () => {
             class="mt-4 pt-4 border-t flex items-center justify-between text-sm text-muted-foreground"
           >
             <span v-if="selectedCount > 0" class="text-foreground font-medium">
-              {{ t('selected_count').replace('{count}', selectedCount.toString()).replace('{total}', extractedFiles.length.toString()) }}
+              {{
+                t('selected_count')
+                  .replace('{count}', selectedCount.toString())
+                  .replace('{total}', extractedFiles.length.toString())
+              }}
               <button
                 class="ml-1 underline underline-offset-2 hover:text-foreground"
                 @click="clearSelection"
@@ -448,33 +448,37 @@ const save = async () => {
                 {{ t('clear_selection') }}
               </button>
             </span>
-            <span v-else>{{ t('files_count').replace('{count}', extractedFiles.length.toString()) }}</span>
+            <span v-else>{{
+              t('files_count').replace('{count}', extractedFiles.length.toString())
+            }}</span>
             <div class="flex items-center gap-2">
-              <button
+              <AppButton
                 v-if="extractedFiles.length > 0"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted text-foreground text-xs font-medium hover:bg-accent transition-colors"
+                variant="secondary"
+                size="sm"
                 @click="toggleSelectAll"
               >
-                <SquareCheckBig v-if="isAllSelected" class="h-3.5 w-3.5" />
-                <Square v-else class="h-3.5 w-3.5" />
+                <SquareCheckBig v-if="isAllSelected" weight="duotone" class="h-3.5 w-3.5" />
+                <Square v-else weight="duotone" class="h-3.5 w-3.5" />
                 {{ isAllSelected ? t('clear_selection') : t('select_all') }}
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 v-if="selectedCount > 0"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground text-xs font-medium hover:bg-destructive/90 transition-colors"
+                variant="destructive"
+                size="sm"
                 @click="deleteFiles([...selectedPaths])"
               >
-                <Trash2 class="h-3.5 w-3.5" />
+                <Trash2 weight="duotone" class="h-3.5 w-3.5" />
                 {{ t('delete_selected').replace('{count}', selectedCount.toString()) }}
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 :disabled="loading || uploadProgress !== null"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                size="sm"
                 @click="uploadAllFiles"
               >
-                <CheckCircle class="h-3.5 w-3.5" />
+                <CheckCircle weight="duotone" class="h-3.5 w-3.5" />
                 {{ loading ? t('saving') : t('batch_upload') }}
-              </button>
+              </AppButton>
             </div>
           </div>
 
@@ -494,7 +498,7 @@ const save = async () => {
                 class="inline-flex items-center gap-1 text-primary font-medium hover:underline"
                 @click="undoDelete"
               >
-                <Undo2 class="h-3.5 w-3.5" />
+                <Undo2 weight="duotone" class="h-3.5 w-3.5" />
                 {{ t('undo') }}
               </button>
             </div>
@@ -513,29 +517,23 @@ const save = async () => {
           >
             <div v-if="!content" class="text-center">
               <div class="flex items-center justify-center gap-4 mb-4">
-                <Archive class="h-16 w-16 opacity-50 text-muted-foreground" />
-                <FileText class="h-16 w-16 opacity-50 text-muted-foreground" />
-                <BookText class="h-16 w-16 opacity-50 text-muted-foreground" />
+                <Archive weight="duotone" class="h-16 w-16 opacity-50 text-muted-foreground" />
+                <FileText weight="duotone" class="h-16 w-16 opacity-50 text-muted-foreground" />
+                <BookText weight="duotone" class="h-16 w-16 opacity-50 text-muted-foreground" />
               </div>
               <p class="text-base text-muted-foreground">{{ t('drag_drop_hint') }}</p>
               <p class="text-sm mt-1 text-muted-foreground">
                 {{ t('supported_formats_hint') }}
               </p>
-              <div class="mt-6 pointer-events-auto flex items-center justify-center gap-4">
-                <button
-                  class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
-                  @click="triggerFileSelect"
-                >
-                  <Archive class="h-4 w-4" />
+              <div class="pointer-events-auto mt-6 flex items-center justify-center gap-4">
+                <AppButton size="lg" @click="triggerFileSelect">
+                  <Archive weight="duotone" class="h-4 w-4" />
                   {{ t('select_file') }}
-                </button>
-                <button
-                  disabled
-                  class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-muted text-muted-foreground font-medium text-sm opacity-50"
-                >
-                  <Upload class="h-4 w-4" />
+                </AppButton>
+                <AppButton variant="secondary" size="lg" disabled>
+                  <Upload weight="duotone" class="h-4 w-4" />
                   {{ t('save_log') }}
-                </button>
+                </AppButton>
               </div>
             </div>
           </div>
@@ -546,28 +544,29 @@ const save = async () => {
           >
             <div class="pointer-events-auto flex items-center gap-3">
               <button
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 backdrop-blur border shadow-sm text-foreground font-medium text-sm hover:bg-accent transition-colors"
+                class="inline-flex items-center gap-2 rounded-lg border bg-background/80 px-4 py-2 font-medium text-sm text-foreground shadow-sm backdrop-blur transition-colors hover:bg-accent"
                 @click="triggerFileSelect"
               >
-                <Archive class="h-4 w-4" />
+                <Archive weight="duotone" class="h-4 w-4" />
                 {{ t('select_file') }}
               </button>
-              <button
+              <AppButton
                 :disabled="loading"
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-all shadow-sm disabled:opacity-50"
+                class="shadow-sm"
                 :class="{ 'animate-pulse-save': !loading }"
                 @click="save"
               >
-                <Loader2 v-if="loading" class="h-4 w-4 animate-spin" />
-                <Upload v-else class="h-4 w-4" />
+                <Loader2 v-if="loading" weight="duotone" class="h-4 w-4 animate-spin" />
+                <Upload v-else weight="duotone" class="h-4 w-4" />
                 {{ loading ? t('saving') : t('save_log') }}
-              </button>
+              </AppButton>
             </div>
           </div>
 
           <div
             v-if="error"
-            class="absolute bottom-16 left-4 right-4 p-3 rounded-lg border border-destructive/50 bg-destructive/10 text-destructive text-sm"
+            role="alert"
+            class="absolute bottom-16 left-4 right-4 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
           >
             {{ error }}
           </div>
@@ -575,45 +574,9 @@ const save = async () => {
       </div>
     </div>
   </div>
-
-  <div class="fixed top-24 right-4 z-50 space-y-2">
-    <TransitionGroup name="notification">
-      <div
-        v-for="notification in notifications"
-        :key="notification.id"
-        class="flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg bg-card min-w-[300px]"
-        :class="notification.type === 'success' ? 'border-green-500/50' : 'border-destructive/50'"
-      >
-        <CheckCircle
-          v-if="notification.type === 'success'"
-          class="h-5 w-5 text-green-500 flex-shrink-0"
-        />
-        <AlertCircle v-else class="h-5 w-5 text-destructive flex-shrink-0" />
-        <span class="text-sm flex-1">{{ notification.message }}</span>
-        <button class="text-gray-400 hover:text-white" @click="removeNotification(notification.id)">
-          <X class="h-4 w-4" />
-        </button>
-      </div>
-    </TransitionGroup>
-  </div>
 </template>
 
 <style scoped>
-.notification-enter-active,
-.notification-leave-active {
-  transition: all 0.3s ease;
-}
-
-.notification-enter-from {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-.notification-leave-to {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
 @keyframes pulse-save {
   0%,
   100% {

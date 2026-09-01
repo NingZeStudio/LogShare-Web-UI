@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { t } from '@/lib/i18n'
-import { Copy, Check } from 'lucide-vue-next'
+import { PhCopy as Copy, PhCheck as Check } from '@phosphor-icons/vue'
 
 const activeTab = ref<'overview' | 'endpoints' | 'sdks' | 'limits'>('overview')
 const copiedEndpoint = ref('')
@@ -39,12 +39,17 @@ const endpoints = [
         desc: '附加文件数组，每个元素 {name, content}。name 以 .zip 结尾时自动展开（≤200 个文件，解压后累计 ≤12MB）'
       },
       {
-        name: 'metadata',
-        type: 'object',
+        name: 'metadata[]',
+        type: 'array',
         required: false,
-        desc: '元数据对象，格式 { "key": "value" }'
+        desc: '元数据数组，每项 {key, value, label?, visible?}；value 为字符串时直接存储，其他类型会 JSON 序列化；单项最长 value 1024 / label 128 / key 64 字符'
       },
-      { name: 'source', type: 'string', required: false, desc: '来源标识（最长 64 字符）' }
+      {
+        name: 'source',
+        type: 'string',
+        required: false,
+        desc: '来源标识（最长 64 字符），建议填写启动器名/版本（如 fcl/1.2.0）。知识库按启动器生态组织了问题案例（FCL/ZL2/PGW/Amethyst/MobileGlues），该字段用于让 AI 分析优先匹配对应来源'
+      }
     ],
     response: {
       success: {
@@ -502,7 +507,7 @@ print_r($data);`,
     path: '/v1/ai/{id}',
     title: 'AI 分析已存储日志',
     description:
-      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出：data: 为正文增量（OpenAI 兼容格式），event: status 推送思维链与工具调用事件，event: done 结束。AI 关闭时统一返回 HTTP 404。',
+      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出：data: 为正文增量（OpenAI 兼容格式），event: status 推送思维链与工具调用事件，event: done 结束。AI 关闭时统一返回 HTTP 404。分析结论按日志 ID 缓存 30 分钟，重复请求直接返回缓存结论。推荐先调用 /v1/insights/{id} 展示结构化摘要（不消耗 AI 资源），用户主动触发时再调用本接口。',
     isSSE: true,
     params: [{ name: 'id', type: 'string', required: true, desc: '日志 ID' }],
     response: {
@@ -568,7 +573,7 @@ curl -N https://api.logshare.cn/v1/ai/abc1234`
     path: '/v1/ai/analyse',
     title: 'AI 分析日志内容',
     description:
-      '直接提交内容给 AI 分析，不落盘。SSE 流式输出（协议同上），缓存基于内容哈希（30 分钟 TTL）。可选传 id 绑定已存在日志：Agent 获得该日志附加文件的访问权（可用于多文件对比），content 可省略。',
+      '直接提交内容给 AI 分析，不落盘。SSE 流式输出（协议同上），缓存基于内容哈希（30 分钟 TTL）。可选传 id 绑定已存在日志：Agent 获得该日志附加文件的访问权（可用于多文件对比），content 可省略。注意：直传内容不经过脱敏过滤链，原文直接发送给 AI 网关；含敏感信息（token、IP 等）的日志建议先走 POST /v1/log 再分析。',
     isSSE: true,
     contentType: 'application/json',
     params: [
@@ -661,55 +666,58 @@ const isSSEEndpoint = (endpoint: any) => {
     </header>
 
     <!-- 导航标签 -->
-    <div class="flex flex-wrap gap-2 mb-8 border-b border-border">
+    <div class="mb-8 flex flex-wrap gap-2 border-b border-border">
       <button
+        v-for="tab in [
+          { key: 'overview', label: '概述' },
+          { key: 'endpoints', label: 'API 端点' },
+          { key: 'sdks', label: t('local_sdks') },
+          { key: 'limits', label: t('api_limits') }
+        ] as const"
+        :key="tab.key"
         :class="[
-          'px-3 py-2 text-sm font-medium transition-colors border-b-2',
-          activeTab === 'overview'
+          'border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+          activeTab === tab.key
             ? 'border-primary text-foreground'
             : 'border-transparent text-muted-foreground hover:text-foreground'
         ]"
-        @click="activeTab = 'overview'"
+        @click="activeTab = tab.key"
       >
-        概述
-      </button>
-      <button
-        :class="[
-          'px-3 py-2 text-sm font-medium transition-colors border-b-2',
-          activeTab === 'endpoints'
-            ? 'border-primary text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground'
-        ]"
-        @click="activeTab = 'endpoints'"
-      >
-        API 端点
-      </button>
-      <button
-        :class="[
-          'px-3 py-2 text-sm font-medium transition-colors border-b-2',
-          activeTab === 'sdks'
-            ? 'border-primary text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground'
-        ]"
-        @click="activeTab = 'sdks'"
-      >
-        {{ t('local_sdks') }}
-      </button>
-      <button
-        :class="[
-          'px-3 py-2 text-sm font-medium transition-colors border-b-2',
-          activeTab === 'limits'
-            ? 'border-primary text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground'
-        ]"
-        @click="activeTab = 'limits'"
-      >
-        {{ t('api_limits') }}
+        {{ tab.label }}
       </button>
     </div>
 
     <!-- 概述 -->
     <div v-if="activeTab === 'overview'" class="space-y-6">
+      <section class="space-y-4">
+        <h2 class="text-lg font-semibold">快速接入</h2>
+        <p class="text-sm text-muted-foreground">
+          接入「日志上传 + AI 分析」的最小流程：上传后使用返回的
+          <code class="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">token</code>
+          删除日志（丢失无法找回，请自行持久化）；移动端建议开启 gzip 上传；客户端读超时建议 300
+          秒以上（Agent 多轮工具分析可能持续数十秒）。
+        </p>
+        <div class="rounded-lg border border-border overflow-hidden">
+          <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border">
+            cURL
+          </div>
+          <pre
+            class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+          ><code>{{ `# 1. 上传日志（source 填启动器名/版本，用于匹配对应生态的知识库）
+curl -X POST https://api.logshare.cn/v1/log \
+     -H 'Content-Type: application/json' \
+     -d '{"content":"<日志全文>","source":"your-launcher/1.0.0"}'
+# → {"success":true,"id":"sAbCdEf","token":"...","raw":"...","url":"..."}
+
+# 2. 获取原始日志或结构化解析（可选）
+curl https://api.logshare.cn/v1/raw/sAbCdEf          # 日志原文
+curl https://api.logshare.cn/v1/insights/sAbCdEf     # Codex 结构化分析
+
+# 3. AI 深度分析（SSE 流式，读超时建议 ≥300s）
+curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
+        </div>
+      </section>
+
       <section class="space-y-4">
         <h2 class="text-lg font-semibold">API 基础信息</h2>
 
@@ -722,8 +730,12 @@ const isSSEEndpoint = (endpoint: any) => {
                 class="text-muted-foreground hover:text-foreground transition-colors"
                 @click="copyEndpoint('https://api.logshare.cn')"
               >
-                <Copy v-if="copiedEndpoint !== 'https://api.logshare.cn'" class="h-3.5 w-3.5" />
-                <Check v-else class="h-3.5 w-3.5" />
+                <Copy
+                  v-if="copiedEndpoint !== 'https://api.logshare.cn'"
+                  weight="duotone"
+                  class="h-3.5 w-3.5"
+                />
+                <Check v-else weight="duotone" class="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
@@ -746,8 +758,8 @@ const isSSEEndpoint = (endpoint: any) => {
 
         <div class="bg-amber-50 dark:bg-amber-950/30 border-l-4 border-amber-500 p-4 rounded-r-lg">
           <p class="text-sm text-amber-800 dark:text-amber-200">
-            所有 API 请求均使用 HTTPS 协议，HTTP 请求会被自动重定向到 HTTPS。 速率限制为每分钟 60
-            个请求（按 IP 计算）。
+            所有 API 请求均使用 HTTPS 协议，HTTP 请求会被自动重定向到 HTTPS。全局限流按 IP + 方法 +
+            归一化路径计数，默认每 IP 每方法每路径 36,000 次/60 秒，触发返回 HTTP 429。
           </p>
         </div>
       </section>
@@ -891,9 +903,10 @@ const isSSEEndpoint = (endpoint: any) => {
           >
             <Copy
               v-if="copiedEndpoint !== `https://api.logshare.cn${endpoint.path}`"
+              weight="duotone"
               class="h-3.5 w-3.5"
             />
-            <Check v-else class="h-3.5 w-3.5" />
+            <Check v-else weight="duotone" class="h-3.5 w-3.5" />
             {{
               copiedEndpoint === `https://api.logshare.cn${endpoint.path}` ? t('copied') : t('copy')
             }}
@@ -1410,7 +1423,9 @@ class Program
           <li class="flex items-start gap-3">
             <span class="text-primary font-medium min-w-fit">{{ t('rate_limit') }}：</span>
             <span class="text-muted-foreground"
-              >每分钟 <strong class="text-foreground">60 个请求</strong>（按 IP 计算）</span
+              >每 IP 每方法每路径
+              <strong class="text-foreground">36,000 次/60 秒</strong>（动态资源段如 /v1/raw/{id}
+              共享同一桶），触发返回 HTTP 429</span
             >
           </li>
           <li class="flex items-start gap-3">
@@ -1458,25 +1473,25 @@ class Program
         </p>
         <ul class="space-y-2 text-sm">
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">Trim</strong> — 去除日志首尾空白</span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">LimitBytes</strong> — 超过 10 MiB 拒绝上传</span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">LimitLines</strong> — 超过 50,000 行拒绝上传</span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">IPv4</strong> — 替换为
               <code class="bg-muted px-1.5 py-0.5 rounded text-xs">**.**.**.**</code>（豁免
@@ -1484,7 +1499,7 @@ class Program
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">IPv6</strong> — 完整 IPv6 替换为
               <code class="bg-muted px-1.5 py-0.5 rounded text-xs"
@@ -1493,7 +1508,7 @@ class Program
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">IPv6Short</strong> — 简写 IPv6（含 ::ffff:
               映射）替换为
@@ -1503,7 +1518,7 @@ class Program
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">UUID</strong> — 替换标准/无连字符/花括号/urn:uuid
               格式为
@@ -1513,42 +1528,42 @@ class Program
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">XUID</strong> — 替换 Xbox User ID 为
               <code class="bg-muted px-1.5 py-0.5 rounded text-xs">****************</code></span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">SessionToken</strong> — 替换 access token、Bearer
               token、session ID</span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">ClientId</strong> — 替换 clientId / deviceId /
               instanceId / launcherId</span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">Coordinate</strong> — 替换 Minecraft 坐标（BlockPos /
               Vec3d / at() 等）</span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">Username</strong> — 替换用户路径中的用户名及
               <code class="bg-muted px-1.5 py-0.5 rounded text-xs">USERNAME=</code> 环境变量</span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Check class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <Check weight="duotone" class="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
             <span class="text-muted-foreground"
               ><strong class="text-foreground">AccessToken</strong> — 替换
               <code class="bg-muted px-1.5 py-0.5 rounded text-xs">accessToken</code> /

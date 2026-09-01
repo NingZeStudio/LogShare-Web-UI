@@ -114,6 +114,30 @@ export const sponsors: Sponsor[] = [
     currency: 'CNY',
     date: '2026-05-02',
     platform: 'wechat'
+  },
+  {
+    id: 11,
+    name: '@夜长梦多的小狗',
+    amount: 15,
+    currency: 'CNY',
+    date: '2026-08-31',
+    platform: 'wechat'
+  },
+  {
+    id: 12,
+    name: '@ink',
+    amount: 40,
+    currency: 'CNY',
+    date: '2026-08-31',
+    platform: 'alipay'
+  },
+  {
+    id: 13,
+    name: '@吃苦瓜加麻加辣个头啊喵喵',
+    amount: 30,
+    currency: 'CNY',
+    date: '2026-08-31',
+    platform: 'wechat'
   }
 ]
 

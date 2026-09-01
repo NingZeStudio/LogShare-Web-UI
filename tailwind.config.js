@@ -6,6 +6,9 @@ export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      transitionTimingFunction: {
+        'bounce-soft': 'cubic-bezier(0.34, 1.7, 0.64, 1)'
+      },
       fontFamily: {
         sans: ['var(--font-sans)'],
         mono: ['var(--font-mono)']

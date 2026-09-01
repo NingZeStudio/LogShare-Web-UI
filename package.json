@@ -10,10 +10,10 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@phosphor-icons/vue": "^2.2.1",
     "@tailwindcss/typography": "^0.5.19",
     "axios": "^1.13.2",
     "jszip": "^3.10.1",
-    "lucide-vue-next": "^0.562.0",
     "markdown-it": "^14.1.0",
     "vue": "^3.5.24",
     "vue-router": "^4.6.4"

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { ArrowLeft } from 'lucide-vue-next'
+import { PhArrowLeft as ArrowLeft } from '@phosphor-icons/vue'
 
 const route = useRoute()
 const tutorialId = computed(() => route.params.id as string)
@@ -577,7 +577,7 @@ const formatStep = (step: string) => {
         to="/tutorials"
         class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft class="h-3.5 w-3.5" />
+        <ArrowLeft weight="duotone" class="h-3.5 w-3.5" />
         返回教程中心
       </RouterLink>
     </div>
@@ -675,7 +675,7 @@ const formatStep = (step: string) => {
         to="/tutorials"
         class="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
       >
-        <ArrowLeft class="h-3.5 w-3.5" />
+        <ArrowLeft weight="duotone" class="h-3.5 w-3.5" />
         返回教程中心
       </RouterLink>
     </div>
