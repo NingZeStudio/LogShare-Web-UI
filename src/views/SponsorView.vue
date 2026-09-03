@@ -203,15 +203,6 @@ const sortedSponsors = computed(() => {
           :key="sponsor.id"
           class="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
         >
-          <!-- 头像/图标 -->
-          <div
-            class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/25 to-primary/10 flex items-center justify-center shrink-0 border"
-          >
-            <span class="text-sm font-bold text-primary">{{
-              sponsor.name.charAt(0).toUpperCase()
-            }}</span>
-          </div>
-
           <!-- 信息 -->
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1">
