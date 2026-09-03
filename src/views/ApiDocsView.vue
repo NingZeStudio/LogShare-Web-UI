@@ -1,7 +1,21 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { t } from '@/lib/i18n'
-import { PhCopy as Copy, PhCheck as Check } from '@phosphor-icons/vue'
+import {
+  PhCopy as Copy,
+  PhCheck as Check,
+  PhBooks as BookOpen,
+  PhPlugs as Plug,
+  PhShieldCheck as Shield,
+  PhListMagnifyingGlass as ListSearch,
+  PhFileText as FileText,
+  PhBrain as Brain,
+  PhInfo as Info,
+  PhEyeSlash as EyeSlash,
+  PhWarningCircle as WarningCircle,
+  PhPackage as Package,
+  PhCode as Code
+} from '@phosphor-icons/vue'
 
 const activeTab = ref<'overview' | 'endpoints' | 'sdks' | 'limits'>('overview')
 const copiedEndpoint = ref('')
@@ -657,6 +671,10 @@ const groupedEndpoints = endpointGroups
   }))
   .filter(g => g.items.length > 0)
 
+// 分组标题图标：与 lemwood 文档页一致的「标题 + duotone 图标」风格
+const groupIcon = (name: string) =>
+  name === 'AI 分析' ? Brain : name === '站点信息' ? Info : FileText
+
 const hasContentType = (endpoint: any) => {
   return endpoint.contentType !== undefined
 }
@@ -705,7 +723,10 @@ const isSSEEndpoint = (endpoint: any) => {
     <!-- 概述 -->
     <div v-if="activeTab === 'overview'" class="space-y-6">
       <section class="space-y-4">
-        <h2 class="text-lg font-semibold">快速接入</h2>
+        <h2 class="flex items-center gap-2 text-lg font-semibold">
+          <BookOpen weight="duotone" class="h-5 w-5 text-primary" />
+          快速接入
+        </h2>
         <p class="text-sm text-muted-foreground">
           接入「日志上传 + AI 分析」的最小流程：上传后使用返回的
           <code class="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">token</code>
@@ -734,7 +755,10 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
       </section>
 
       <section class="space-y-4">
-        <h2 class="text-lg font-semibold">API 基础信息</h2>
+        <h2 class="flex items-center gap-2 text-lg font-semibold">
+          <Plug weight="duotone" class="h-5 w-5 text-primary" />
+          API 基础信息
+        </h2>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="p-4 rounded-lg border border-border bg-card">
@@ -780,7 +804,10 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
       </section>
 
       <section class="space-y-4">
-        <h2 class="text-lg font-semibold">可用端点</h2>
+        <h2 class="flex items-center gap-2 text-lg font-semibold">
+          <ListSearch weight="duotone" class="h-5 w-5 text-primary" />
+          可用端点
+        </h2>
         <div class="rounded-lg border border-border overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="bg-muted/50">
@@ -901,7 +928,10 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
     <!-- API 端点 -->
     <div v-if="activeTab === 'endpoints'" class="space-y-10">
       <section v-for="group in groupedEndpoints" :key="group.group" class="space-y-4">
-        <h2 class="text-lg font-semibold">{{ group.group }}</h2>
+        <h2 class="flex items-center gap-2 text-lg font-semibold">
+          <component :is="groupIcon(group.group)" weight="duotone" class="h-5 w-5 text-primary" />
+          {{ group.group }}
+        </h2>
 
         <div v-for="endpoint in group.items" :key="endpoint.path" class="space-y-4">
           <div class="rounded-lg border border-border bg-card">
@@ -1091,6 +1121,10 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
 
     <!-- SDKs -->
     <div v-if="activeTab === 'sdks'" class="space-y-6">
+      <h2 class="flex items-center gap-2 text-lg font-semibold">
+        <Package weight="duotone" class="h-5 w-5 text-primary" />
+        {{ t('local_sdks') }}
+      </h2>
       <p class="text-sm text-muted-foreground">
         我们为您提供了开箱即用的本地 SDK，您可以直接下载并集成到您的项目中。
       </p>
@@ -1295,7 +1329,10 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
 
       <!-- 快速使用示例 -->
       <section class="space-y-4 mt-6">
-        <h2 class="text-lg font-semibold">快速使用示例</h2>
+        <h2 class="flex items-center gap-2 text-lg font-semibold">
+          <Code weight="duotone" class="h-5 w-5 text-primary" />
+          快速使用示例
+        </h2>
 
         <div class="space-y-4">
           <!-- PHP 示例 -->
@@ -1423,7 +1460,10 @@ class Program
     <!-- 限制 -->
     <div v-if="activeTab === 'limits'" class="space-y-6">
       <div class="rounded-lg border border-border bg-card p-5">
-        <h2 class="text-lg font-semibold mb-4">{{ t('api_limits') }}</h2>
+        <h2 class="flex items-center gap-2 text-lg font-semibold mb-4">
+          <Shield weight="duotone" class="h-5 w-5 text-primary" />
+          {{ t('api_limits') }}
+        </h2>
         <ul class="space-y-3 text-sm">
           <li class="flex items-start gap-3">
             <span class="text-primary font-medium min-w-fit">{{ t('rate_limit') }}：</span>
@@ -1472,7 +1512,10 @@ class Program
       </div>
 
       <div class="rounded-lg border border-border bg-card p-5">
-        <h2 class="text-lg font-semibold mb-4">隐私保护过滤器</h2>
+        <h2 class="flex items-center gap-2 text-lg font-semibold mb-4">
+          <EyeSlash weight="duotone" class="h-5 w-5 text-primary" />
+          隐私保护过滤器
+        </h2>
         <p class="text-sm text-muted-foreground mb-4">
           所有提交的日志会自动应用以下过滤器（按执行顺序）：
         </p>
@@ -1581,7 +1624,10 @@ class Program
       </div>
 
       <div class="rounded-lg border border-border bg-card p-5">
-        <h2 class="text-lg font-semibold mb-4">错误码</h2>
+        <h2 class="flex items-center gap-2 text-lg font-semibold mb-4">
+          <WarningCircle weight="duotone" class="h-5 w-5 text-primary" />
+          错误码
+        </h2>
         <div class="rounded-lg border border-border overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="bg-muted/50">

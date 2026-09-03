@@ -1,0 +1,16 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lemwood Mirror">
+  <!-- 镜像笔画：M 的抽象，左右两组圆角竖条以中缝镜像对称 -->
+  <rect x="7" y="11" width="4.5" height="11" rx="2.25" fill="#2dd4bf"/>
+  <rect x="14.5" y="11" width="4.5" height="17" rx="2.25" fill="#5eead4"/>
+  <rect x="7" y="26" width="4.5" height="6" rx="2.25" fill="#5eead4" opacity="0.5"/>
+  <rect x="14.5" y="32" width="4.5" height="5" rx="2.25" fill="#2dd4bf" opacity="0.5"/>
+  <!-- 镜面：中缝斜线 -->
+  <path d="M25 6 L19 42" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+  <!-- 反射像：右半透明度衰减 -->
+  <rect x="41" y="11" width="4.5" height="11" rx="2.25" fill="#2dd4bf" opacity="0.4"/>
+  <rect x="33.5" y="11" width="4.5" height="17" rx="2.25" fill="#5eead4" opacity="0.4"/>
+  <rect x="41" y="26" width="4.5" height="6" rx="2.25" fill="#5eead4" opacity="0.2"/>
+  <rect x="33.5" y="32" width="4.5" height="5" rx="2.25" fill="#2dd4bf" opacity="0.2"/>
+  <!-- Fast：极简闪电，穿镜而出 -->
+  <path d="M30 13 L22 26 h5.5 L25 37 l9.5-13.5 H29 L30 13 Z" fill="#fb923c"/>
+</svg>
