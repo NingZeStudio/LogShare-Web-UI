@@ -202,7 +202,8 @@ onUnmounted(() => {
       </div>
     </header>
 
-    <main class="flex-1 flex flex-col">
+    <!-- [&>*]:min-w-0：flex 子项默认 min-width:auto，长内容（如文档页代码块）会把页面撑出横向滚动 -->
+    <main class="flex-1 flex flex-col [&>*]:min-w-0">
       <RouterView v-slot="{ Component }">
         <Transition name="page" mode="out-in">
           <component :is="Component" :key="route.path" />

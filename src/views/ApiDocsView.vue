@@ -653,7 +653,8 @@ const isSSEEndpoint = (endpoint: any) => {
 </script>
 
 <template>
-  <div class="container mx-auto px-3 py-6 max-w-4xl">
+  <!-- min-w-0 + overflow-x-clip：移动端兜底，防止表格/代码块把页面撑出横向滚动 -->
+  <div class="container mx-auto min-w-0 max-w-4xl overflow-x-clip px-3 py-6">
     <!-- 页面标题 -->
     <header class="mb-8">
       <h1 class="text-3xl font-bold mb-2">
@@ -697,12 +698,12 @@ const isSSEEndpoint = (endpoint: any) => {
           删除日志（丢失无法找回，请自行持久化）；移动端建议开启 gzip 上传；客户端读超时建议 300
           秒以上（Agent 多轮工具分析可能持续数十秒）。
         </p>
-        <div class="rounded-lg border border-border overflow-hidden">
+        <div class="rounded-lg border border-border overflow-x-auto">
           <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border">
             cURL
           </div>
           <pre
-            class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+            class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
           ><code>{{ `# 1. 上传日志（source 填启动器名/版本，用于匹配对应生态的知识库）
 curl -X POST https://api.logshare.cn/v1/log \
      -H 'Content-Type: application/json' \
@@ -766,7 +767,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
 
       <section class="space-y-4">
         <h2 class="text-lg font-semibold">可用端点</h2>
-        <div class="rounded-lg border border-border overflow-hidden">
+        <div class="rounded-lg border border-border overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="bg-muted/50">
               <tr>
@@ -782,7 +783,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >POST</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/v1/log</td>
+                <td class="p-3 break-all font-mono text-xs">/v1/log</td>
                 <td class="p-3 text-muted-foreground">提交日志</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -791,7 +792,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >POST</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/v1/analyse</td>
+                <td class="p-3 break-all font-mono text-xs">/v1/analyse</td>
                 <td class="p-3 text-muted-foreground">分析日志（本地 Codex）</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -800,7 +801,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/v1/raw/{id}</td>
+                <td class="p-3 break-all font-mono text-xs">/v1/raw/{id}</td>
                 <td class="p-3 text-muted-foreground">获取原始日志</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -809,7 +810,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/v1/insights/{id}</td>
+                <td class="p-3 break-all font-mono text-xs">/v1/insights/{id}</td>
                 <td class="p-3 text-muted-foreground">获取日志分析结果</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -818,7 +819,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/v1/raw/{id}/{filename}</td>
+                <td class="p-3 break-all font-mono text-xs">/v1/raw/{id}/{filename}</td>
                 <td class="p-3 text-muted-foreground">获取日志附加文件</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -827,7 +828,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/v1/log/{id}</td>
+                <td class="p-3 break-all font-mono text-xs">/v1/log/{id}</td>
                 <td class="p-3 text-muted-foreground">获取日志元信息与文件列表</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -838,7 +839,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >DELETE</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/v1/log/{id}</td>
+                <td class="p-3 break-all font-mono text-xs">/v1/log/{id}</td>
                 <td class="p-3 text-muted-foreground">删除日志</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -847,7 +848,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/v1/limits</td>
+                <td class="p-3 break-all font-mono text-xs">/v1/limits</td>
                 <td class="p-3 text-muted-foreground">获取限制信息</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -856,7 +857,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/v1/filters</td>
+                <td class="p-3 break-all font-mono text-xs">/v1/filters</td>
                 <td class="p-3 text-muted-foreground">获取过滤器信息</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -865,7 +866,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >GET</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/v1/ai/{id}</td>
+                <td class="p-3 break-all font-mono text-xs">/v1/ai/{id}</td>
                 <td class="p-3 text-muted-foreground">AI 分析已存储日志（SSE 流式输出）</td>
               </tr>
               <tr class="border-t border-border hover:bg-muted/30 transition-colors">
@@ -874,7 +875,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >POST</span
                   >
                 </td>
-                <td class="p-3 font-mono text-xs">/v1/ai/analyse</td>
+                <td class="p-3 break-all font-mono text-xs">/v1/ai/analyse</td>
                 <td class="p-3 text-muted-foreground">AI 分析日志内容（SSE 流式输出）</td>
               </tr>
             </tbody>
@@ -888,14 +889,14 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
       <div v-for="(endpoint, index) in endpoints" :key="index" class="space-y-4">
         <!-- 端点头部 -->
         <div class="flex items-start justify-between flex-wrap gap-4">
-          <div class="flex items-center gap-3">
+          <div class="flex min-w-0 flex-wrap items-center gap-3">
             <span
               class="px-2.5 py-1 rounded text-xs font-bold"
               :class="methodTypeClass(endpoint.methodType)"
             >
               {{ endpoint.method }}
             </span>
-            <code class="text-sm font-mono">{{ endpoint.path }}</code>
+            <code class="break-all text-sm font-mono">{{ endpoint.path }}</code>
           </div>
           <button
             class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -933,7 +934,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
         <!-- 请求头 -->
         <div v-if="endpoint.headers && endpoint.headers.length > 0" class="space-y-2">
           <h3 class="text-sm font-semibold">请求头</h3>
-          <div class="rounded-lg border border-border overflow-hidden">
+          <div class="rounded-lg border border-border overflow-x-auto">
             <table class="w-full text-sm">
               <thead class="bg-muted/50">
                 <tr>
@@ -959,7 +960,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >
                     <span v-else class="text-xs text-muted-foreground">可选</span>
                   </td>
-                  <td class="p-2.5 text-xs text-muted-foreground">{{ header.desc }}</td>
+                  <td class="p-2.5 text-xs text-muted-foreground break-words">{{ header.desc }}</td>
                 </tr>
               </tbody>
             </table>
@@ -969,7 +970,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
         <!-- 请求参数 -->
         <div v-if="endpoint.params.length > 0" class="space-y-2">
           <h3 class="text-sm font-semibold">请求参数</h3>
-          <div class="rounded-lg border border-border overflow-hidden">
+          <div class="rounded-lg border border-border overflow-x-auto">
             <table class="w-full text-sm">
               <thead class="bg-muted/50">
                 <tr>
@@ -995,7 +996,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                     >
                     <span v-else class="text-xs text-muted-foreground">可选</span>
                   </td>
-                  <td class="p-2.5 text-xs text-muted-foreground">{{ param.desc }}</td>
+                  <td class="p-2.5 text-xs text-muted-foreground break-words">{{ param.desc }}</td>
                 </tr>
               </tbody>
             </table>
@@ -1007,38 +1008,38 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
           <h3 class="text-sm font-semibold">调用示例</h3>
           <div class="space-y-3">
             <!-- JavaScript -->
-            <div class="rounded-lg border border-border overflow-hidden">
+            <div class="rounded-lg border border-border overflow-x-auto">
               <div
                 class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border"
               >
                 JavaScript
               </div>
               <pre
-                class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+                class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
               ><code>{{ endpoint.examples.js }}</code></pre>
             </div>
 
             <!-- PHP -->
-            <div class="rounded-lg border border-border overflow-hidden">
+            <div class="rounded-lg border border-border overflow-x-auto">
               <div
                 class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border"
               >
                 PHP
               </div>
               <pre
-                class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+                class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
               ><code>{{ endpoint.examples.php }}</code></pre>
             </div>
 
             <!-- cURL -->
-            <div class="rounded-lg border border-border overflow-hidden">
+            <div class="rounded-lg border border-border overflow-x-auto">
               <div
                 class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border"
               >
                 cURL
               </div>
               <pre
-                class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+                class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
               ><code>{{ endpoint.examples.curl }}</code></pre>
             </div>
           </div>
@@ -1048,7 +1049,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
         <div class="space-y-2">
           <h3 class="text-sm font-semibold">响应示例</h3>
           <div class="grid gap-3 sm:grid-cols-2">
-            <div class="rounded-lg border border-border overflow-hidden">
+            <div class="rounded-lg border border-border overflow-x-auto">
               <div
                 class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center justify-between"
               >
@@ -1063,7 +1064,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                 }}</span>
               </div>
               <pre
-                class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+                class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
               ><code>{{ endpoint.response.success.example }}</code></pre>
             </div>
             <div
@@ -1076,7 +1077,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                 错误响应
               </div>
               <pre
-                class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+                class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
               ><code>{{ endpoint.response.error.example }}</code></pre>
             </div>
           </div>
@@ -1294,7 +1295,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
 
         <div class="space-y-4">
           <!-- PHP 示例 -->
-          <div class="rounded-lg border border-border overflow-hidden">
+          <div class="rounded-lg border border-border overflow-x-auto">
             <div
               class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2"
             >
@@ -1305,7 +1306,7 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
               PHP SDK 使用示例
             </div>
             <pre
-              class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+              class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
             ><code>&lt;?php
 require_once 'mclogs.php';
 
@@ -1321,7 +1322,7 @@ $id = $result['id'];</code></pre>
           </div>
 
           <!-- JavaScript 示例 -->
-          <div class="rounded-lg border border-border overflow-hidden">
+          <div class="rounded-lg border border-border overflow-x-auto">
             <div
               class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2"
             >
@@ -1332,7 +1333,7 @@ $id = $result['id'];</code></pre>
               JavaScript SDK 使用示例
             </div>
             <pre
-              class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+              class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
             ><code>import { LogShareSDK } from './mclogs.js';
 
 const sdk = new LogShareSDK({ timeout: 120000 });
@@ -1343,7 +1344,7 @@ const id = result.id;</code></pre>
           </div>
 
           <!-- Java 示例 -->
-          <div class="rounded-lg border border-border overflow-hidden">
+          <div class="rounded-lg border border-border overflow-x-auto">
             <div
               class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2"
             >
@@ -1354,7 +1355,7 @@ const id = result.id;</code></pre>
               Java SDK 使用示例
             </div>
             <pre
-              class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+              class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
             ><code>import cn.logshare.sdk.LogShareSDK;
 import cn.logshare.sdk.LogShareException;
 import java.util.*;
@@ -1375,7 +1376,7 @@ public class Example {
           </div>
 
           <!-- .NET 示例 -->
-          <div class="rounded-lg border border-border overflow-hidden">
+          <div class="rounded-lg border border-border overflow-x-auto">
             <div
               class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-2"
             >
@@ -1386,7 +1387,7 @@ public class Example {
               C# SDK 使用示例
             </div>
             <pre
-              class="bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+              class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
             ><code>using LogShare.CN.SDK;
 using System;
 using System.Text.Json;
@@ -1577,7 +1578,7 @@ class Program
 
       <div class="rounded-lg border border-border bg-card p-5">
         <h2 class="text-lg font-semibold mb-4">错误码</h2>
-        <div class="rounded-lg border border-border overflow-hidden">
+        <div class="rounded-lg border border-border overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="bg-muted/50">
               <tr>

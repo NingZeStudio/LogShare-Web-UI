@@ -153,6 +153,12 @@
   * {
     @apply border-border;
   }
+  /* 全站横向溢出兜底：任何长内容（表格/代码块/长文件名）不得把页面撑出横向滚动。
+     clip 不生成滚动容器，sticky 顶栏不受影响 */
+  html,
+  body {
+    overflow-x: clip;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
