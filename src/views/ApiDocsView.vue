@@ -643,6 +643,20 @@ const methodTypeClass = (type: string) => {
   return classes[type] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
 }
 
+// 端点分组：端点卡片按业务域聚合，替代线性平铺
+const endpointGroups = [
+  { group: '日志核心', match: ['/v1/log', '/v1/analyse', '/v1/raw/{id}', '/v1/raw/{id}/{filename}', '/v1/log/{id}'] },
+  { group: 'AI 分析', match: ['/v1/insights/{id}', '/v1/ai/{id}', '/v1/ai/analyse'] },
+  { group: '站点信息', match: ['/v1/limits', '/v1/filters'] }
+]
+
+const groupedEndpoints = endpointGroups
+  .map(g => ({
+    group: g.group,
+    items: endpoints.filter(ep => g.match.includes(ep.path))
+  }))
+  .filter(g => g.items.length > 0)
+
 const hasContentType = (endpoint: any) => {
   return endpoint.contentType !== undefined
 }
@@ -885,204 +899,194 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
     </div>
 
     <!-- API 端点 -->
-    <div v-if="activeTab === 'endpoints'" class="space-y-8">
-      <div v-for="(endpoint, index) in endpoints" :key="index" class="space-y-4">
-        <!-- 端点头部 -->
-        <div class="flex items-start justify-between flex-wrap gap-4">
-          <div class="flex min-w-0 flex-wrap items-center gap-3">
-            <span
-              class="px-2.5 py-1 rounded text-xs font-bold"
-              :class="methodTypeClass(endpoint.methodType)"
-            >
-              {{ endpoint.method }}
-            </span>
-            <code class="break-all text-sm font-mono">{{ endpoint.path }}</code>
-          </div>
-          <button
-            class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            @click="copyEndpoint(`https://api.logshare.cn${endpoint.path}`)"
-          >
-            <Copy
-              v-if="copiedEndpoint !== `https://api.logshare.cn${endpoint.path}`"
-              weight="duotone"
-              class="h-3.5 w-3.5"
-            />
-            <Check v-else weight="duotone" class="h-3.5 w-3.5" />
-            {{
-              copiedEndpoint === `https://api.logshare.cn${endpoint.path}` ? t('copied') : t('copy')
-            }}
-          </button>
-        </div>
+    <div v-if="activeTab === 'endpoints'" class="space-y-10">
+      <section v-for="group in groupedEndpoints" :key="group.group" class="space-y-4">
+        <h2 class="text-lg font-semibold">{{ group.group }}</h2>
 
-        <!-- 描述 -->
-        <p class="text-sm text-muted-foreground">
-          {{ endpoint.description }}
-        </p>
-
-        <!-- SSE 提示 -->
-        <p v-if="isSSEEndpoint(endpoint)" class="text-sm text-blue-500">该接口为 SSE 流式输出</p>
-
-        <!-- Content-Type 提示 -->
-        <div
-          v-if="hasContentType(endpoint)"
-          class="flex items-center gap-2 text-xs text-muted-foreground"
-        >
-          <span class="font-medium">Content-Type:</span>
-          <code class="bg-muted px-1.5 py-0.5 rounded">{{ endpoint.contentType }}</code>
-        </div>
-
-        <!-- 请求头 -->
-        <div v-if="endpoint.headers && endpoint.headers.length > 0" class="space-y-2">
-          <h3 class="text-sm font-semibold">请求头</h3>
-          <div class="rounded-lg border border-border overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="bg-muted/50">
-                <tr>
-                  <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">参数</th>
-                  <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">类型</th>
-                  <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">必需</th>
-                  <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">描述</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="header in endpoint.headers"
-                  :key="header.name"
-                  class="border-t border-border"
-                >
-                  <td class="p-2.5 font-mono text-xs text-primary">{{ header.name }}</td>
-                  <td class="p-2.5">
-                    <code class="bg-muted px-1.5 py-0.5 rounded text-xs">{{ header.type }}</code>
-                  </td>
-                  <td class="p-2.5">
-                    <span v-if="header.required" class="text-xs text-destructive font-medium"
-                      >必需</span
-                    >
-                    <span v-else class="text-xs text-muted-foreground">可选</span>
-                  </td>
-                  <td class="p-2.5 text-xs text-muted-foreground break-words">{{ header.desc }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 请求参数 -->
-        <div v-if="endpoint.params.length > 0" class="space-y-2">
-          <h3 class="text-sm font-semibold">请求参数</h3>
-          <div class="rounded-lg border border-border overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="bg-muted/50">
-                <tr>
-                  <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">参数</th>
-                  <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">类型</th>
-                  <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">必需</th>
-                  <th class="p-2.5 text-left font-medium text-muted-foreground text-xs">描述</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="param in endpoint.params"
-                  :key="param.name"
-                  class="border-t border-border"
-                >
-                  <td class="p-2.5 font-mono text-xs text-primary">{{ param.name }}</td>
-                  <td class="p-2.5">
-                    <code class="bg-muted px-1.5 py-0.5 rounded text-xs">{{ param.type }}</code>
-                  </td>
-                  <td class="p-2.5">
-                    <span v-if="param.required" class="text-xs text-destructive font-medium"
-                      >必需</span
-                    >
-                    <span v-else class="text-xs text-muted-foreground">可选</span>
-                  </td>
-                  <td class="p-2.5 text-xs text-muted-foreground break-words">{{ param.desc }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 代码示例 -->
-        <div class="space-y-2">
-          <h3 class="text-sm font-semibold">调用示例</h3>
-          <div class="space-y-3">
-            <!-- JavaScript -->
-            <div class="rounded-lg border border-border overflow-x-auto">
-              <div
-                class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border"
-              >
-                JavaScript
-              </div>
-              <pre
-                class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
-              ><code>{{ endpoint.examples.js }}</code></pre>
-            </div>
-
-            <!-- PHP -->
-            <div class="rounded-lg border border-border overflow-x-auto">
-              <div
-                class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border"
-              >
-                PHP
-              </div>
-              <pre
-                class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
-              ><code>{{ endpoint.examples.php }}</code></pre>
-            </div>
-
-            <!-- cURL -->
-            <div class="rounded-lg border border-border overflow-x-auto">
-              <div
-                class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border"
-              >
-                cURL
-              </div>
-              <pre
-                class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
-              ><code>{{ endpoint.examples.curl }}</code></pre>
-            </div>
-          </div>
-        </div>
-
-        <!-- 响应示例 -->
-        <div class="space-y-2">
-          <h3 class="text-sm font-semibold">响应示例</h3>
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div class="rounded-lg border border-border overflow-x-auto">
-              <div
-                class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center justify-between"
-              >
-                <span
-                  >成功响应
-                  {{
-                    endpoint.response.success.code ? `(${endpoint.response.success.code} OK)` : ''
-                  }}</span
-                >
-                <span v-if="endpoint.response.success.type" class="text-muted-foreground">{{
-                  endpoint.response.success.type
-                }}</span>
-              </div>
-              <pre
-                class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
-              ><code>{{ endpoint.response.success.example }}</code></pre>
-            </div>
+        <div v-for="endpoint in group.items" :key="endpoint.path" class="space-y-4">
+          <div class="rounded-lg border border-border bg-card">
+            <!-- 端点头：method 徽标 + 路径 + 复制 -->
             <div
-              v-if="endpoint.response.error"
-              class="rounded-lg border border-border overflow-hidden"
+              class="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3"
             >
-              <div
-                class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border"
-              >
-                错误响应
+              <div class="flex min-w-0 flex-wrap items-center gap-2.5">
+                <span
+                  class="shrink-0 px-2.5 py-1 rounded text-xs font-bold"
+                  :class="methodTypeClass(endpoint.methodType)"
+                >
+                  {{ endpoint.method }}
+                </span>
+                <code class="break-all text-sm font-mono">{{ endpoint.path }}</code>
               </div>
-              <pre
-                class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
-              ><code>{{ endpoint.response.error.example }}</code></pre>
+              <button
+                class="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                @click="copyEndpoint(`https://api.logshare.cn${endpoint.path}`)"
+              >
+                <Copy
+                  v-if="copiedEndpoint !== `https://api.logshare.cn${endpoint.path}`"
+                  weight="duotone"
+                  class="h-3.5 w-3.5"
+                />
+                <Check v-else weight="duotone" class="h-3.5 w-3.5" />
+                {{
+                  copiedEndpoint === `https://api.logshare.cn${endpoint.path}`
+                    ? t('copied')
+                    : t('copy')
+                }}
+              </button>
+            </div>
+
+            <div class="space-y-4 p-4">
+              <!-- 描述 -->
+              <p class="text-sm leading-relaxed text-muted-foreground">
+                {{ endpoint.description }}
+              </p>
+
+              <!-- SSE 提示 -->
+              <p v-if="isSSEEndpoint(endpoint)" class="text-sm text-blue-500">
+                该接口为 SSE 流式输出
+              </p>
+
+              <!-- Content-Type 提示 -->
+              <div
+                v-if="hasContentType(endpoint)"
+                class="flex items-center gap-2 text-xs text-muted-foreground"
+              >
+                <span class="font-medium">Content-Type:</span>
+                <code class="bg-muted px-1.5 py-0.5 rounded break-all">{{ endpoint.contentType }}</code>
+              </div>
+
+              <!-- 请求头 -->
+              <div v-if="endpoint.headers && endpoint.headers.length > 0" class="space-y-2">
+                <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  请求头
+                </h4>
+                <div class="space-y-2">
+                  <div
+                    v-for="header in endpoint.headers"
+                    :key="header.name"
+                    class="rounded-lg border border-border/60 bg-background p-3"
+                  >
+                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <code class="break-all font-mono text-xs font-semibold text-primary">{{
+                        header.name
+                      }}</code>
+                      <code class="bg-muted px-1.5 py-0.5 rounded text-[10px]">{{ header.type }}</code>
+                      <span v-if="header.required" class="text-[10px] font-medium text-destructive"
+                        >必需</span
+                      >
+                      <span v-else class="text-[10px] text-muted-foreground">可选</span>
+                    </div>
+                    <p class="mt-1 break-words text-xs leading-relaxed text-muted-foreground">
+                      {{ header.desc }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 请求参数 -->
+              <div v-if="endpoint.params.length > 0" class="space-y-2">
+                <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  请求参数
+                </h4>
+                <div class="space-y-2">
+                  <div
+                    v-for="param in endpoint.params"
+                    :key="param.name"
+                    class="rounded-lg border border-border/60 bg-background p-3"
+                  >
+                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <code class="break-all font-mono text-xs font-semibold text-primary">{{
+                        param.name
+                      }}</code>
+                      <code class="bg-muted px-1.5 py-0.5 rounded text-[10px]">{{ param.type }}</code>
+                      <span v-if="param.required" class="text-[10px] font-medium text-destructive"
+                        >必需</span
+                      >
+                      <span v-else class="text-[10px] text-muted-foreground">可选</span>
+                    </div>
+                    <p class="mt-1 break-words text-xs leading-relaxed text-muted-foreground">
+                      {{ param.desc }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 代码示例 -->
+              <div class="min-w-0 space-y-1.5">
+                <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  调用示例
+                </h4>
+                <div class="space-y-3">
+                  <div class="min-w-0 overflow-hidden rounded-lg border border-border">
+                    <div
+                      class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border"
+                    >
+                      JavaScript
+                    </div>
+                    <pre
+                      class="max-w-full bg-slate-950 text-slate-50 p-3.5 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+                    ><code>{{ endpoint.examples.js }}</code></pre>
+                  </div>
+
+                  <div class="min-w-0 overflow-hidden rounded-lg border border-border">
+                    <div
+                      class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border"
+                    >
+                      cURL
+                    </div>
+                    <pre
+                      class="max-w-full bg-slate-950 text-slate-50 p-3.5 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+                    ><code>{{ endpoint.examples.curl }}</code></pre>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 响应示例 -->
+              <div class="min-w-0 space-y-1.5">
+                <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  响应示例
+                </h4>
+                <div class="space-y-3">
+                  <div class="min-w-0 overflow-hidden rounded-lg border border-border">
+                    <div
+                      class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center justify-between"
+                    >
+                      <span
+                        >成功响应
+                        {{
+                          endpoint.response.success.code
+                            ? `(${endpoint.response.success.code} OK)`
+                            : ''
+                        }}</span
+                      >
+                      <span v-if="endpoint.response.success.type" class="break-all">{{
+                        endpoint.response.success.type
+                      }}</span>
+                    </div>
+                    <pre
+                      class="max-w-full bg-slate-950 text-slate-50 p-3.5 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+                    ><code>{{ endpoint.response.success.example }}</code></pre>
+                  </div>
+                  <div
+                    v-if="endpoint.response.error"
+                    class="min-w-0 overflow-hidden rounded-lg border border-border"
+                  >
+                    <div
+                      class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border"
+                    >
+                      错误响应
+                    </div>
+                    <pre
+                      class="max-w-full bg-slate-950 text-slate-50 p-3.5 text-xs overflow-x-auto whitespace-pre leading-relaxed"
+                    ><code>{{ endpoint.response.error.example }}</code></pre>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
 
     <!-- SDKs -->
@@ -1587,35 +1591,35 @@ class Program
               </tr>
             </thead>
             <tbody>
-              <tr class="border-t border-border">
+              <tr class="border-t border-border transition-colors hover:bg-muted/30">
                 <td class="p-2.5 font-mono text-xs">400</td>
                 <td class="p-2.5 text-muted-foreground">请求参数错误</td>
               </tr>
-              <tr class="border-t border-border">
+              <tr class="border-t border-border transition-colors hover:bg-muted/30">
                 <td class="p-2.5 font-mono text-xs">403</td>
                 <td class="p-2.5 text-muted-foreground">Token 无效或权限不足</td>
               </tr>
-              <tr class="border-t border-border">
+              <tr class="border-t border-border transition-colors hover:bg-muted/30">
                 <td class="p-2.5 font-mono text-xs">404</td>
                 <td class="p-2.5 text-muted-foreground">资源未找到</td>
               </tr>
-              <tr class="border-t border-border">
+              <tr class="border-t border-border transition-colors hover:bg-muted/30">
                 <td class="p-2.5 font-mono text-xs">405</td>
                 <td class="p-2.5 text-muted-foreground">方法不被允许</td>
               </tr>
-              <tr class="border-t border-border">
+              <tr class="border-t border-border transition-colors hover:bg-muted/30">
                 <td class="p-2.5 font-mono text-xs">413</td>
                 <td class="p-2.5 text-muted-foreground">请求体过大</td>
               </tr>
-              <tr class="border-t border-border">
+              <tr class="border-t border-border transition-colors hover:bg-muted/30">
                 <td class="p-2.5 font-mono text-xs">415</td>
                 <td class="p-2.5 text-muted-foreground">不支持的内容类型</td>
               </tr>
-              <tr class="border-t border-border">
+              <tr class="border-t border-border transition-colors hover:bg-muted/30">
                 <td class="p-2.5 font-mono text-xs">429</td>
                 <td class="p-2.5 text-muted-foreground">请求频率超限</td>
               </tr>
-              <tr class="border-t border-border">
+              <tr class="border-t border-border transition-colors hover:bg-muted/30">
                 <td class="p-2.5 font-mono text-xs">500</td>
                 <td class="p-2.5 text-muted-foreground">服务器内部错误</td>
               </tr>

@@ -79,26 +79,3 @@ const widthClass: Record<string, string> = {
   </Teleport>
 </template>
 
-<style scoped>
-div[class*='overflow-y-auto'] {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
-}
-
-div[class*='overflow-y-auto']::-webkit-scrollbar {
-  width: 6px;
-}
-
-div[class*='overflow-y-auto']::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-div[class*='overflow-y-auto']::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 3px;
-}
-
-.dark div[class*='overflow-y-auto']::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--muted-foreground) / 0.5);
-}
-</style>
