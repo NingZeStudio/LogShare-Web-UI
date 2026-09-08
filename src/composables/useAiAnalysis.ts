@@ -8,11 +8,12 @@ export interface AiStatusEntry {
   name?: string
   delta?: string
   summary?: string
+  position?: number
 }
 
 export interface AiStatusBlock {
   id: number
-  type: 'thinking' | 'tool' | 'limit'
+  type: 'queued' | 'thinking' | 'tool' | 'limit'
   title: string
   detail: string
   completed: boolean
@@ -40,7 +41,16 @@ export function useAiAnalysis(logId: string) {
   const aiStatusBlocks = computed<AiStatusBlock[]>(() => {
     const blocks: AiStatusBlock[] = []
     for (const entry of aiStatusEntries.value) {
-      if (entry.type === 'thinking') {
+      if (entry.type === 'queued') {
+        blocks.push({
+          id: entry.id,
+          type: 'queued',
+          title: t('ai_status_queued').replace('{count}', String(entry.position ?? 0)),
+          detail: entry.position ? `前方约 ${entry.position} 个任务等待处理` : '正在排队等待分析',
+          completed: false,
+          expanded: expandedStatusIds.value.has(entry.id)
+        })
+      } else if (entry.type === 'thinking') {
         const previous = blocks[blocks.length - 1]
         if (previous?.type === 'thinking' && !previous.completed) {
           previous.detail += entry.delta || ''
@@ -86,6 +96,12 @@ export function useAiAnalysis(logId: string) {
       last.completed = true
       last.title = '已完成思考'
     }
+    // 排队块在分析真正开始（出现后续步骤或正文）后标记完成
+    const queued = blocks.find((b) => b.type === 'queued')
+    if (queued && !queued.completed && (blocks.length > 1 || aiText.value)) {
+      queued.completed = true
+      queued.title = t('ai_status_queued_done')
+    }
     return blocks
   })
 
@@ -115,6 +131,7 @@ export function useAiAnalysis(logId: string) {
     if (!aiLoading.value && !aiIsStreaming.value) return null
     const latest = aiStatusEntries.value[aiStatusEntries.value.length - 1]
     if (!latest) return null
+    if (latest.type === 'queued') return { type: 'queued' as const, name: '' }
     if (latest.type === 'thinking') return { type: 'thinking' as const, name: '' }
     if (latest.type === 'tool') return { type: 'tool' as const, name: latest.name || '工具' }
     if (latest.type === 'tool_result') {
@@ -150,6 +167,9 @@ export function useAiAnalysis(logId: string) {
 
   const handleStatus = (status: AiStatusEvent) => {
     switch (status.type) {
+      case 'queued':
+        pushStatus({ type: 'queued', position: status.position })
+        break
       case 'thinking':
         if (status.delta) pushStatus({ type: 'thinking', delta: status.delta })
         break

@@ -100,13 +100,15 @@ export interface AiError {
 }
 
 export interface AiStatusEvent {
-  type: 'thinking' | 'tool' | 'tool_result' | 'limit'
+  type: 'thinking' | 'tool' | 'tool_result' | 'limit' | 'queued'
   delta?: string
   name?: string
   arguments?: unknown
   summary?: string
   truncated?: boolean
   rounds?: number
+  /** 仅 queued：入队时的近似队列深度（前方等待的任务数） */
+  position?: number
 }
 
 export interface AiStreamCallbacks {
