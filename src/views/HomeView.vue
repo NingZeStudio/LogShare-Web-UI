@@ -321,7 +321,7 @@ const save = async () => {
 </script>
 
 <template>
-  <div class="flex min-h-[calc(100vh-3.5rem)] flex-col flex-1 bg-transparent">
+  <div class="flex h-[calc(100vh-3.5rem)] flex-col flex-1 bg-transparent">
     <div class="flex flex-col flex-1 min-h-0">
       <div
         class="flex flex-col flex-1 min-h-0 bg-card/80 backdrop-blur-xl text-card-foreground shadow-sm overflow-hidden"
