@@ -269,6 +269,7 @@ LogAgent 模式（`ai.agent.enabled`）会输出额外的 `event: status` 事件
 
 | 事件 | 载荷 `data` | 说明 |
 |------|-------------|------|
+| `event: status` | `{"type":"queued","position":N}` | 仅队列模式（`ai.queue.enabled`）：任务已入队，`position` 为入队时的近似队列深度 |
 | `event: status` | `{"type":"thinking","delta":"..."}` | 模型思维链（reasoning_content）逐段推送，供前端展示 |
 | `event: status` | `{"type":"tool","name":"web_search_exa","arguments":{...}}` | 即将调用某工具 |
 | `event: status` | `{"type":"tool_result","name":"web_search_exa","summary":"...","truncated":true}` | 工具返回摘要（完整结果进 LLM 上下文） |
@@ -276,7 +277,9 @@ LogAgent 模式（`ai.agent.enabled`）会输出额外的 `event: status` 事件
 | `data:`（原有） | `{"choices":[{"delta":{"content":"..."}}]}` | 正文增量 |
 | `event: done` | `{"status":"completed"}` | 流结束 |
 
-**前端 SSE 解析注意事项：** 一个 SSE 事件以空行（`\n\n`）结束；`event: status` 后紧跟其 `data:` JSON，未声明 `event:` 的 `data:` 行是正文增量。正文应拼接 `data.choices[0].delta.content`，思考内容拼接 `data.delta`。除 `done` 外还需处理 `event: error`（`data.error`）和 `event: status` 的 `tool`、`tool_result`、`limit`。
+**队列模式（`ai.queue.enabled`）：** 全部 AI 分析经 Redis Streams 微队列执行，端点本身只做 SSE 中继，事件协议不变（仅多首帧 `queued`）。三个行为差异：① 队列已满（深度达 `ai.queue.maxQueue`）时，在 SSE 开始前返回 `429` JSON（带 `Retry-After: 30`）；② 客户端断开不取消任务，分析继续跑完并写入结果缓存，后续请求（含缓存命中路径）直接取用；③ Redis 不可用时按 `ai.queue.failOpen` 回退请求内直连执行（默认回退），行为与队列关闭时一致。中继端等待时长由 `ai.queue.waitTimeout` 控制，配为 `0` 时无排队超时（等到 `done`/`error` 或客户端断开为止）。
+
+**前端 SSE 解析注意事项：** 一个 SSE 事件以空行（`\n\n`）结束；`event: status` 后紧跟其 `data:` JSON，未声明 `event:` 的 `data:` 行是正文增量。正文应拼接 `data.choices[0].delta.content`，思考内容拼接 `data.delta`。除 `done` 外还需处理 `event: error`（`data.error`）和 `event: status` 的 `queued`、`tool`、`tool_result`、`limit`。
 **可注册的工具：** 工具会作为 OpenAI-compatible `tools` 字段发送给模型；只有满足注册条件时才会出现在该次会话中。工具调用过程本身不会作为客户端请求发送，前端只接收对应的 SSE 状态事件。
 
 | 工具 | 注册条件 | 参数 | 返回给模型的内容 |

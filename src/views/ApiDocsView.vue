@@ -521,7 +521,7 @@ print_r($data);`,
     path: '/v1/ai/{id}',
     title: 'AI 分析已存储日志',
     description:
-      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出：data: 为正文增量（OpenAI 兼容格式），event: status 推送思维链与工具调用事件，event: done 结束。AI 关闭时统一返回 HTTP 404。分析结论按日志 ID 缓存 30 分钟，重复请求直接返回缓存结论。推荐先调用 /v1/insights/{id} 展示结构化摘要（不消耗 AI 资源），用户主动触发时再调用本接口。',
+      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出：data: 为正文增量（OpenAI 兼容格式），event: status 推送排队、思维链与工具调用事件，event: done 结束。AI 关闭时统一返回 HTTP 404。分析结论按日志 ID 缓存 30 分钟，重复请求直接返回缓存结论。服务端启用分析队列时，流首帧为 queued 状态（含排队位置），队列满时在 SSE 开始前返回 HTTP 429 + Retry-After。推荐先调用 /v1/insights/{id} 展示结构化摘要（不消耗 AI 资源），用户主动触发时再调用本接口。',
     isSSE: true,
     params: [{ name: 'id', type: 'string', required: true, desc: '日志 ID' }],
     response: {
@@ -529,6 +529,10 @@ print_r($data);`,
         code: 200,
         example: `// 正文增量（OpenAI 兼容格式）
 data: {"choices":[{"delta":{"content":"# 分析结果\\n..."}}]}
+
+// 队列模式首帧：任务已入队，position 为近似排队深度
+event: status
+data: {"type":"queued","position":3}
 
 // LogAgent 模式额外输出 status 事件
 event: status
@@ -547,6 +551,13 @@ data: {"status":"completed"}`
     "success": false,
     "error": "AI analysis is disabled.",
     "code": 404
+}
+
+// 队列满（SSE 开始前，带 Retry-After: 30 头）
+{
+    "success": false,
+    "error": "AI 分析队列已满，请稍后重试。",
+    "code": 429
 }`
       }
     },
@@ -587,7 +598,7 @@ curl -N https://api.logshare.cn/v1/ai/abc1234`
     path: '/v1/ai/analyse',
     title: 'AI 分析日志内容',
     description:
-      '直接提交内容给 AI 分析，不落盘。SSE 流式输出（协议同上），缓存基于内容哈希（30 分钟 TTL）。可选传 id 绑定已存在日志：Agent 获得该日志附加文件的访问权（可用于多文件对比），content 可省略。注意：直传内容不经过脱敏过滤链，原文直接发送给 AI 网关；含敏感信息（token、IP 等）的日志建议先走 POST /v1/log 再分析。',
+      '直接提交内容给 AI 分析，不落盘。SSE 流式输出（协议同上，队列模式含 queued 首帧与 429 队列满），缓存基于内容哈希（30 分钟 TTL）。可选传 id 绑定已存在日志：Agent 获得该日志附加文件的访问权（可用于多文件对比），content 可省略。注意：直传内容不经过脱敏过滤链，原文直接发送给 AI 网关；含敏感信息（token、IP 等）的日志建议先走 POST /v1/log 再分析。',
     isSSE: true,
     contentType: 'application/json',
     params: [
