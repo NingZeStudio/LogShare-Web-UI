@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.7.4
+
+### 适配与优化
+- **请求体自适应 Gzip 压缩**：在浏览器支持 `CompressionStream` 环境下，上传日志（`submitLog`）与 AI 纯文本分析（`streamAiAnalyseByContent`）自动以 `Content-Encoding: gzip` 压缩上传大请求体（≥1 KiB），节省用户上行带宽；环境不支持时无缝优雅降级
+- **SSE 流健壮性提升**：规范化事件帧边界处理，在消息边界空行重置事件类型，避免无类型数据帧被前置状态污染；兼容 `reasoning_content` 思维链增量解析
+- **API 规范同步**：`API.md` 与站内开发者文档全量对齐上游后端规范，补充 Brotli/Gzip 全链路响应压缩、请求体 20MB 解压安全上限、RAG 工具最新参数（`topic` 定向、区间读取等）
+
 ## v1.7.3
 
 ### 新功能

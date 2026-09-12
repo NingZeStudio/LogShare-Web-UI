@@ -37,8 +37,28 @@ const endpoints = [
     path: '/v1/log',
     title: t('paste_log'),
     description:
-      '提交新的日志数据进行分析，生成分享链接和分析结果。支持纯文本或 JSON 格式，支持 gzip/deflate/br 压缩。',
+      '提交新的日志数据进行分析，生成分享链接和分析结果。支持纯文本或 JSON 格式。系统默认全链路采用 Brotli（br）压缩：请求体默认推荐 Content-Encoding: br 压缩上传（向下兼容 gzip 与 deflate，服务端设 20MB 解压防护上限）；服务端出站响应全链路默认优先采用 Brotli 压缩返回。',
     contentType: 'text/plain 或 application/json',
+    headers: [
+      {
+        name: 'Content-Type',
+        type: 'string',
+        required: true,
+        desc: 'text/plain 或 application/json'
+      },
+      {
+        name: 'Content-Encoding',
+        type: 'string',
+        required: false,
+        desc: '请求体压缩编码。默认采用 br（Brotli，极限压缩比，首选推荐），向下兼容 gzip / deflate。服务端解压上限 20 MiB'
+      },
+      {
+        name: 'Accept-Encoding',
+        type: 'string',
+        required: false,
+        desc: '接收响应压缩编码。默认优先协商采用 br（Brotli）压缩响应，未声明 br 时回退 gzip'
+      }
+    ],
     params: [
       {
         name: 'content',
@@ -86,7 +106,36 @@ const endpoints = [
       }
     },
     examples: {
-      js: `// JSON 模式
+      curl: `# 1. Brotli 压缩上传模式（默认推荐，压缩比最高）
+brotli -c server.log | curl -X POST https://api.logshare.cn/v1/log \\
+  -H "Content-Type: text/plain" \\
+  -H "Content-Encoding: br" \\
+  -H "Accept-Encoding: br, gzip" \\
+  --data-binary @-
+
+# 2. JSON 模式
+curl -X POST https://api.logshare.cn/v1/log \\
+  -H "Content-Type: application/json" \\
+  -H "Accept-Encoding: br, gzip" \\
+  -d '{
+    "content": "[Server thread/INFO]: Starting minecraft server",
+    "metadata": {"version": "1.20.1"},
+    "source": "cli-upload"
+  }'
+
+# 3. 纯文本模式
+curl -X POST https://api.logshare.cn/v1/log \\
+  -H "Content-Type: text/plain" \\
+  -H "Accept-Encoding: br, gzip" \\
+  -d @server.log
+
+# 4. Gzip 压缩上传模式（向下兼容）
+gzip -c server.log | curl -X POST https://api.logshare.cn/v1/log \\
+  -H "Content-Type: text/plain" \\
+  -H "Content-Encoding: gzip" \\
+  -H "Accept-Encoding: br, gzip" \\
+  --data-binary @-`,
+      js: `// JSON 模式（浏览器底层自动协商 Accept-Encoding: br, gzip）
 const response = await fetch('https://api.logshare.cn/v1/log', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -99,11 +148,17 @@ const response = await fetch('https://api.logshare.cn/v1/log', {
 const data = await response.json();
 console.log(data);
 
-// 纯文本模式
-const response = await fetch('https://api.logshare.cn/v1/log', {
+// 客户端压缩上传模式（现代浏览器使用 CompressionStream）
+const jsonStr = JSON.stringify({ content: logContent, source: "web-upload" });
+const stream = new Blob([jsonStr]).stream().pipeThrough(new CompressionStream('gzip'));
+const compressed = await new Response(stream).arrayBuffer();
+const gzipRes = await fetch('https://api.logshare.cn/v1/log', {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: logContent
+    headers: {
+        'Content-Type': 'application/json',
+        'Content-Encoding': 'gzip'
+    },
+    body: compressed
 });`,
       php: `<?php
 $data = [
@@ -114,24 +169,14 @@ $data = [
 $ch = curl_init('https://api.logshare.cn/v1/log');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+    'Accept-Encoding: br, gzip'
+]);
 $response = curl_exec($ch);
 $result = json_decode($response, true);
 curl_close($ch);
-print_r($result);`,
-      curl: `# JSON 模式
-curl -X POST https://api.logshare.cn/v1/log \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "content": "[Server thread/INFO]: Starting minecraft server",
-    "metadata": {"version": "1.20.1"},
-    "source": "cli-upload"
-  }'
-
-# 纯文本模式
-curl -X POST https://api.logshare.cn/v1/log \\
-  -H "Content-Type: text/plain" \\
-  -d @server.log`
+print_r($result);`
     }
   },
   {
@@ -142,6 +187,26 @@ curl -X POST https://api.logshare.cn/v1/log \\
     description:
       '提交日志内容进行本地分析，不会存储到数据库。返回分析结果包括服务器类型、版本和问题检测。',
     contentType: 'text/plain 或 application/json',
+    headers: [
+      {
+        name: 'Content-Type',
+        type: 'string',
+        required: true,
+        desc: 'text/plain 或 application/json'
+      },
+      {
+        name: 'Content-Encoding',
+        type: 'string',
+        required: false,
+        desc: '请求体压缩编码。支持 br（默认推荐）/ gzip / deflate'
+      },
+      {
+        name: 'Accept-Encoding',
+        type: 'string',
+        required: false,
+        desc: '接收响应压缩编码。默认优先协商采用 br（Brotli）压缩响应'
+      }
+    ],
     params: [{ name: 'content', type: 'string', required: true, desc: '日志原始内容' }],
     response: {
       success: {
@@ -601,6 +666,26 @@ curl -N https://api.logshare.cn/v1/ai/abc1234`
       '直接提交内容给 AI 分析，不落盘。SSE 流式输出（协议同上，队列模式含 queued 首帧与 429 队列满），缓存基于内容哈希（30 分钟 TTL）。可选传 id 绑定已存在日志：Agent 获得该日志附加文件的访问权（可用于多文件对比），content 可省略。注意：直传内容不经过脱敏过滤链，原文直接发送给 AI 网关；含敏感信息（token、IP 等）的日志建议先走 POST /v1/log 再分析。',
     isSSE: true,
     contentType: 'application/json',
+    headers: [
+      {
+        name: 'Content-Type',
+        type: 'string',
+        required: true,
+        desc: 'application/json'
+      },
+      {
+        name: 'Accept',
+        type: 'string',
+        required: true,
+        desc: 'text/event-stream'
+      },
+      {
+        name: 'Content-Encoding',
+        type: 'string',
+        required: false,
+        desc: '请求体压缩编码。支持 br（默认推荐）/ gzip / deflate'
+      }
+    ],
     params: [
       {
         name: 'content',
@@ -670,7 +755,10 @@ const methodTypeClass = (type: string) => {
 
 // 端点分组：端点卡片按业务域聚合，替代线性平铺
 const endpointGroups = [
-  { group: '日志核心', match: ['/v1/log', '/v1/analyse', '/v1/raw/{id}', '/v1/raw/{id}/{filename}', '/v1/log/{id}'] },
+  {
+    group: '日志核心',
+    match: ['/v1/log', '/v1/analyse', '/v1/raw/{id}', '/v1/raw/{id}/{filename}', '/v1/log/{id}']
+  },
   { group: 'AI 分析', match: ['/v1/insights/{id}', '/v1/ai/{id}', '/v1/ai/analyse'] },
   { group: '站点信息', match: ['/v1/limits', '/v1/filters'] }
 ]
@@ -741,8 +829,12 @@ const isSSEEndpoint = (endpoint: any) => {
         <p class="text-sm text-muted-foreground">
           接入「日志上传 + AI 分析」的最小流程：上传后使用返回的
           <code class="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">token</code>
-          删除日志（丢失无法找回，请自行持久化）；移动端建议开启 gzip 上传；客户端读超时建议 300
-          秒以上（Agent 多轮工具分析可能持续数十秒）。
+          删除日志（丢失无法找回，请自行持久化）；系统全链路默认采用
+          Brotli（br）压缩，客户端默认推荐使用
+          <code class="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">Content-Encoding: br</code>
+          压缩上传（亦兼容 gzip）；服务端出站响应全链路默认以
+          <code class="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">br</code>
+          压缩返回；客户端读超时建议 300 秒以上（Agent 多轮工具分析可能持续数十秒）。
         </p>
         <div class="rounded-lg border border-border overflow-x-auto">
           <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border">
@@ -750,10 +842,14 @@ const isSSEEndpoint = (endpoint: any) => {
           </div>
           <pre
             class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed"
-          ><code>{{ `# 1. 上传日志（source 填启动器名/版本，用于匹配对应生态的知识库）
-curl -X POST https://api.logshare.cn/v1/log \
-     -H 'Content-Type: application/json' \
-     -d '{"content":"<日志全文>","source":"your-launcher/1.0.0"}'
+          ><code>{{ `# 1. 上传日志（系统默认采用 Brotli 压缩；亦支持未压缩纯文本或 JSON）
+brotli -c server.log | curl -X POST https://api.logshare.cn/v1/log \
+     -H 'Content-Type: text/plain' \
+     -H 'Content-Encoding: br' \
+     -H 'Accept-Encoding: br, gzip' \
+     --data-binary @-
+# 或普通 JSON 模式：
+# curl -X POST https://api.logshare.cn/v1/log -H 'Content-Type: application/json' -d '{"content":"<日志全文>","source":"your-launcher/1.0.0"}'
 # → {"success":true,"id":"sAbCdEf","token":"...","raw":"...","url":"..."}
 
 # 2. 获取原始日志或结构化解析（可选）
@@ -994,7 +1090,9 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                 class="flex items-center gap-2 text-xs text-muted-foreground"
               >
                 <span class="font-medium">Content-Type:</span>
-                <code class="bg-muted px-1.5 py-0.5 rounded break-all">{{ endpoint.contentType }}</code>
+                <code class="bg-muted px-1.5 py-0.5 rounded break-all">{{
+                  endpoint.contentType
+                }}</code>
               </div>
 
               <!-- 请求头 -->
@@ -1012,7 +1110,9 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                       <code class="break-all font-mono text-xs font-semibold text-primary">{{
                         header.name
                       }}</code>
-                      <code class="bg-muted px-1.5 py-0.5 rounded text-[10px]">{{ header.type }}</code>
+                      <code class="bg-muted px-1.5 py-0.5 rounded text-[10px]">{{
+                        header.type
+                      }}</code>
                       <span v-if="header.required" class="text-[10px] font-medium text-destructive"
                         >必需</span
                       >
@@ -1040,7 +1140,9 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
                       <code class="break-all font-mono text-xs font-semibold text-primary">{{
                         param.name
                       }}</code>
-                      <code class="bg-muted px-1.5 py-0.5 rounded text-[10px]">{{ param.type }}</code>
+                      <code class="bg-muted px-1.5 py-0.5 rounded text-[10px]">{{
+                        param.type
+                      }}</code>
                       <span v-if="param.required" class="text-[10px] font-medium text-destructive"
                         >必需</span
                       >
@@ -1511,13 +1613,26 @@ class Program
             >
           </li>
           <li class="flex items-start gap-3">
-            <span class="text-primary font-medium min-w-fit">压缩支持：</span>
-            <span class="text-muted-foreground"
-              >支持 <code class="bg-muted px-1.5 py-0.5 rounded text-xs">gzip</code>、<code
-                class="bg-muted px-1.5 py-0.5 rounded text-xs"
-                >deflate</code
-              >、<code class="bg-muted px-1.5 py-0.5 rounded text-xs">br</code> 压缩上传</span
-            >
+            <span class="text-primary font-medium min-w-fit">传输压缩：</span>
+            <div class="space-y-1.5 text-muted-foreground text-xs leading-relaxed">
+              <p class="font-medium text-foreground text-sm">全链路默认采用 Brotli（br）压缩：</p>
+              <p>
+                • <strong>服务端出站响应：</strong>Hyperf (Swoole 引擎) 与 OpenResty
+                反向代理全链路默认以
+                <code class="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">br</code>
+                压缩输出（≥1024 字节自动启用），未声明 br 时回退 gzip。
+              </p>
+              <p>
+                • <strong>客户端入站请求：</strong>默认推荐携带
+                <code class="bg-muted px-1.5 py-0.5 rounded text-xs font-mono"
+                  >Content-Encoding: br</code
+                >
+                压缩上传，同时向下兼容
+                <code class="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">gzip</code> 与
+                <code class="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">deflate</code
+                >（服务端设 20 MiB 解压安全上限）。
+              </p>
+            </div>
           </li>
         </ul>
       </div>

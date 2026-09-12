@@ -118,6 +118,50 @@ export interface AiStreamCallbacks {
   onError?: (error: AiError) => void
 }
 
+/**
+ * 现代浏览器与 Node 环境下，若数据大于 1 KiB 且支持 CompressionStream，则使用 Gzip 压缩请求体
+ */
+async function compressPayloadIfNeeded(
+  data: any,
+  headers: Record<string, any>
+): Promise<{ data: any; headers: Record<string, any> }> {
+  if (
+    typeof CompressionStream === 'undefined' ||
+    typeof Response === 'undefined' ||
+    typeof Blob === 'undefined' ||
+    data == null
+  ) {
+    return { data, headers }
+  }
+
+  try {
+    const jsonStr = typeof data === 'string' ? data : JSON.stringify(data)
+    // 小于 1024 字节不压缩（避免 Gzip 头部开销反超）
+    if (jsonStr.length < 1024) {
+      return { data, headers }
+    }
+
+    const stream = new Blob([jsonStr]).stream().pipeThrough(new CompressionStream('gzip'))
+    const buffer = await new Response(stream).arrayBuffer()
+    const compressed = new Uint8Array(buffer)
+
+    // 仅在压缩确实带来体积缩减时采用
+    if (compressed.byteLength < jsonStr.length) {
+      return {
+        data: compressed,
+        headers: {
+          ...headers,
+          'Content-Encoding': 'gzip'
+        }
+      }
+    }
+  } catch {
+    // 任何压缩异常均优雅降级，发送原始数据
+  }
+
+  return { data, headers }
+}
+
 export class ApiClient {
   private client: AxiosInstance
 
@@ -171,14 +215,22 @@ export class ApiClient {
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<AxiosResponse<T>> {
+    const rawHeaders: Record<string, any> = {
+      'Content-Type': 'application/json',
+      ...(config?.headers || {})
+    }
+
+    // 尝试根据负载体积自适应进行 gzip 压缩
+    const { data: finalData, headers: finalHeaders } = await compressPayloadIfNeeded(
+      data,
+      rawHeaders
+    )
+
     const postConfig: AxiosRequestConfig = {
       ...config,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(config?.headers || {})
-      }
+      headers: finalHeaders
     }
-    return this.client.post<T>(url, data, postConfig)
+    return this.client.post<T>(url, finalData, postConfig)
   }
 
   async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
@@ -271,6 +323,11 @@ export class ApiClient {
         for (const rawLine of parts) {
           const line = rawLine.endsWith('\r') ? rawLine.slice(0, -1) : rawLine
 
+          if (line === '') {
+            currentEvent = ''
+            continue
+          }
+
           if (line.startsWith('event:')) {
             currentEvent = line.slice(6).trim()
             if (currentEvent === 'done') {
@@ -308,7 +365,8 @@ export class ApiClient {
               break
             }
 
-            const content = payload.choices?.[0]?.delta?.content
+            const content =
+              payload.choices?.[0]?.delta?.content || payload.choices?.[0]?.delta?.reasoning_content
             if (content) {
               fullText += content
               callbacks.onChunk?.(content)
@@ -348,15 +406,22 @@ export class ApiClient {
     callbacks: AiStreamCallbacks,
     logId?: string
   ): Promise<void> {
+    const rawHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream'
+    }
+    const payload = { content, ...(logId ? { id: logId } : {}) }
+    const { data: finalBody, headers: finalHeaders } = await compressPayloadIfNeeded(
+      payload,
+      rawHeaders
+    )
+
     await this.consumeSse(
       `${baseURL}/v1/ai/analyse`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'text/event-stream'
-        },
-        body: JSON.stringify({ content, ...(logId ? { id: logId } : {}) })
+        headers: finalHeaders,
+        body: finalBody instanceof Uint8Array ? (finalBody as any) : JSON.stringify(payload)
       },
       callbacks
     )
