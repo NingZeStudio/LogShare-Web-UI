@@ -586,7 +586,7 @@ print_r($data);`,
     path: '/v1/ai/{id}',
     title: 'AI 分析已存储日志',
     description:
-      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出：data: 为正文增量（OpenAI 兼容格式），event: status 推送排队、思维链与工具调用事件，event: done 结束。AI 关闭时统一返回 HTTP 404。分析结论按日志 ID 缓存 30 分钟，重复请求直接返回缓存结论。LogAgent 模式开放知识库检索（rag_search / list_topics）、网络搜索（web_search_exa）以及行级文件检索（list_log_files / read_log_file / grep_log_file）。长日志（≥12KB）自动运用算法定位首个错误行并截取 12KB 上下文窗口；未定位到错误时不截取前缀干扰日志，引导模型结合常用关键词通过 grep_log_file 适可而止排查。服务端启用分析队列时，流首帧为 queued 状态（含排队位置），队列满时在 SSE 开始前返回 HTTP 429 + Retry-After。推荐先调用 /v1/insights/{id} 展示结构化摘要（不消耗 AI 资源），用户主动触发时再调用本接口。',
+      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出协议：无 event 头的纯 data: 为正文增量（OpenAI 兼容格式），event: status 状态帧（含 queued 队列首帧、thinking 思维链、tool 工具调用、tool_result 工具结果摘要、limit 轮次上限熔断），event: error 异常流终止，event: done 流正常结束。AI 关闭时统一返回 HTTP 404。分析结论按日志 ID 缓存 30 分钟，重复请求直接返回缓存结论。LogAgent 模式开放知识库检索（rag_search / list_topics）、网络搜索（web_search_exa）以及行级文件检索（list_log_files / read_log_file / grep_log_file）。长日志（≥12KB）自动运行算法定位首个错误行并截取 12KB 上下文窗口（预留 2.5KB 前置因果与完整后置堆栈，整行对齐）；未定位到显式错误时不截取前缀干扰日志，注入日志全局概况并引导模型结合常用关键词通过 grep_log_file 适可而止排查；日志 <12KB 时完整直传。服务端启用分析队列时，流首帧为 queued 状态（含排队位置），队列满时在 SSE 开始前返回 HTTP 429 + Retry-After。推荐先调用 /v1/insights/{id} 展示结构化摘要（不消耗 AI 资源），用户主动触发时再调用本接口。',
     isSSE: true,
     params: [{ name: 'id', type: 'string', required: true, desc: '日志 ID' }],
     response: {
@@ -611,9 +611,17 @@ data: {"type":"tool","name":"rag_search","arguments":{"query":"MixinApplyError"}
 event: status
 data: {"type":"tool_result","name":"rag_search","summary":"共命中 1 条：[1] mixin-apply-failed.md","truncated":false}
 
-// 流结束
+// 工具循环达到安全轮次上限（默认 50 轮）
+event: status
+data: {"type":"limit","rounds":50}
+
+// 流结束（正常完成）
 event: done
-data: {"status":"completed"}`
+data: {"status":"completed"}
+
+// 流异常终止（超时 / Redis 不可用 / 上游异常）
+event: error
+data: {"error":"分析排队等待超时，请稍后重试。"}`
       },
       error: {
         example: `{
@@ -645,7 +653,14 @@ while (true) {
         if (currentEvent === 'done') break;
         if (!line.startsWith('data: ')) continue;
         const payload = JSON.parse(line.slice(6));
-        if (currentEvent === 'status') { console.log('status:', payload); continue; }
+        if (currentEvent === 'error') {
+            console.error('SSE 流异常:', payload.error);
+            break;
+        }
+        if (currentEvent === 'status') {
+            console.log('状态帧 [' + payload.type + ']:', payload);
+            continue;
+        }
         fullText += payload.choices?.[0]?.delta?.content || '';
     }
 }
@@ -667,7 +682,7 @@ curl -N https://api.logshare.cn/v1/ai/abc1234`
     path: '/v1/ai/analyse',
     title: 'AI 分析日志内容',
     description:
-      '直接提交内容给 AI 分析，不落盘。SSE 流式输出（协议同上，队列模式含 queued 首帧与 429 队列满），缓存基于内容哈希（30 分钟 TTL）。可选传 id 绑定已存在日志：Agent 获得该日志附加文件的访问权及 grep_log_file 行级检索能力（可用于多文件定位与对比），content 可省略。注意：直传内容不经过脱敏过滤链，原文直接发送给 AI 网关；含敏感信息（token、IP 等）的日志建议先走 POST /v1/log 再分析。',
+      '直接提交内容给 AI 分析，不落盘。SSE 流式输出（协议完全同上，队列模式首发 queued 帧，队列满在 SSE 开始前返回 HTTP 429），缓存基于内容哈希（30 分钟 TTL）。支持 Content-Encoding 请求体压缩（br 推荐 / gzip / deflate，含 20MB 防解压炸弹保护）。可选传 id 绑定已存在日志：Agent 获得该日志附加文件的访问权及 grep_log_file 行级检索能力（可用于多文件定位与对比），content 可省略。注意：直传内容不经过脱敏过滤链，原文直接发送给 AI 网关；含敏感信息（token、IP 等）的日志建议先走 POST /v1/log 再分析。',
     isSSE: true,
     contentType: 'application/json',
     headers: [
@@ -707,17 +722,37 @@ curl -N https://api.logshare.cn/v1/ai/abc1234`
     response: {
       success: {
         code: 200,
-        example: `// SSE 流式数据，协议同 GET /v1/ai/{id}
-data: {"choices":[{"delta":{"content":"# 崩溃分析..."}}]}
+        example: `// SSE 流式数据，协议完全同 GET /v1/ai/{id}
+data: {"choices":[{"delta":{"content":"# 崩溃分析\\n..."}}]}
 
+// 队列模式首帧
+event: status
+data: {"type":"queued","position":1}
+
+// LogAgent 模式 status 事件
+event: status
+data: {"type":"thinking","delta":"正在分析提供的崩溃堆栈..."}
+
+// 流正常结束
 event: done
-data: {"status":"completed"}`
+data: {"status":"completed"}
+
+// 流异常终止
+event: error
+data: {"error":"分析排队等待超时，请稍后重试。"}`
       },
       error: {
         example: `{
     "success": false,
     "error": "AI analysis is disabled.",
     "code": 404
+}
+
+// 队列满（SSE 开始前，带 Retry-After: 30 头）
+{
+    "success": false,
+    "error": "AI 分析队列已满，请稍后重试。",
+    "code": 429
 }`
       }
     },
@@ -729,7 +764,7 @@ data: {"status":"completed"}`
         content: "[Server thread/ERROR]: Could not bind to port 25565..."
     })
 });
-// SSE 流式读取同 GET /v1/ai/{id}`,
+// SSE 流式读取协议与事件处理同 GET /v1/ai/{id}`,
       php: `<?php
 $data = ['content' => "[Server thread/ERROR]: Could not bind to port 25565..."];
 $ch = curl_init('https://api.logshare.cn/v1/ai/analyse');
