@@ -586,7 +586,7 @@ print_r($data);`,
     path: '/v1/ai/{id}',
     title: 'AI 分析已存储日志',
     description:
-      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出：data: 为正文增量（OpenAI 兼容格式），event: status 推送排队、思维链与工具调用事件，event: done 结束。AI 关闭时统一返回 HTTP 404。分析结论按日志 ID 缓存 30 分钟，重复请求直接返回缓存结论。服务端启用分析队列时，流首帧为 queued 状态（含排队位置），队列满时在 SSE 开始前返回 HTTP 429 + Retry-After。推荐先调用 /v1/insights/{id} 展示结构化摘要（不消耗 AI 资源），用户主动触发时再调用本接口。',
+      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出：data: 为正文增量（OpenAI 兼容格式），event: status 推送排队、思维链与工具调用事件，event: done 结束。AI 关闭时统一返回 HTTP 404。分析结论按日志 ID 缓存 30 分钟，重复请求直接返回缓存结论。LogAgent 模式开放知识库检索（rag_search / list_topics）、网络搜索（web_search_exa）以及行级文件检索（list_log_files / read_log_file / grep_log_file）。长日志（≥12KB）自动运用算法定位首个错误行并截取 12KB 上下文窗口；未定位到错误时不截取前缀干扰日志，引导模型结合常用关键词通过 grep_log_file 适可而止排查。服务端启用分析队列时，流首帧为 queued 状态（含排队位置），队列满时在 SSE 开始前返回 HTTP 429 + Retry-After。推荐先调用 /v1/insights/{id} 展示结构化摘要（不消耗 AI 资源），用户主动触发时再调用本接口。',
     isSSE: true,
     params: [{ name: 'id', type: 'string', required: true, desc: '日志 ID' }],
     response: {
@@ -599,13 +599,17 @@ data: {"choices":[{"delta":{"content":"# 分析结果\\n..."}}]}
 event: status
 data: {"type":"queued","position":3}
 
-// LogAgent 模式额外输出 status 事件
+// LogAgent 模式额外输出 status 事件（思维链、工具调用与结果摘要）
 event: status
-data: {"type":"thinking","delta":"用户日志显示端口被占用..."}
+data: {"type":"thinking","delta":"正在检索日志中的崩溃标记..."}
 event: status
-data: {"type":"tool","name":"web_search_exa","arguments":{"query":"..."}}
+data: {"type":"tool","name":"grep_log_file","arguments":{"query":"MixinApplyError"}}
 event: status
-data: {"type":"tool_result","name":"web_search_exa","summary":"...","truncated":true}
+data: {"type":"tool_result","name":"grep_log_file","summary":"在文件 main（共 500 行）中检索 \\"MixinApplyError\\"：共找到 1 处匹配\\n> 142 | [Server thread/ERROR]: Caused by: MixinApplyError...","truncated":false}
+event: status
+data: {"type":"tool","name":"rag_search","arguments":{"query":"MixinApplyError"}}
+event: status
+data: {"type":"tool_result","name":"rag_search","summary":"共命中 1 条：[1] mixin-apply-failed.md","truncated":false}
 
 // 流结束
 event: done
@@ -663,7 +667,7 @@ curl -N https://api.logshare.cn/v1/ai/abc1234`
     path: '/v1/ai/analyse',
     title: 'AI 分析日志内容',
     description:
-      '直接提交内容给 AI 分析，不落盘。SSE 流式输出（协议同上，队列模式含 queued 首帧与 429 队列满），缓存基于内容哈希（30 分钟 TTL）。可选传 id 绑定已存在日志：Agent 获得该日志附加文件的访问权（可用于多文件对比），content 可省略。注意：直传内容不经过脱敏过滤链，原文直接发送给 AI 网关；含敏感信息（token、IP 等）的日志建议先走 POST /v1/log 再分析。',
+      '直接提交内容给 AI 分析，不落盘。SSE 流式输出（协议同上，队列模式含 queued 首帧与 429 队列满），缓存基于内容哈希（30 分钟 TTL）。可选传 id 绑定已存在日志：Agent 获得该日志附加文件的访问权及 grep_log_file 行级检索能力（可用于多文件定位与对比），content 可省略。注意：直传内容不经过脱敏过滤链，原文直接发送给 AI 网关；含敏感信息（token、IP 等）的日志建议先走 POST /v1/log 再分析。',
     isSSE: true,
     contentType: 'application/json',
     headers: [

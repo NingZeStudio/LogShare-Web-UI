@@ -109,6 +109,7 @@ export function useAiAnalysis(logId: string) {
     if (name === 'rag_search') return '正在查阅知识库…'
     if (name === 'list_topics') return '正在浏览知识库主题…'
     if (name === 'list_log_files' || name === 'read_log_file') return '正在查看日志文件…'
+    if (name === 'grep_log_file') return '正在检索日志内容…'
     if (name === 'web_search_exa') return '正在搜索网络资料…'
     return `正在调用 ${name || '工具'}…`
   }
@@ -116,6 +117,7 @@ export function useAiAnalysis(logId: string) {
   const getToolResultTitle = (name?: string, _summary?: string) => {
     if (name === 'rag_search' || name === 'list_topics') return '知识库查阅完成'
     if (name === 'list_log_files' || name === 'read_log_file') return '日志文件查看完成'
+    if (name === 'grep_log_file') return '日志检索完成'
     if (name === 'web_search_exa') return '网络资料查阅完成'
     return `${name || '工具'}执行完成`
   }
