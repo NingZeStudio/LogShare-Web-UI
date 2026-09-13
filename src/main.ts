@@ -2,6 +2,10 @@ import './assets/index.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import { initTelemetry } from './lib/telemetry'
+
+// 初始化客户端轻量遥测（Core Web Vitals、API 性能与错误自动上报）
+initTelemetry()
 
 const app = createApp(App)
 
