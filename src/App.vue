@@ -264,21 +264,41 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- 右：友情链接 -->
-          <div>
-            <p class="text-sm font-semibold">{{ t('friend_links') }}</p>
-            <div class="mt-2 flex flex-col gap-2">
-              <a
-                v-for="link in friendLinks"
-                :key="link.url"
-                :href="link.url"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary hover:underline"
-              >
-                {{ link.name }}
-                <ExternalLink weight="duotone" class="h-3 w-3" />
-              </a>
+          <!-- 右：条款与合规 + 友情链接 -->
+          <div class="grid grid-cols-2 gap-6 sm:gap-8">
+            <div>
+              <p class="text-sm font-semibold">{{ t('legal_provisions') }}</p>
+              <div class="mt-2 flex flex-col gap-2">
+                <RouterLink
+                  to="/terms"
+                  class="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary hover:underline"
+                >
+                  {{ t('terms_of_service') }}
+                </RouterLink>
+                <RouterLink
+                  to="/privacy"
+                  class="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary hover:underline"
+                >
+                  {{ t('privacy_policy') }}
+                </RouterLink>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-sm font-semibold">{{ t('friend_links') }}</p>
+              <div class="mt-2 flex flex-col gap-2">
+                <a
+                  v-for="link in friendLinks"
+                  :key="link.url"
+                  :href="link.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary hover:underline"
+                >
+                  {{ link.name }}
+                  <ExternalLink weight="duotone" class="h-3 w-3" />
+                </a>
+              </div>
             </div>
           </div>
         </div>

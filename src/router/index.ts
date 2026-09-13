@@ -42,6 +42,20 @@ const router = createRouter({
       meta: { title: 'groups' }
     },
     {
+      path: '/terms',
+      alias: '/terms-of-service',
+      name: 'terms',
+      component: () => import('../views/TermsView.vue'),
+      meta: { title: 'terms' }
+    },
+    {
+      path: '/privacy',
+      alias: '/privacy-policy',
+      name: 'privacy',
+      component: () => import('../views/PrivacyView.vue'),
+      meta: { title: 'privacy' }
+    },
+    {
       path: '/:id',
       name: 'log',
       component: () => import('../views/LogView.vue'),
