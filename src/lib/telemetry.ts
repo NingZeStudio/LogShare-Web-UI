@@ -47,7 +47,7 @@ export interface TelemetryConfig {
 
 class TelemetryClient {
   private queue: TelemetryItem[] = []
-  private endpointUrl: string = '/v1/telemetry/report'
+  private endpointUrl: string = import.meta.env.DEV ? '/v1/telemetry/report' : 'https://api.logshare.cn/v1/telemetry/report'
   private batchSize: number = 10
   private flushIntervalMs: number = 5000
   private enabled: boolean = true
