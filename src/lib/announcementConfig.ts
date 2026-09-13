@@ -12,25 +12,24 @@ export interface AnnouncementConfig {
 }
 
 export const announcementConfig: AnnouncementConfig = {
-  id: '20260823_system_upgrade',
-  title: '系统全面重构升级公告',
+  id: '20260913_telemetry_terms_notice',
+  title: 'LogShare 更新公告',
   content:
-    'LogShare 上线至今已有 7 月有余，处理或历史存储日志量已有千万之数。为给用户们更好的体验，我们于 2026 年 8 月 23 日对系统和框架进行了全面重构和升级。\n\n再次感谢您的支持。',
+    '新版本已内置自研遥测SDK，用于采集 Core Web Vitals、API时延等性能数据，帮助我们优化访问速度与稳定性；相关《服务协议》和《隐私政策》已同步更新，请留意查看。\n\n继续使用即视为知悉，如不同意可停止使用，感谢支持～',
   links: [
     {
-      label: '加入官方QQ群',
-      url: 'https://qm.qq.com/q/FOGt99aayY',
-      icon: 'Users',
+      label: '服务协议',
+      url: 'https://logshare.cn/terms',
+      icon: 'FileText',
       color: 'blue'
     },
     {
-      label: '赞助支持我们',
-      url: '/sponsor',
-      icon: 'Heart',
-      color: 'red'
+      label: '隐私政策',
+      url: 'https://logshare.cn/privacy',
+      icon: 'Shield',
+      color: 'green'
     }
-  ],
-  importantText: '我们近期遭受了一些满怀恶意的攻击'
+  ]
 }
 
 export interface LogUpdateConfig {
@@ -58,6 +57,7 @@ export function getLogUpdateShownKey(logId: string): string {
 }
 
 export function hasSeenAnnouncement(): boolean {
+  if (typeof localStorage === 'undefined') return true
   const lastSeen = localStorage.getItem(localStorageKeys.lastAnnouncementId)
   const currentId = announcementConfig.id
   return (
@@ -66,23 +66,28 @@ export function hasSeenAnnouncement(): boolean {
 }
 
 export function markAnnouncementAsSeen(): void {
+  if (typeof localStorage === 'undefined') return
   localStorage.setItem(localStorageKeys.announcementShown, 'true')
   localStorage.setItem(localStorageKeys.lastAnnouncementId, announcementConfig.id)
 }
 
 export function hasSeenLogUpdate(logId: string): boolean {
+  if (typeof localStorage === 'undefined') return true
   return localStorage.getItem(getLogUpdateShownKey(logId)) === 'true'
 }
 
 export function markLogUpdateAsSeen(logId: string): void {
+  if (typeof localStorage === 'undefined') return
   localStorage.setItem(getLogUpdateShownKey(logId), 'true')
 }
 
 export function resetAnnouncement(): void {
+  if (typeof localStorage === 'undefined') return
   localStorage.removeItem(localStorageKeys.announcementShown)
   localStorage.removeItem(localStorageKeys.lastAnnouncementId)
 }
 
 export function resetLogUpdate(logId: string): void {
+  if (typeof localStorage === 'undefined') return
   localStorage.removeItem(getLogUpdateShownKey(logId))
 }
