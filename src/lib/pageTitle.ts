@@ -11,26 +11,33 @@ export const pageTitleTemplates = {
   notFound: '页面未找到 - LogShare.CN'
 }
 
+export const getPageTitle = (
+  template: keyof typeof pageTitleTemplates | string,
+  params?: { title?: string; id?: string }
+): string => {
+  if (typeof template === 'string' && template in pageTitleTemplates) {
+    const templateFn = pageTitleTemplates[template as keyof typeof pageTitleTemplates]
+    if (typeof templateFn === 'function') {
+      return templateFn(params?.title, params?.id)
+    }
+    return templateFn
+  } else if (typeof template === 'string') {
+    return template
+  }
+  return 'LogShare.CN'
+}
+
 export const setPageTitle = (
   template: keyof typeof pageTitleTemplates | string,
   params?: { title?: string; id?: string }
 ) => {
-  let title = ''
+  const title = getPageTitle(template, params)
 
-  if (typeof template === 'string' && template in pageTitleTemplates) {
-    const templateFn = pageTitleTemplates[template as keyof typeof pageTitleTemplates]
-    if (typeof templateFn === 'function') {
-      title = templateFn(params?.title, params?.id)
-    } else {
-      title = templateFn
-    }
-  } else if (typeof template === 'string') {
-    title = template
-  } else {
-    title = 'LogShare.CN'
+  if (typeof document !== 'undefined') {
+    document.title = title
   }
 
-  document.title = title
+  return title
 }
 
 export const getCurrentPageTemplate = (routeName: string | undefined) => {

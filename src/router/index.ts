@@ -1,88 +1,101 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import {
+  createRouter,
+  createWebHistory,
+  createMemoryHistory,
+  type RouteRecordRaw,
+  type Router
+} from 'vue-router'
 import { setPageTitle, getCurrentPageTemplate } from '@/lib/pageTitle'
 
-const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  // 已知屎山：路由配置硬编码，修改路由需同时修改此处和导航组件
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: () => import('../views/HomeView.vue'),
-      meta: { title: 'home' }
-    },
-    {
-      path: '/api-docs',
-      name: 'api-docs',
-      component: () => import('../views/ApiDocsView.vue'),
-      meta: { title: 'apiDocs' }
-    },
-    {
-      path: '/sponsor',
-      name: 'sponsor',
-      component: () => import('../views/SponsorView.vue'),
-      meta: { title: 'sponsor' }
-    },
-    {
-      path: '/tutorials',
-      name: 'tutorials',
-      component: () => import('../views/TutorialsView.vue'),
-      meta: { title: 'tutorials' }
-    },
-    {
-      path: '/tutorials/:id',
-      name: 'tutorial-article',
-      component: () => import('../views/TutorialArticleView.vue'),
-      meta: { title: 'tutorialArticle' }
-    },
-    {
-      path: '/groups',
-      name: 'groups',
-      component: () => import('../views/GroupListView.vue'),
-      meta: { title: 'groups' }
-    },
-    {
-      path: '/terms',
-      alias: '/terms-of-service',
-      name: 'terms',
-      component: () => import('../views/TermsView.vue'),
-      meta: { title: 'terms' }
-    },
-    {
-      path: '/privacy',
-      alias: '/privacy-policy',
-      name: 'privacy',
-      component: () => import('../views/PrivacyView.vue'),
-      meta: { title: 'privacy' }
-    },
-    {
-      path: '/:id',
-      name: 'log',
-      component: () => import('../views/LogView.vue'),
-      meta: { title: 'log' }
-    },
-    {
-      path: '/:pathMatch(.*)*',
-      name: 'not-found',
-      component: () => import('../views/NotFoundView.vue'),
-      meta: { title: '404' }
-    }
-  ]
-})
-
-router.beforeEach((to, _, next) => {
-  const template = (to.meta.title as string) || getCurrentPageTemplate(to.name?.toString())
-
-  if (template === 'log' && to.params.id) {
-    setPageTitle(template, { id: to.params.id as string })
-  } else if (template === 'tutorialArticle' && to.params.id) {
-    // 警告：教程标题显示"加载中..."，实际标题应在 TutorialArticleView 中设置
-    setPageTitle(template, { title: '加载中...' })
-  } else {
-    setPageTitle(template)
+export const routes: RouteRecordRaw[] = [
+  {
+    path: '/',
+    name: 'home',
+    component: () => import('../views/HomeView.vue'),
+    meta: { title: 'home' }
+  },
+  {
+    path: '/api-docs',
+    name: 'api-docs',
+    component: () => import('../views/ApiDocsView.vue'),
+    meta: { title: 'apiDocs' }
+  },
+  {
+    path: '/sponsor',
+    name: 'sponsor',
+    component: () => import('../views/SponsorView.vue'),
+    meta: { title: 'sponsor' }
+  },
+  {
+    path: '/tutorials',
+    name: 'tutorials',
+    component: () => import('../views/TutorialsView.vue'),
+    meta: { title: 'tutorials' }
+  },
+  {
+    path: '/tutorials/:id',
+    name: 'tutorial-article',
+    component: () => import('../views/TutorialArticleView.vue'),
+    meta: { title: 'tutorialArticle' }
+  },
+  {
+    path: '/groups',
+    name: 'groups',
+    component: () => import('../views/GroupListView.vue'),
+    meta: { title: 'groups' }
+  },
+  {
+    path: '/terms',
+    alias: '/terms-of-service',
+    name: 'terms',
+    component: () => import('../views/TermsView.vue'),
+    meta: { title: 'terms' }
+  },
+  {
+    path: '/privacy',
+    alias: '/privacy-policy',
+    name: 'privacy',
+    component: () => import('../views/PrivacyView.vue'),
+    meta: { title: 'privacy' }
+  },
+  {
+    path: '/:id',
+    name: 'log',
+    component: () => import('../views/LogView.vue'),
+    meta: { title: 'log' }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('../views/NotFoundView.vue'),
+    meta: { title: '404' }
   }
+]
 
-  next()
-})
+export function createAppRouter(isServer = typeof window === 'undefined'): Router {
+  const router = createRouter({
+    history: isServer
+      ? createMemoryHistory(import.meta.env.BASE_URL)
+      : createWebHistory(import.meta.env.BASE_URL),
+    routes
+  })
 
+  router.beforeEach((to, _, next) => {
+    const template = (to.meta.title as string) || getCurrentPageTemplate(to.name?.toString())
+
+    if (template === 'log' && to.params.id) {
+      setPageTitle(template, { id: to.params.id as string })
+    } else if (template === 'tutorialArticle' && to.params.id) {
+      setPageTitle(template, { title: '加载中...' })
+    } else {
+      setPageTitle(template)
+    }
+
+    next()
+  })
+
+  return router
+}
+
+const router = createAppRouter()
 export default router

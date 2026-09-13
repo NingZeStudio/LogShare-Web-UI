@@ -1,22 +1,28 @@
 import { zhCN, zhTW, type LanguagePack, type LanguageCode } from './i18nConfig'
 
 export const detectSystemLanguage = (): LanguageCode => {
-  const preferredLang = localStorage.getItem('preferred_language')
-  if (preferredLang === 'zh-CN' || preferredLang === 'zh-TW') {
-    return preferredLang as LanguageCode
+  if (typeof localStorage !== 'undefined') {
+    const preferredLang = localStorage.getItem('preferred_language')
+    if (preferredLang === 'zh-CN' || preferredLang === 'zh-TW') {
+      return preferredLang as LanguageCode
+    }
   }
 
-  const systemLang = navigator.language || (navigator as any).userLanguage
+  if (typeof navigator !== 'undefined') {
+    const systemLang =
+      navigator.language || (navigator as unknown as { userLanguage?: string }).userLanguage
 
-  if (
-    systemLang &&
-    (systemLang.startsWith('zh-HK') ||
-      systemLang.startsWith('zh-MO') ||
-      systemLang.startsWith('zh-TW') ||
-      systemLang === 'zh-Hant')
-  ) {
-    return 'zh-TW'
+    if (
+      systemLang &&
+      (systemLang.startsWith('zh-HK') ||
+        systemLang.startsWith('zh-MO') ||
+        systemLang.startsWith('zh-TW') ||
+        systemLang === 'zh-Hant')
+    ) {
+      return 'zh-TW'
+    }
   }
+
   return 'zh-CN'
 }
 

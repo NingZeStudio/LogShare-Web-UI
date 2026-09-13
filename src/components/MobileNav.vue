@@ -16,7 +16,11 @@ const props = defineProps<{ scrolled?: boolean }>()
 
 const route = useRoute()
 const isOpen = ref(false)
-const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
+const currentLang = ref(
+  typeof localStorage !== 'undefined'
+    ? localStorage.getItem('preferred_language') || 'zh-CN'
+    : 'zh-CN'
+)
 const rootEl = ref<HTMLElement | null>(null)
 const menuEl = ref<HTMLElement | null>(null)
 

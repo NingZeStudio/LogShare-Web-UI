@@ -1,5 +1,5 @@
 import './assets/index.css'
-import { createApp } from 'vue'
+import { createSSRApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { initTelemetry } from './lib/telemetry'
@@ -7,11 +7,13 @@ import { initTelemetry } from './lib/telemetry'
 // 初始化客户端轻量遥测（Core Web Vitals、API 性能与错误自动上报）
 initTelemetry()
 
-const app = createApp(App)
+const app = createSSRApp(App)
 
 app.use(router)
 
-app.mount('#app')
+router.isReady().then(() => {
+  app.mount('#app')
+})
 
 // 警告：Service Worker 更新机制依赖 CustomEvent，修改时需测试 PWA 更新流程
 if ('serviceWorker' in navigator) {

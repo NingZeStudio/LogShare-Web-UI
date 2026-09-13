@@ -60,6 +60,13 @@ Vue 3 + TypeScript 5 + Vite 7 前端，Minecraft/Hytale 日志分享与分析平
 - 6 种主题色、2 种字体（Maple Mono / Fira Code，自托管 woff2），所有设置存 `localStorage`。
 - 字体文件：`font-display: swap`。
 
+## 渲染模式与架构（SSG 预渲染 + 动态 CSR 回退）
+
+- **混合渲染架构**：采用「静态展示页面 SSG 预渲染 + 高动态日志分析 CSR」混合模式。
+  - **SSG 预渲染页面**：`/`（首页）、`/api-docs`（文档）、`/sponsor`（赞助）、`/tutorials` 与教程文章、`/groups`（群列表）、`/terms`（服务协议）、`/privacy`（隐私政策）。构建期经由 `src/entry-server.ts` 与 `scripts/prerender.mjs` 预渲染为带完整 DOM 与元信息的静态 HTML 文件，实现 0 毫秒首屏加载与极佳 SEO。
+  - **CSR 动态渲染页面**：`/:id`（日志查看与即时分析）保留纯客户端渲染。EdgeOne 在无匹配静态文件时回退至 `dist/index.html`，由客户端 `createSSRApp` 与 Vue Router 激活水合并接管 Web Worker 染色与 SSE 流式 AI 分析。
+  - **构建链路**：`npm run build` 自动串联类型检查（`vue-tsc -b`）、客户端打包、SSR 打包（`dist-ssr/`）以及 `scripts/prerender.mjs` 静态预渲染注入，完成后自动清理 `dist-ssr/`，最终产物统一归入 `dist/`。
+
 ## 部署
 
 - 当前无 CI 配置。

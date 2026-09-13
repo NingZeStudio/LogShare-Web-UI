@@ -7,7 +7,11 @@ defineProps({
 })
 
 const showMenu = ref(false)
-const currentLang = ref(localStorage.getItem('preferred_language') || 'zh-CN')
+const currentLang = ref(
+  typeof localStorage !== 'undefined'
+    ? localStorage.getItem('preferred_language') || 'zh-CN'
+    : 'zh-CN'
+)
 
 const toggleMenu = () => {
   showMenu.value = !showMenu.value

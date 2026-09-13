@@ -83,14 +83,19 @@ function getFileTypeIcon(fileName: string): string {
  */
 function customBuildReportPlugin(): Plugin {
   let buildStartTime = 0
+  let isSsr = false
 
   return {
     name: 'custom-build-report',
     enforce: 'post',
+    configResolved(config) {
+      isSsr = Boolean(config.build.ssr)
+    },
     buildStart() {
       buildStartTime = Date.now()
     },
     closeBundle() {
+      if (isSsr) return
       const buildTimeSec = ((Date.now() - buildStartTime) / 1000).toFixed(2)
       const distDir = resolve(process.cwd(), 'dist')
 
