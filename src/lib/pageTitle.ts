@@ -27,6 +27,35 @@ export const getPageTitle = (
   return 'LogShare.CN'
 }
 
+export const updateShareMeta = (title: string, description?: string, image?: string) => {
+  if (typeof document === 'undefined') return
+
+  const setMeta = (attr: 'name' | 'property', key: string, content: string) => {
+    let el = document.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)
+    if (!el) {
+      el = document.createElement('meta')
+      el.setAttribute(attr, key)
+      document.head.appendChild(el)
+    }
+    el.content = content
+  }
+
+  // QQ Share
+  setMeta('name', 'qq:share:title', title)
+  if (description) setMeta('name', 'qq:share:description', description)
+  if (image) setMeta('name', 'qq:share:image', image)
+
+  // Open Graph
+  setMeta('property', 'og:title', title)
+  if (description) setMeta('property', 'og:description', description)
+  if (image) setMeta('property', 'og:image', image)
+
+  // Twitter
+  setMeta('name', 'twitter:title', title)
+  if (description) setMeta('name', 'twitter:description', description)
+  if (image) setMeta('name', 'twitter:image', image)
+}
+
 export const setPageTitle = (
   template: keyof typeof pageTitleTemplates | string,
   params?: { title?: string; id?: string }
@@ -35,6 +64,7 @@ export const setPageTitle = (
 
   if (typeof document !== 'undefined') {
     document.title = title
+    updateShareMeta(title)
   }
 
   return title

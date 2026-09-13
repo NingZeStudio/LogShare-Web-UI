@@ -22,6 +22,19 @@ export default [
   ...vue.configs['flat/recommended'],
   prettierConfig,
   {
+    files: ['scripts/**/*.{js,mjs,cjs}'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.node
+      }
+    },
+    rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }]
+    }
+  },
+  {
     files: ['**/*.{ts,tsx,js,jsx}'],
     plugins: {
       '@typescript-eslint': tseslint.plugin,

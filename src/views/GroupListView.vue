@@ -8,11 +8,11 @@ import {
 } from '@/data/groups'
 import AppButton from '@/components/ui/AppButton.vue'
 
-const sections: Array<{ title: string; groups: QqGroup[] }> = [
-  { title: '官方群', groups: officialGroups },
+const sections: Array<{ title: string; groups: QqGroup[]; isChannel?: boolean }> = [
+  { title: '各频道', groups: channelGroups, isChannel: true },
+  { title: '官方群与答疑群', groups: officialGroups },
   { title: '各启动器群', groups: launcherGroups },
-  { title: '玩家社区', groups: communityGroups },
-  { title: '频道', groups: channelGroups }
+  { title: '玩家社区', groups: communityGroups }
 ]
 </script>
 
@@ -39,8 +39,16 @@ const sections: Array<{ title: string; groups: QqGroup[] }> = [
               {{ group.description }}
             </div>
           </div>
-          <AppButton as="a" variant="soft" size="sm" :href="group.url" class="shrink-0">
-            加入群聊
+          <AppButton
+            as="a"
+            variant="soft"
+            size="sm"
+            :href="group.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="shrink-0"
+          >
+            {{ section.isChannel ? '进入频道' : '加入群聊' }}
           </AppButton>
         </div>
       </div>

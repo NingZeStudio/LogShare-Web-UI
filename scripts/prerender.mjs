@@ -51,6 +51,18 @@ async function prerender() {
 
       if (title) {
         rendered = rendered.replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
+        rendered = rendered.replace(
+          /<meta name="qq:share:title" content=".*?" \/>/,
+          `<meta name="qq:share:title" content="${title}" />`
+        )
+        rendered = rendered.replace(
+          /<meta property="og:title" content=".*?" \/>/,
+          `<meta property="og:title" content="${title}" />`
+        )
+        rendered = rendered.replace(
+          /<meta name="twitter:title" content=".*?" \/>/,
+          `<meta name="twitter:title" content="${title}" />`
+        )
       }
 
       let filePath = ''

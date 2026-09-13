@@ -316,9 +316,8 @@ class TelemetryClient {
     }
 
     const originalFetch = window.fetch
-    const self = this
 
-    window.fetch = async function (...args) {
+    window.fetch = async (...args) => {
       const start = performance.now()
       let status = 0
       let url = ''
@@ -344,7 +343,7 @@ class TelemetryClient {
       }
 
       try {
-        const response = await originalFetch.apply(this, args)
+        const response = await originalFetch.apply(window, args)
         status = response.status
         return response
       } catch (err) {
@@ -353,7 +352,7 @@ class TelemetryClient {
       } finally {
         const duration = performance.now() - start
         if (url) {
-          self.trackApi(url, method, duration, status)
+          this.trackApi(url, method, duration, status)
         }
       }
     }
