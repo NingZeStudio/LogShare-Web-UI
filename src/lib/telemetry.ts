@@ -78,42 +78,36 @@ class TelemetryClient {
   }
 
   public init(config?: TelemetryConfig): void {
-    if (this.initialized || typeof window === 'undefined') {
-      return
+    try {
+      if (this.initialized || typeof window === 'undefined') {
+        return
+      }
+
+      if (config) {
+        if (config.endpointUrl) this.endpointUrl = config.endpointUrl
+        if (typeof config.batchSize === 'number') this.batchSize = Math.max(1, config.batchSize)
+        if (typeof config.flushIntervalMs === 'number') this.flushIntervalMs = Math.max(500, config.flushIntervalMs)
+        if (typeof config.sampleRate === 'number') this.sampleRate = Math.min(1, Math.max(0, config.sampleRate))
+        if (typeof config.errorSampleRate === 'number') this.errorSampleRate = Math.min(1, Math.max(0, config.errorSampleRate))
+        if (typeof config.enabled === 'boolean') this.enabled = config.enabled
+      }
+
+      if (!this.enabled) {
+        return
+      }
+
+      this.initialized = true
+
+      // 各监控子系统独立隔离防护，确保任何环境兼容性问题绝不影响主应用
+      try { this.collectWebVitals() } catch {}
+      try { this.interceptFetch() } catch {}
+      try { this.interceptXhr() } catch {}
+      try { this.listenErrors() } catch {}
+      try { this.startFlushTimer() } catch {}
+      try { this.bindUnloadEvents() } catch {}
+    } catch {
+      // 容错防崩：绝对不抛出任何异常影响宿主应用渲染
     }
-
-    if (config) {
-      if (config.endpointUrl) this.endpointUrl = config.endpointUrl
-      if (typeof config.batchSize === 'number') this.batchSize = Math.max(1, config.batchSize)
-      if (typeof config.flushIntervalMs === 'number') this.flushIntervalMs = Math.max(500, config.flushIntervalMs)
-      if (typeof config.sampleRate === 'number') this.sampleRate = Math.min(1, Math.max(0, config.sampleRate))
-      if (typeof config.errorSampleRate === 'number') this.errorSampleRate = Math.min(1, Math.max(0, config.errorSampleRate))
-      if (typeof config.enabled === 'boolean') this.enabled = config.enabled
-    }
-
-    if (!this.enabled) {
-      return
-    }
-
-    this.initialized = true
-
-    // 1. 采集 Core Web Vitals
-    this.collectWebVitals()
-
-    // 2. 劫持原生 fetch
-    this.interceptFetch()
-
-    // 3. 劫持原生 XMLHttpRequest（保障 Axios 等库发起的 API 请求 100% 捕获）
-    this.interceptXhr()
-
-    // 4. 监听全局脚本与 Promise 未捕获错误
-    this.listenErrors()
-
-    // 5. 定时调度批量上报
-    this.startFlushTimer()
-
-    // 6. 页面关闭/后台切出时固化指标并冲刷剩余队列
-    this.bindUnloadEvents()
   }
 
   /**
@@ -156,53 +150,67 @@ class TelemetryClient {
    * 单页路由切换时通知（固化当前页面指标并即时冲刷队列）
    */
   public trackPageView(_path?: string): void {
-    if (!this.enabled) return
-    this.commitPendingWebVitals()
-    this.flush()
+    try {
+      if (!this.enabled) return
+      this.commitPendingWebVitals()
+      this.flush()
+    } catch {
+      // 容错防崩
+    }
   }
 
   /**
    * 固化尚未推入队列的 Web Vitals（如 LCP、CLS）
    */
   public commitPendingWebVitals(): void {
-    if (this.pendingLcp) {
-      this.push(this.pendingLcp)
-      this.pendingLcp = null
-    }
-    if (this.pendingCls) {
-      this.push(this.pendingCls)
-      this.pendingCls = null
+    try {
+      if (this.pendingLcp) {
+        this.push(this.pendingLcp)
+        this.pendingLcp = null
+      }
+      if (this.pendingCls) {
+        this.push(this.pendingCls)
+        this.pendingCls = null
+      }
+    } catch {
+      // 容错防崩
     }
   }
 
   private push(item: TelemetryItem): void {
-    // 采样率过滤：默认 1.0（即 100% 全采样）
-    const rate = item.type === 'error' ? this.errorSampleRate : this.sampleRate
-    if (rate < 1.0 && Math.random() > rate) {
-      return
-    }
+    try {
+      if (!item || !this.enabled) return
 
-    this.queue.push(item)
+      // 采样率过滤：默认 1.0（即 100% 全采样）
+      const rate = item.type === 'error' ? this.errorSampleRate : this.sampleRate
+      if (rate < 1.0 && Math.random() > rate) {
+        return
+      }
 
-    // 超过 200 条时丢弃最旧数据，避免极端网络环境下内存堆积
-    if (this.queue.length > 200) {
-      this.queue.splice(0, this.queue.length - 200)
-    }
+      this.queue.push(item)
 
-    // 关键事件即时冲刷：未捕获异常、API 报错或慢请求立即上报
-    if (item.type === 'error') {
-      this.flush()
-      return
-    }
+      // 超过 200 条时丢弃最旧数据，避免极端网络环境下内存堆积
+      if (this.queue.length > 200) {
+        this.queue.splice(0, this.queue.length - 200)
+      }
 
-    if (item.type === 'api' && (item.status >= 400 || item.status === 0 || item.duration >= 1000)) {
-      this.flush()
-      return
-    }
+      // 关键事件即时冲刷：未捕获异常、API 报错或慢请求立即上报
+      if (item.type === 'error') {
+        this.flush()
+        return
+      }
 
-    // 缓冲队列达到 batchSize 时立即触发上报
-    if (this.queue.length >= this.batchSize) {
-      this.flush()
+      if (item.type === 'api' && (item.status >= 400 || item.status === 0 || item.duration >= 1000)) {
+        this.flush()
+        return
+      }
+
+      // 缓冲队列达到 batchSize 时立即触发上报
+      if (this.queue.length >= this.batchSize) {
+        this.flush()
+      }
+    } catch {
+      // 容错防崩
     }
   }
 
@@ -456,36 +464,47 @@ class TelemetryClient {
     const originalOpen = XMLHttpRequest.prototype.open
     const originalSend = XMLHttpRequest.prototype.send
 
-    XMLHttpRequest.prototype.open = function (this: any, method: string, url: string | URL, ...rest: any[]) {
+    XMLHttpRequest.prototype.open = function (this: any, ...args: any[]) {
       try {
+        const method = typeof args[0] === 'string' ? args[0].toUpperCase() : 'GET'
+        let url = ''
+        if (typeof args[1] === 'string') {
+          url = args[1]
+        } else if (args[1] && typeof args[1] === 'object' && 'href' in args[1]) {
+          url = String((args[1] as URL).href)
+        }
         this._lsTelemetry = {
-          method: (method || 'GET').toUpperCase(),
-          url: typeof url === 'string' ? url : url.href,
+          method,
+          url,
           startTime: 0,
         }
       } catch {
         // 容错防崩
       }
-      return originalOpen.apply(this, [method, url, ...rest] as any)
+      return (originalOpen as any).apply(this, args)
     }
 
     XMLHttpRequest.prototype.send = function (this: any, ...args: any[]) {
-      if (this._lsTelemetry) {
-        this._lsTelemetry.startTime = performance.now()
-        this.addEventListener('loadend', () => {
-          try {
-            if (!this._lsTelemetry || !this._lsTelemetry.startTime) return
-            const duration = performance.now() - this._lsTelemetry.startTime
-            const url = this._lsTelemetry.url
-            const method = this._lsTelemetry.method
-            const status = typeof this.status === 'number' ? this.status : 0
-            if (url) {
-              client.trackApi(url, method, duration, status)
+      try {
+        if (this._lsTelemetry) {
+          this._lsTelemetry.startTime = performance.now()
+          this.addEventListener('loadend', () => {
+            try {
+              if (!this._lsTelemetry || !this._lsTelemetry.startTime) return
+              const duration = performance.now() - this._lsTelemetry.startTime
+              const url = this._lsTelemetry.url
+              const method = this._lsTelemetry.method
+              const status = typeof this.status === 'number' ? this.status : 0
+              if (url) {
+                client.trackApi(url, method, duration, status)
+              }
+            } catch {
+              // 容错防崩
             }
-          } catch {
-            // 容错防崩
-          }
-        }, { once: true })
+          }, { once: true })
+        }
+      } catch {
+        // 容错防崩
       }
       return (originalSend as any).apply(this, args)
     }

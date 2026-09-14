@@ -82,7 +82,7 @@ const endpoints = [
         name: 'source',
         type: 'string',
         required: false,
-        desc: '来源标识（最长 64 字符），建议填写启动器名/版本（如 fcl/1.2.0）。知识库按启动器生态组织了问题案例（FCL/ZL2/PGW/Amethyst/MobileGlues），该字段用于让 AI 分析优先匹配对应来源'
+        desc: '来源标识（最长 64 字符）。接入规范要求上传时注明来源标识，格式如 pojav-glow-worm/3.4.0、fcl/1.2.0、zl2/2.1.0。知识库按各启动器生态收录了特有问题案例，注明来源可大幅提升 AI 分析精准度'
       }
     ],
     response: {
@@ -897,6 +897,62 @@ curl https://api.logshare.cn/v1/insights/sAbCdEf     # Codex 结构化分析
 
 # 3. AI 深度分析（SSE 流式，读超时建议 ≥300s）
 curl -N https://api.logshare.cn/v1/ai/sAbCdEf` }}</code></pre>
+        </div>
+      </section>
+
+      <!-- 客户端接入规范 -->
+      <section class="space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold">
+          <Shield weight="duotone" class="h-5 w-5 text-primary" />
+          客户端接入规范（推荐）
+        </h2>
+        <p class="text-sm text-muted-foreground">
+          为保证 AI 诊断模型与技术支持社区能够完整还原异常现场，启动器及第三方客户端接入时建议遵循以下规范：
+        </p>
+
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="p-4 rounded-lg border border-border bg-card space-y-2">
+            <div class="flex items-center gap-2 font-medium text-sm text-foreground">
+              <FileText weight="duotone" class="h-4 w-4 text-primary shrink-0" />
+              <span>多日志完整打包上传</span>
+            </div>
+            <p class="text-xs text-muted-foreground leading-relaxed">
+              游戏崩溃往往源于 JVM 参数、移动端渲染器驱动、动态链接库或设备环境。接入时尽可能同时上传<strong class="text-foreground">「游戏主日志（latest.log）+ 崩溃报告（crash-reports/*.txt）+ 启动器运行日志」</strong>。可通过 <code class="bg-muted px-1 rounded text-xs font-mono">files</code> 数组或 ZIP 压缩包一次性提交，服务端会自动保留内部相对路径并在前端展示多文件视图。
+            </p>
+          </div>
+
+          <div class="p-4 rounded-lg border border-border bg-card space-y-2">
+            <div class="flex items-center gap-2 font-medium text-sm text-foreground">
+              <Package weight="duotone" class="h-4 w-4 text-primary shrink-0" />
+              <span>上传时务必注明来源标识（source）</span>
+            </div>
+            <p class="text-xs text-muted-foreground leading-relaxed">
+              上传请求体中请务必附带 <code class="bg-muted px-1 rounded text-xs font-mono">source</code> 参数，推荐格式为 <code class="bg-muted px-1 rounded text-xs font-mono">启动器名称/版本号</code>（如 <code class="text-primary font-mono">pojav-glow-worm/3.4.0</code>、<code class="text-primary font-mono">fcl/1.2.0</code>、<code class="text-primary font-mono">zl2/2.1.0</code> 等）。知识库收录了各启动器生态的专属案例，注明来源有助于 AI 诊断引擎优先匹配对应环境的精准解决方案。
+            </p>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-border overflow-hidden">
+          <div class="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center justify-between">
+            <span>标准多文件与注明来源上报 Payload 示例</span>
+            <span class="font-mono text-[10px] text-muted-foreground">JSON</span>
+          </div>
+          <pre
+            class="max-w-full bg-slate-950 text-slate-50 p-4 text-xs overflow-x-auto whitespace-pre leading-relaxed font-mono"
+          ><code>{{ `{
+  "source": "pojav-glow-worm/3.4.0",
+  "content": "[00:00:01] [main/INFO]: Minecraft client started...",
+  "files": [
+    {
+      "name": "crash-reports/crash-2026-09-14.txt",
+      "content": "---- Minecraft Crash Report ----\n// Who set us up the TNT?\nTime: 2026-09-14..."
+    },
+    {
+      "name": "launcher.log",
+      "content": "[Launcher] Selected renderer: Turnip Vulkan 24.1.0\n[Launcher] Process exited with exit code 1"
+    }
+  ]
+}` }}</code></pre>
         </div>
       </section>
 

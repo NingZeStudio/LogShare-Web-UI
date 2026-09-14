@@ -90,5 +90,21 @@ export const integratedLaunchers: LauncherItem[] = [
     tags: ['鸿蒙原生', 'ArkTS', '技术首创'],
     featured: true,
     logo: new URL('@/assets/img/launchers/amcl.png', import.meta.url).href
+  },
+  {
+    id: 'pojav-glow-worm',
+    name: 'Pojav Glow·Worm',
+    shortName: 'PGW',
+    slogan: '基于 Pojav 的高性能魔改 Android Minecraft 启动器',
+    description:
+      '基于 PojavLauncher 深度定制优化的移动端启动器，增加更多渲染后端与实验性性能配置，原生支持崩溃异常与游戏日志一键提交排查。',
+    platform: ['Android'],
+    website: 'https://github.com/Vera-Firefly/Pojav-Glow-Worm',
+    github: 'https://github.com/Vera-Firefly/Pojav-Glow-Worm',
+    integration: '原生集成 LogShare API，客户端游戏闪退或报错时可一键上传并生成诊断分享链接。',
+    tags: ['Android', '魔改定制', '多渲染器', '日志集成'],
+    featured: true,
+    logo: new URL('@/assets/img/launchers/pojav-glow-worm.png', import.meta.url).href
   }
 ]
+
