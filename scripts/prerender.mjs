@@ -18,6 +18,7 @@ const routesToPrerender = [
   '/tutorials/ask-questions-effectively',
   '/tutorials/basic-concepts',
   '/groups',
+  '/launchers',
   '/terms',
   '/terms-of-service',
   '/privacy',

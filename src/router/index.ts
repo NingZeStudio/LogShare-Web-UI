@@ -45,6 +45,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { title: 'groups' }
   },
   {
+    path: '/launchers',
+    name: 'launchers',
+    component: () => import('../views/LaunchersView.vue'),
+    meta: { title: 'launchers' }
+  },
+  {
     path: '/terms',
     alias: '/terms-of-service',
     name: 'terms',

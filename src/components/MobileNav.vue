@@ -6,6 +6,7 @@ import {
   PhBookOpen as BookOpen,
   PhFileText as FileText,
   PhUsers as Users,
+  PhRocketLaunch as Rocket,
   PhGlobe as Languages,
   PhGithubLogo as Github
 } from '@phosphor-icons/vue'
@@ -49,6 +50,7 @@ const switchLanguage = (lang: 'zh-CN' | 'zh-TW') => {
 
 const navLinks = [
   { name: () => t('group_list'), path: '/groups', icon: Users },
+  { name: () => t('launchers'), path: '/launchers', icon: Rocket },
   { name: () => t('sponsor'), path: '/sponsor', icon: Heart },
   { name: () => t('tutorials'), path: '/tutorials', icon: BookOpen },
   { name: () => t('api_docs'), path: '/api-docs', icon: FileText }
