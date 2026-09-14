@@ -83,7 +83,15 @@ const getPlatformIcon = (platforms: string[]) => {
           <div class="space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex items-center gap-3">
+                <img
+                  v-if="launcher.logo"
+                  :src="launcher.logo"
+                  :alt="launcher.name"
+                  class="h-10 w-10 rounded-xl object-contain border border-border/80 shadow-soft bg-background shrink-0 p-0.5"
+                  loading="lazy"
+                />
                 <div
+                  v-else
                   class="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold font-mono text-sm shrink-0"
                 >
                   <component
