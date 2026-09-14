@@ -2,7 +2,8 @@
  * LogShare 前端轻量遥测 SDK。
  *
  * 采集 Core Web Vitals（FCP、LCP、CLS、TTFB、INP）、
- * API 请求性能（时延、状态码）与前端运行时异常，自动防抖批量上报。
+ * API 请求性能（时延、状态码、全量拦截 fetch 与 XMLHttpRequest / Axios）、
+ * 运行时异常与脚本错误，支持采样率配置（默认 100% 全量采集）与敏捷批量上报。
  */
 
 export type TelemetryType = 'api' | 'web_vitals' | 'error'
@@ -37,10 +38,14 @@ export type TelemetryItem = ApiMetricItem | WebVitalItem | ErrorMetricItem
 export interface TelemetryConfig {
   /** 上报目标完整 URL 或相对路径，默认为 /v1/telemetry/report */
   endpointUrl?: string
-  /** 批量上报缓冲容量，满此阈值立即触发上报（默认 10） */
+  /** 批量上报缓冲容量，满此阈值立即触发上报（默认 2） */
   batchSize?: number
-  /** 定时冲刷间隔毫秒数（默认 5000） */
+  /** 定时冲刷间隔毫秒数（默认 2000） */
   flushIntervalMs?: number
+  /** 全局性能与 API 指标采样率（0.0 ~ 1.0），默认 1.0（即 100% 全量采样） */
+  sampleRate?: number
+  /** 运行时异常与错误采样率（0.0 ~ 1.0），默认 1.0（即 100% 全量采集） */
+  errorSampleRate?: number
   /** 是否启用遥测（默认 true） */
   enabled?: boolean
 }
@@ -48,16 +53,27 @@ export interface TelemetryConfig {
 class TelemetryClient {
   private queue: TelemetryItem[] = []
   private endpointUrl: string = import.meta.env.DEV ? '/v1/telemetry/report' : 'https://api.logshare.cn/v1/telemetry/report'
-  private batchSize: number = 10
-  private flushIntervalMs: number = 5000
+  private batchSize: number = 2
+  private flushIntervalMs: number = 2000
+  private sampleRate: number = 1.0
+  private errorSampleRate: number = 1.0
   private enabled: boolean = true
   private timer: number | null = null
+  private lcpDebounceTimer: number | null = null
   private initialized: boolean = false
+
+  // 待提交的 Web Vitals 临时暂存（确保 LCP/CLS 在稳定或页面卸载前可靠入队）
+  private pendingLcp: WebVitalItem | null = null
+  private pendingCls: WebVitalItem | null = null
 
   public destroy(): void {
     if (this.timer !== null && typeof window !== 'undefined') {
       window.clearInterval(this.timer)
       this.timer = null
+    }
+    if (this.lcpDebounceTimer !== null && typeof window !== 'undefined') {
+      window.clearTimeout(this.lcpDebounceTimer)
+      this.lcpDebounceTimer = null
     }
   }
 
@@ -68,8 +84,10 @@ class TelemetryClient {
 
     if (config) {
       if (config.endpointUrl) this.endpointUrl = config.endpointUrl
-      if (typeof config.batchSize === 'number') this.batchSize = config.batchSize
-      if (typeof config.flushIntervalMs === 'number') this.flushIntervalMs = config.flushIntervalMs
+      if (typeof config.batchSize === 'number') this.batchSize = Math.max(1, config.batchSize)
+      if (typeof config.flushIntervalMs === 'number') this.flushIntervalMs = Math.max(500, config.flushIntervalMs)
+      if (typeof config.sampleRate === 'number') this.sampleRate = Math.min(1, Math.max(0, config.sampleRate))
+      if (typeof config.errorSampleRate === 'number') this.errorSampleRate = Math.min(1, Math.max(0, config.errorSampleRate))
       if (typeof config.enabled === 'boolean') this.enabled = config.enabled
     }
 
@@ -85,24 +103,27 @@ class TelemetryClient {
     // 2. 劫持原生 fetch
     this.interceptFetch()
 
-    // 3. 监听全局脚本与 Promise 未捕获错误
+    // 3. 劫持原生 XMLHttpRequest（保障 Axios 等库发起的 API 请求 100% 捕获）
+    this.interceptXhr()
+
+    // 4. 监听全局脚本与 Promise 未捕获错误
     this.listenErrors()
 
-    // 4. 定时调度批量上报
+    // 5. 定时调度批量上报
     this.startFlushTimer()
 
-    // 5. 页面关闭/后台切出时使用 sendBeacon 冲刷剩余队列
+    // 6. 页面关闭/后台切出时固化指标并冲刷剩余队列
     this.bindUnloadEvents()
   }
 
   /**
-   * 手动记录 API 性能指标（供 axios 拦截器等使用）
+   * 手动记录 API 性能指标（供 axios 拦截器或特定端点使用）
    */
   public trackApi(endpoint: string, method: string, durationMs: number, status: number): void {
     if (!this.enabled) return
 
-    // 过滤上报端点自身，避免递归
-    if (endpoint.includes('/telemetry/report')) {
+    // 过滤上报端点自身与非 HTTP 请求，避免递归
+    if (endpoint.includes('/telemetry/report') || endpoint.startsWith('data:') || endpoint.startsWith('blob:')) {
       return
     }
 
@@ -131,45 +152,99 @@ class TelemetryClient {
     })
   }
 
-  private push(item: TelemetryItem): void {
-    this.queue.push(item)
+  /**
+   * 单页路由切换时通知（固化当前页面指标并即时冲刷队列）
+   */
+  public trackPageView(_path?: string): void {
+    if (!this.enabled) return
+    this.commitPendingWebVitals()
+    this.flush()
+  }
 
-    // 超过 100 条时丢弃最旧数据，避免极端网络环境内存堆积
-    if (this.queue.length > 100) {
-      this.queue.splice(0, this.queue.length - 100)
+  /**
+   * 固化尚未推入队列的 Web Vitals（如 LCP、CLS）
+   */
+  public commitPendingWebVitals(): void {
+    if (this.pendingLcp) {
+      this.push(this.pendingLcp)
+      this.pendingLcp = null
+    }
+    if (this.pendingCls) {
+      this.push(this.pendingCls)
+      this.pendingCls = null
+    }
+  }
+
+  private push(item: TelemetryItem): void {
+    // 采样率过滤：默认 1.0（即 100% 全采样）
+    const rate = item.type === 'error' ? this.errorSampleRate : this.sampleRate
+    if (rate < 1.0 && Math.random() > rate) {
+      return
     }
 
+    this.queue.push(item)
+
+    // 超过 200 条时丢弃最旧数据，避免极端网络环境下内存堆积
+    if (this.queue.length > 200) {
+      this.queue.splice(0, this.queue.length - 200)
+    }
+
+    // 关键事件即时冲刷：未捕获异常、API 报错或慢请求立即上报
+    if (item.type === 'error') {
+      this.flush()
+      return
+    }
+
+    if (item.type === 'api' && (item.status >= 400 || item.status === 0 || item.duration >= 1000)) {
+      this.flush()
+      return
+    }
+
+    // 缓冲队列达到 batchSize 时立即触发上报
     if (this.queue.length >= this.batchSize) {
       this.flush()
     }
   }
 
   public flush(): void {
-    if (this.queue.length === 0 || !this.enabled) {
+    if (this.queue.length === 0 || !this.enabled || typeof window === 'undefined') {
       return
     }
 
     const payload = this.queue.splice(0, 50)
     const body = JSON.stringify({ items: payload })
 
+    // 优先使用带有 keepalive 的原生 fetch：
+    // 标准现代规范，在页面活跃时具备完整 CORS 协商与调试支持，在页面卸载/切后台时亦能可靠在后台发送完成
+    try {
+      if (typeof window.fetch === 'function') {
+        window.fetch(this.endpointUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          keepalive: true,
+        }).catch(() => {
+          // fetch 失败时降级尝试 sendBeacon 补发
+          this.fallbackBeacon(body)
+        })
+        return
+      }
+    } catch {
+      // 容错降级
+    }
+
+    this.fallbackBeacon(body)
+  }
+
+  private fallbackBeacon(body: string): void {
     try {
       if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-        const blob = new Blob([body], { type: 'application/json' })
-        const sent = navigator.sendBeacon(this.endpointUrl, blob)
-        if (sent) return
+        // 使用 text/plain Blob 规避跨域 CORS preflight OPTIONS 失败被浏览器拦截的问题
+        const blob = new Blob([body], { type: 'text/plain;charset=UTF-8' })
+        navigator.sendBeacon(this.endpointUrl, blob)
       }
-
-      // 回退使用原生 fetch
-      window.fetch(this.endpointUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-        keepalive: true,
-      }).catch(() => {
-        // 静默丢弃失败，不影响前端主线程
-      })
     } catch {
-      // 容错防崩
+      // 静默丢弃失败，避免影响前端主线程
     }
   }
 
@@ -181,16 +256,21 @@ class TelemetryClient {
   }
 
   private bindUnloadEvents(): void {
-    if (typeof document === 'undefined') return
+    if (typeof document === 'undefined' || typeof window === 'undefined') return
 
-    const onHidden = () => {
-      if (document.visibilityState === 'hidden') {
-        this.flush()
-      }
+    const handleUnloadOrHidden = () => {
+      this.commitPendingWebVitals()
+      this.flush()
     }
 
-    document.addEventListener('visibilitychange', onHidden)
-    window.addEventListener('pagehide', () => this.flush())
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        handleUnloadOrHidden()
+      }
+    })
+
+    window.addEventListener('pagehide', handleUnloadOrHidden)
+    window.addEventListener('beforeunload', handleUnloadOrHidden)
   }
 
   private collectWebVitals(): void {
@@ -246,34 +326,49 @@ class TelemetryClient {
     // 3. LCP (Largest Contentful Paint)
     try {
       let lcpValue = 0
+      const commitLcp = () => {
+        if (lcpValue > 0) {
+          const rating = lcpValue < 2500 ? 'good' : lcpValue < 4000 ? 'needs-improvement' : 'poor'
+          this.pendingLcp = {
+            type: 'web_vitals',
+            name: 'LCP',
+            value: lcpValue,
+            rating,
+            timestamp: Math.floor(Date.now() / 1000),
+          }
+          this.commitPendingWebVitals()
+          lcpValue = 0
+        }
+      }
+
       const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries()
         if (entries.length > 0) {
           const lastEntry = entries[entries.length - 1]
           if (lastEntry) {
             lcpValue = Math.round(lastEntry.startTime)
+            // 防抖 2000ms：当首屏主要渲染完成后主动固化 LCP，无需苦等页面卸载
+            if (this.lcpDebounceTimer !== null) {
+              window.clearTimeout(this.lcpDebounceTimer)
+            }
+            this.lcpDebounceTimer = window.setTimeout(() => {
+              commitLcp()
+            }, 2000) as unknown as number
           }
         }
       })
       lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true })
 
-      // 页面隐藏时固化最终 LCP
-      const commitLcp = () => {
-        if (lcpValue > 0) {
-          const rating = lcpValue < 2500 ? 'good' : lcpValue < 4000 ? 'needs-improvement' : 'poor'
-          this.push({
-            type: 'web_vitals',
-            name: 'LCP',
-            value: lcpValue,
-            rating,
-            timestamp: Math.floor(Date.now() / 1000),
-          })
-          lcpValue = 0
-        }
+      // 用户首次交互（点击或按键）标志着首屏内容加载结束，立即固化 LCP
+      const onFirstInteraction = () => {
+        commitLcp()
+        window.removeEventListener('pointerdown', onFirstInteraction)
+        window.removeEventListener('keydown', onFirstInteraction)
+        window.removeEventListener('scroll', onFirstInteraction)
       }
-      window.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') commitLcp()
-      }, { once: true })
+      window.addEventListener('pointerdown', onFirstInteraction, { once: true, passive: true })
+      window.addEventListener('keydown', onFirstInteraction, { once: true, passive: true })
+      window.addEventListener('scroll', onFirstInteraction, { once: true, passive: true })
     } catch {
       // 忽略
     }
@@ -286,25 +381,19 @@ class TelemetryClient {
           const shift = entry as PerformanceEntry & { hadRecentInput?: boolean; value?: number }
           if (!shift.hadRecentInput && typeof shift.value === 'number') {
             clsValue += shift.value
+            const val = Math.round(clsValue * 1000) / 1000
+            const rating = val < 0.1 ? 'good' : val < 0.25 ? 'needs-improvement' : 'poor'
+            this.pendingCls = {
+              type: 'web_vitals',
+              name: 'CLS',
+              value: val,
+              rating,
+              timestamp: Math.floor(Date.now() / 1000),
+            }
           }
         }
       })
       clsObserver.observe({ type: 'layout-shift', buffered: true })
-
-      const commitCls = () => {
-        const val = Math.round(clsValue * 1000) / 1000
-        const rating = val < 0.1 ? 'good' : val < 0.25 ? 'needs-improvement' : 'poor'
-        this.push({
-          type: 'web_vitals',
-          name: 'CLS',
-          value: val,
-          rating,
-          timestamp: Math.floor(Date.now() / 1000),
-        })
-      }
-      window.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') commitCls()
-      }, { once: true })
     } catch {
       // 忽略
     }
@@ -355,6 +444,50 @@ class TelemetryClient {
           this.trackApi(url, method, duration, status)
         }
       }
+    }
+  }
+
+  private interceptXhr(): void {
+    if (typeof window === 'undefined' || typeof window.XMLHttpRequest !== 'function') {
+      return
+    }
+
+    const client = this
+    const originalOpen = XMLHttpRequest.prototype.open
+    const originalSend = XMLHttpRequest.prototype.send
+
+    XMLHttpRequest.prototype.open = function (this: any, method: string, url: string | URL, ...rest: any[]) {
+      try {
+        this._lsTelemetry = {
+          method: (method || 'GET').toUpperCase(),
+          url: typeof url === 'string' ? url : url.href,
+          startTime: 0,
+        }
+      } catch {
+        // 容错防崩
+      }
+      return originalOpen.apply(this, [method, url, ...rest] as any)
+    }
+
+    XMLHttpRequest.prototype.send = function (this: any, ...args: any[]) {
+      if (this._lsTelemetry) {
+        this._lsTelemetry.startTime = performance.now()
+        this.addEventListener('loadend', () => {
+          try {
+            if (!this._lsTelemetry || !this._lsTelemetry.startTime) return
+            const duration = performance.now() - this._lsTelemetry.startTime
+            const url = this._lsTelemetry.url
+            const method = this._lsTelemetry.method
+            const status = typeof this.status === 'number' ? this.status : 0
+            if (url) {
+              client.trackApi(url, method, duration, status)
+            }
+          } catch {
+            // 容错防崩
+          }
+        }, { once: true })
+      }
+      return (originalSend as any).apply(this, args)
     }
   }
 

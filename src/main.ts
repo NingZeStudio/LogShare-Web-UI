@@ -2,14 +2,18 @@ import './assets/index.css'
 import { createSSRApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import { initTelemetry } from './lib/telemetry'
+import { initTelemetry, telemetry } from './lib/telemetry'
 
-// 初始化客户端轻量遥测（Core Web Vitals、API 性能与错误自动上报）
+// 初始化客户端轻量遥测（Core Web Vitals、API 性能与错误自动上报，默认 100% 全采样）
 initTelemetry()
 
 const app = createSSRApp(App)
 
 app.use(router)
+
+router.afterEach((to) => {
+  telemetry.trackPageView(to.fullPath)
+})
 
 router.isReady().then(() => {
   app.mount('#app')
