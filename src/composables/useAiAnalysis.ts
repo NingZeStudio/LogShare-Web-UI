@@ -106,19 +106,144 @@ export function useAiAnalysis(logId: string) {
   })
 
   const getToolTitle = (name?: string) => {
-    if (name === 'rag_search') return '正在查阅知识库…'
+    if (name === 'rag_search') return '正在检索知识库…'
     if (name === 'list_topics') return '正在浏览知识库主题…'
-    if (name === 'list_log_files' || name === 'read_log_file') return '正在查看日志文件…'
+    if (name === 'list_log_files') return '正在列出日志文件…'
+    if (name === 'read_log_file') return '正在读取日志文件…'
     if (name === 'grep_log_file') return '正在检索日志内容…'
     if (name === 'web_search_exa') return '正在搜索网络资料…'
+    if (name === 'github_list_repos') return '正在获取关联仓库列表…'
+    if (name === 'github_search') return '正在检索 GitHub Issues / PRs…'
+    if (name === 'github_get_content') return '正在读取 GitHub 详情…'
     return `正在调用 ${name || '工具'}…`
   }
 
-  const getToolResultTitle = (name?: string, _summary?: string) => {
-    if (name === 'rag_search' || name === 'list_topics') return '知识库查阅完成'
-    if (name === 'list_log_files' || name === 'read_log_file') return '日志文件查看完成'
-    if (name === 'grep_log_file') return '日志检索完成'
-    if (name === 'web_search_exa') return '网络资料查阅完成'
+  const getToolResultTitle = (name?: string, summary?: string) => {
+    const text = summary?.trim() || ''
+
+    if (name === 'list_log_files') {
+      const matchNum = text.match(/(?:共|包含)\s*(\d+)\s*个文件/)
+      if (matchNum) {
+        return `列出 ${matchNum[1]} 个文件`
+      }
+      const bullets = (text.match(/^\s*-\s+/gm) || []).length
+      if (bullets > 0) {
+        return `列出 ${bullets} 个文件`
+      }
+      if (text.includes('未绑定日志') || text.includes('日志不存在')) {
+        return '未获取到日志文件'
+      }
+      return '列出 1 个文件'
+    }
+
+    if (name === 'github_list_repos') {
+      const matchNum = text.match(/共\s*(\d+)\s*个仓库/)
+      if (matchNum) {
+        return `列出 ${matchNum[1]} 个仓库`
+      }
+      const bullets = (text.match(/^\s*-\s+\*\*/gm) || text.match(/^\s*-\s+/gm) || []).length
+      if (bullets > 0) {
+        return `列出 ${bullets} 个仓库`
+      }
+      return '列出 0 个仓库'
+    }
+
+    if (name === 'rag_search') {
+      const matchHits = text.match(/共命中\s*(\d+)\s*条/) || text.match(/找到\s*(\d+)\s*条/)
+      if (matchHits) {
+        const count = Number(matchHits[1])
+        return count > 0 ? `搜索到 ${count} 个结果` : '未搜索到相关结果'
+      }
+      const itemHits = (text.match(/^\s*\[\d+\]/gm) || []).length
+      if (itemHits > 0) {
+        return `搜索到 ${itemHits} 个结果`
+      }
+      if (text.includes('未找到') || text.includes('无相关')) {
+        return '未搜索到相关结果'
+      }
+      return '知识库搜索完成'
+    }
+
+    if (name === 'grep_log_file') {
+      const matchGrep = text.match(/共找到\s*(\d+)\s*处匹配/) || text.match(/(\d+)\s*处匹配/)
+      if (matchGrep) {
+        const count = Number(matchGrep[1])
+        return count > 0 ? `检索到 ${count} 段日志内容` : '未检索到匹配的日志内容'
+      }
+      const markCount = (text.match(/^\s*>\s*\d+\s*\|/gm) || []).length
+      if (markCount > 0) {
+        return `检索到 ${markCount} 段日志内容`
+      }
+      if (text.includes('未找到') || text.includes('未检索到')) {
+        return '未检索到匹配的日志内容'
+      }
+      return '日志检索完成'
+    }
+
+    if (name === 'github_search') {
+      const issues = (text.match(/\[Issue\s*#\d+/gi) || []).length
+      const prs = (text.match(/\[PR\s*#\d+/gi) || []).length
+      const discussions = (text.match(/\[Discussion\s*#\d+/gi) || []).length
+      const parts: string[] = []
+      if (issues > 0) parts.push(`${issues} 个 Issue`)
+      if (prs > 0) parts.push(`${prs} 个 PR`)
+      if (discussions > 0) parts.push(`${discussions} 个 Discussion`)
+
+      if (parts.length > 0) {
+        return `搜索到 ${parts.join('、')}`
+      }
+
+      const matchTotal = text.match(/共\s*(\d+)\s*条/) || text.match(/找到\s*(\d+)\s*个匹配/)
+      if (matchTotal) {
+        const count = Number(matchTotal[1])
+        return count > 0 ? `搜索到 ${count} 个 Issue/PR` : '未搜索到相关 Issue/PR'
+      }
+      if (text.includes('未找到') || text.includes('0 条')) {
+        return '未搜索到相关 Issue/PR'
+      }
+      return 'GitHub 检索完成'
+    }
+
+    if (name === 'read_log_file') {
+      const mFile = text.match(/文件\s+([^\s（(]+)/)
+      const filename = mFile ? mFile[1] : 'main'
+      const mRange = text.match(/本次行区间=(\d+)-(\d+)/)
+      if (mRange) {
+        const lines = Number(mRange[2]) - Number(mRange[1]) + 1
+        return `读取了 ${filename}（${lines} 行）`
+      }
+      const mTotal = text.match(/共\s*(\d+)\s*行/)
+      if (mTotal) {
+        return `读取了 ${filename}（共 ${mTotal[1]} 行）`
+      }
+      return `读取了文件 ${filename}`
+    }
+
+    if (name === 'github_get_content') {
+      const m = text.match(/\[(Issue|PR|Discussion)\s*#(\d+)/i)
+      if (m) {
+        return `读取了 ${m[1]} #${m[2]} 详情`
+      }
+      return '读取 GitHub 详情完成'
+    }
+
+    if (name === 'list_topics') {
+      const matchTopics = text.match(/共收录\s*(\d+)\s*个主题/)
+      if (matchTopics) {
+        return `列出 ${matchTopics[1]} 个知识库主题`
+      }
+      const count = (text.match(/■/g) || []).length
+      if (count > 0) {
+        return `列出 ${count} 个知识库主题`
+      }
+      return '列出知识库主题完成'
+    }
+
+    if (name === 'web_search_exa') {
+      // 外部 MCP 除外：保持简洁概括
+      return '网络资料查阅完成'
+    }
+
     return `${name || '工具'}执行完成`
   }
 

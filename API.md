@@ -37,6 +37,25 @@ curl -N https://api.logshare.cn/v1/ai/sAbCdEf
 
 ---
 
+## 客户端接入规范
+
+为确保 AI 诊断引擎与技术支持社区能够全面洞察异常根因，启动器或客户端接入时应遵循以下规范：
+
+1. **尽可能完整上传「游戏主日志 + 崩溃报告 + 启动器日志」**：
+   - 游戏闪退或报错往往源于 Java 虚拟机配置、移动端渲染器组件（如 Zink / Turnip / Holy GL4ES）、本地原生动态库或启动参数异常，单传游戏日志易产生诊断盲区。
+   - 接入时**尽可能同时上传三类关键内容**：
+     - **游戏主日志**（如 `latest.log`）；
+     - **崩溃报告**（如 `crash-reports/crash-*.txt`）；
+     - **启动器运行日志**（如 `launcher.log`、控制台输出或错误堆栈）。
+   - 建议通过 `files` 数组或 ZIP 压缩包一次性提交，服务端会自动保留相对路径并构建完整的多文件预览面板。
+2. **上传时务必注明来源标识（`source` 字段）**：
+   - 上传请求体中须尽量携带 `source` 参数，推荐格式为 `启动器标识/版本号`（例如 `pojav-glow-worm/3.4.0`、`fcl/1.2.0`、`zl2/2.1.0`、`amcl/1.0.0` 等）。
+   - LogShare 针对不同启动器生态组织了专有案例知识库，注明来源标识有助于 AI 分析精准匹配针对性解决方案。
+3. **保留删除凭证与分享直达**：
+   - 上传成功后持久化保存返回的 `token`，并在客户端界面提供分享链接（`url`）的一键复制或外跳功能。
+
+---
+
 ## 日志管理
 
 ### 上传日志
@@ -78,6 +97,7 @@ POST /v1/log
 - 展开后每个文件独立经过脱敏过滤链
 - 上限：文件数 ≤ 200，解压后累计 ≤ 12MB（`storage.uploadFiles`）
 - ZIP 条目名会做路径遍历防护（拒绝 `../`、绝对路径）
+- **极速解耦与异步事件流**：上传时系统仅执行轻量级 Codex 特征探测并即刻持久化入库，毫秒级直接响应结果；随后派发 `log.uploaded` 事件，由后台常驻队列 Worker 异步执行内容敏感规则审核与 SpinYarn 堆栈反混淆。若异步审核命中违规规则，该日志将被物理清除并自动封禁非私网来源 IP。
 
 **响应：**
 
@@ -274,9 +294,10 @@ LogAgent 模式（`ai.agent.enabled`）会输出额外的 `event: status` 事件
 | `event: status` | `{"type":"thinking","delta":"..."}` | 模型思维链（reasoning_content）逐段推送，供前端展示 |
 | `event: status` | `{"type":"tool","name":"web_search_exa","arguments":{...}}` | 即将调用某工具 |
 | `event: status` | `{"type":"tool_result","name":"web_search_exa","summary":"...","truncated":true}` | 工具返回摘要（完整结果进 LLM 上下文） |
-| `event: status` | `{"type":"limit","rounds":3}` | 达到工具循环上限 |
-| `data:`（原有） | `{"choices":[{"delta":{"content":"..."}}]}` | 正文增量 |
-| `event: done` | `{"status":"completed"}` | 流结束 |
+| `event: status` | `{"type":"limit","rounds":3}` | 达到工具循环上限（默认 50 轮） |
+| `data:`（原有） | `{"choices":[{"delta":{"content":"..."}}]}` | 正文增量（OpenAI 兼容格式） |
+| `event: error` | `{"error":"..."}` | 流异常终止（排队超时、队列故障或上游异常） |
+| `event: done` | `{"status":"completed"}` | 流正常结束 |
 
 **队列模式（`ai.queue.enabled`）：** 全部 AI 分析经 Redis Streams 微队列执行，端点本身只做 SSE 中继，事件协议不变（仅多首帧 `queued`）。三个行为差异：① 队列已满（深度达 `ai.queue.maxQueue`）时，在 SSE 开始前返回 `429` JSON（带 `Retry-After: 30`）；② 客户端断开不取消任务，分析继续跑完并写入结果缓存，后续请求（含缓存命中路径）直接取用；③ Redis 不可用时按 `ai.queue.failOpen` 回退请求内直连执行（默认回退），行为与队列关闭时一致。中继端最长等待 `ai.queue.waitTimeout` 秒，超时以 `event: error` 收尾。
 
@@ -563,6 +584,660 @@ GET /v1/errors/rate
 始终返回 HTTP 429，用于测试限速错误处理。
 
 ---
+
+## 管理后台接口（Admin API）
+
+所有管理后台端点均位于 `/{version}/admin/*`（推荐 `/v1/admin/*`），受 `admin.enabled` 开关保护（未启用时返回 404）。  
+请求必须在 Header 中携带管理员鉴权令牌：
+- `Authorization: Bearer <ADMIN_TOKEN>`
+- 或 `X-Admin-Token: <ADMIN_TOKEN>`
+
+若令牌缺失或不匹配，返回 401 Unauthorized。
+
+### 1. 日志列表查询
+
+```
+GET /v1/admin/logs
+```
+
+**Query 参数：**
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `page` | int | 1 | 当前页码（从 1 开始） |
+| `limit` | int | 20 | 每页条数（1–100） |
+| `source` | string | - | 按上传来源标识精准过滤（如 `fcl/1.2.0`） |
+| `since` | int | - | 按创建时间过滤（≥ since 秒级时间戳） |
+| `until` | int | - | 按创建时间过滤（≤ until 秒级时间戳） |
+| `keyword` | string | - | 模糊检索（支持日志完整 ID、原始 ID 或 source） |
+
+**响应示例：**
+
+```json
+{
+    "success": true,
+    "message": "Logs retrieved successfully",
+    "items": [
+        {
+            "id": "sAbCdEf",
+            "size": 40960,
+            "source": "fcl/1.2.0",
+            "created": 1726200000,
+            "filesCount": 2
+        }
+    ],
+    "total": 128,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 7
+}
+```
+
+### 2. 日志详情查看
+
+```
+GET /v1/admin/logs/{id}
+```
+
+免用户删除 Token 查看单条日志的完整数据与元数据。
+
+**响应示例：**
+
+```json
+{
+    "success": true,
+    "message": "Log details retrieved successfully",
+    "id": "sAbCdEf",
+    "size": 40960,
+    "lines": 1200,
+    "created": 1726200000,
+    "expires": 1726804800,
+    "source": "fcl/1.2.0",
+    "files": [
+        {"name": "crash-reports/crash.txt", "size": 1024}
+    ],
+    "metadata": [],
+    "content": "[12:34:56] [Server thread/INFO]: ..."
+}
+```
+
+### 3. 日志特权强制删除
+
+```
+DELETE /v1/admin/logs/{id}
+```
+
+管理员下架接口，**无需**普通用户的 deletion token。支持通过逗号分隔批量删除（如 `DELETE /v1/admin/logs/s123,s456`）。删除后主存储数据、附加文件及 Redis 缓存同步清除并写入墓碑标记。
+
+**响应示例：**
+
+```json
+{
+    "success": true,
+    "message": "Log deletion completed",
+    "deleted": ["sAbCdEf"],
+    "failed": [],
+    "total": 1,
+    "deletedCount": 1,
+    "failedCount": 0
+}
+```
+
+### 4. AI 分析队列监控
+
+```
+GET /v1/admin/system/queue
+```
+
+查看当前 AI 微队列运行状态与排队指标。
+
+**响应示例：**
+
+```json
+{
+    "success": true,
+    "message": "Queue status retrieved successfully",
+    "enabled": true,
+    "depth": 0,
+    "maxQueue": 50,
+    "maxConcurrent": 2,
+    "waitTimeout": 300,
+    "claimIdleMs": 120000,
+    "jobTtl": 600,
+    "failOpen": true
+}
+```
+
+### 5. 系统统计与状态
+
+```
+GET /v1/admin/system/stats
+```
+
+查看系统版本、PHP/Swoole 运行时、存储后端、总日志数及 RAG 索引时间戳。
+
+**响应示例：**
+
+```json
+{
+    "success": true,
+    "message": "System statistics retrieved successfully",
+    "version": "1.7.8",
+    "phpVersion": "8.4.4",
+    "swooleVersion": "6.2.0",
+    "storageBackend": "s",
+    "totalLogs": 2480,
+    "storageTime": 604800,
+    "aiEnabled": true,
+    "ragIndexUpdated": 1726200000
+}
+```
+
+### 6. 获取系统配置（已脱敏）
+
+```
+GET /v1/admin/config
+```
+
+获取全站当前的完整配置树。为防止敏感凭据泄露，`admin.token`、`storage.mariadb.password`、`cache.redis.password`、`ai.mcp.rag.authToken` 统一返回 `******`；`ai.apiKeys` 与 `ai.rag.providers[].apiKey` 统一返回首尾截断掩码（如 `sk-12****abcd`）。
+
+### 7. 更新系统配置（动态热生效）
+
+```
+PUT /v1/admin/config
+```
+
+更新业务配置并持久化至 `runtime/dynamic_config.json`。修改后立即更新内存单例，无需重启服务即可对新请求热生效。若传入已脱敏的密钥占位符，服务端会自动保留并还原原有的真实密钥，不覆盖。
+
+### 8. 重置系统配置
+
+```
+POST /v1/admin/config/reset
+```
+
+清空动态配置文件，重新载入基础配置与环境变量。
+
+### 9. AI 模型连通性测试
+
+```
+POST /v1/admin/config/test-ai
+```
+
+向指定或当前配置的 AI API 发送测试请求，探测模型响应与时延。
+
+**请求参数（JSON）：**
+- `baseUrl` (string, 可选): AI 端点地址，缺省使用当前配置
+- `model` (string, 可选): 模型名，缺省使用当前配置
+- `apiKey` (string, 可选): 密钥，若包含掩码或未传则使用当前有效密钥
+- `timeout` (int, 可选): 超时秒数，默认 15s
+- `headers` (object, 可选): 自定义 HTTP 请求头键值对（如 `{"HTTP-Referer": "https://logshare.cn", "X-Title": "LogShare"}`）
+
+### 10. RAG 向量供应商连通性测试
+
+```
+POST /v1/admin/config/test-rag-provider
+```
+
+向指定或当前配置的向量 Embedding 供应商发送测试向量化请求，探测网络与模型维度。
+
+**请求参数（JSON）：**
+- `baseUrl` (string, 必填): Embedding API 地址
+- `embeddingModel` (string, 必填): 向量模型 ID（如 `BAAI/bge-m3`）
+- `apiKey` (string, 可选): 密钥，支持掩码还原
+- `name` (string, 可选): 供应商代号
+
+### 11. 知识库指标与生态主题全景
+
+```
+GET /v1/admin/rag/stats
+```
+
+返回向量索引文件大小、最后更新时间、文档分块总数（Chunks）、已向量化数量（Embedded）、语义增强状态及生态主题分类（Forge/NeoForge/PaperMC/渲染器/崩溃库等）。
+
+### 12. 触发知识库重新构建
+
+```
+POST /v1/admin/rag/build
+```
+
+异步启动知识库构建任务。采用原子临时文件生成机制，构建过程中不阻塞线上正常检索。
+
+### 13. 获取知识库构建状态
+
+```
+GET /v1/admin/rag/build/status
+```
+
+轮询知识库构建进度与状态（`idle` / `building` / `success` / `failed`）及耗时统计。
+
+### 14. 知识库检索调试
+
+```
+POST /v1/admin/rag/search
+```
+
+在线测试知识库召回效果。
+
+**请求参数（JSON）：**
+- `query` (string, 必填): 检索关键词或报错文本
+- `limit` (int, 可选): 返回条数（1~20，默认 5）
+
+### 15. 知识库分类主题列表
+
+```
+GET /v1/admin/rag/topics
+```
+
+获取知识库所有合法注册分类目录、人工定性描述及文档总数统计。
+
+### 16. 知识库文档列表
+
+```
+GET /v1/admin/rag/docs
+```
+
+查询知识库物理文档列表。
+
+**查询参数（Query）：**
+- `topic` (string, 可选): 按分类过滤（如 `forge`, `zl_help` 等）
+- `keyword` (string, 可选): 按文件名或相对路径模糊搜索
+
+### 17. 获取知识库文档详情
+
+```
+GET /v1/admin/rag/docs/content?path={relativePath}
+```
+
+读取单个 Markdown/TXT/Log 文件的元信息与正文。
+
+### 18. 新建或保存知识库文档
+
+```
+POST /v1/admin/rag/docs/save
+```
+
+保存或修改文档，采用原子写入。
+
+**请求参数（JSON）：**
+- `topic` (string, 必填): 所属分类目录
+- `filename` (string, 必填): 文件名（如 `example.md`）
+- `content` (string, 必填): Markdown 正文文本
+- `isNew` (bool, 可选): 是否新建（若为 true 且目标文件已存在则报错）
+
+### 19. 上传知识库文档
+
+```
+POST /v1/admin/rag/docs/upload
+```
+
+上传 `.md`、`.txt`、`.log` 文件到指定分类，单个限制 ≤ 5MB。支持 `multipart/form-data`（字段：`file`、`topic`）与直接 JSON 载荷（字段：`topic`、`filename`、`content`）。
+
+### 20. 删除知识库文档
+
+```
+DELETE /v1/admin/rag/docs?path={relativePath}
+POST /v1/admin/rag/docs/delete
+```
+
+安全删除指定知识库文档，受路径遍历白名单保护。
+
+### 21. 客户端与生态来源分布统计
+
+```
+GET /v1/admin/analytics/sources?days=7
+```
+
+参数：
+- `days`: 查询天数（1-90，默认 7）
+
+响应：
+- `days`: 查询天数
+- `total`: 该时间段日志总数
+- `sources`: 来源生态列表（`source`, `count`, `percentage`）
+
+### 22. Minecraft 版本与加载器矩阵
+
+```
+GET /v1/admin/analytics/versions?days=30
+```
+
+参数：
+- `days`: 采样天数（1-90，默认 30）
+
+响应：
+- `versions`: MC 核心版本排行与占比
+- `loaders`: Mod/服务端加载器分布排行与占比
+
+### 23. 日志时序走势大盘
+
+```
+GET /v1/admin/analytics/trends?days=7
+```
+
+参数：
+- `days`: 统计天数（1-30，默认 7）
+
+响应：
+- `trends`: 按日走势列表（`date`, `count`, `bytes`）
+
+### 24. 存储健康度与底层资源诊断
+
+```
+GET /v1/admin/system/storage-health
+```
+
+返回 MariaDB 表数据与索引大小、文件系统磁盘剩余容量、Redis 内存占用与 Key 数量。
+
+### 25. 手动触发过期日志清理
+
+```
+POST /v1/admin/system/cleanup-expired
+```
+
+立即执行底层的 `CleanupExpired()`，返回回收条数与耗时。
+
+### 26. Redis 缓存按需清空
+
+```
+POST /v1/admin/system/cache/flush
+```
+
+请求体：
+- `prefix`: 缓存前缀（默认 `log:*`，支持 `ai:*` 或 `all`）
+
+### 27. 按条件批量下架日志
+
+```
+POST /v1/admin/logs/batch-delete
+```
+
+请求体：
+- `source`: 可选来源过滤
+- `since`: 可选起始时间戳
+- `until`: 可选结束时间戳
+- `keyword`: 可选关键词
+- `limit`: 单次上限（1-1000，默认 500）
+
+### 28. 封禁 IP 清单查询
+
+```
+GET /v1/admin/security/bans
+```
+
+返回当前所有处于封禁状态的 IP 地址、解封时间戳、剩余有效期与封禁原因（合并 Redis 活跃键与 OpenLiteWaf 本地持久化）。
+
+### 29. 手动封禁 IP
+
+```
+POST /v1/admin/security/ban
+```
+
+请求体：
+- `ip`: 目标 IPv4 或 IPv6 地址（必填）
+- `ttl`: 封禁时长（秒，默认 86400）
+- `reason`: 封禁原因备注（可选）
+
+### 30. 手动解除 IP 封禁
+
+```
+POST /v1/admin/security/unban
+```
+
+请求体：
+- `ip`: 目标 IP 地址（必填）
+
+### 31. 边缘防御概览与分类拦截统计
+
+```
+GET /v1/admin/security/overview
+```
+
+返回 OpenLiteWaf 拦截大盘数据，包括累计拦截次数、当前封禁 IP 总量、分类拦截计数（CC、SQL 注入、XSS、目录穿越、RCE/探针等）。
+
+### 32. 获取违规内容过滤规则
+
+```
+GET /v1/admin/security/content-rules
+```
+
+返回当前生效的违规内容过滤开关（`enabled`）、关键词黑名单（`keywords`）和正则表达式规则列表（`patterns`）。
+
+### 33. 更新违规内容过滤规则
+
+```
+PUT /v1/admin/security/content-rules
+```
+
+请求体：
+- `enabled`: 布尔值，是否启用内容过滤
+- `keywords`: 字符串数组，违规关键词列表
+- `patterns`: 字符串数组，违规正则列表
+
+### 34. AI 智能分析运营指标查询
+
+```
+GET /v1/admin/ai/metrics?days=7
+```
+
+参数：
+- `days`: 统计天数（1-30，默认 7）
+
+响应：
+- `summary`: 核心运营总览（总分析请求数、成功/失败数、成功率、平均耗时、P50/P90/P99 耗时、Token 输入/输出/总计预估、RAG 检索调用次数）
+- `trends`: 按日分析吞吐量与平均耗时走势
+- `topics`: 知识库 Top 命中 Topic 排行及占比
+- `durationDistribution`: 响应耗时分布区间统计（极速、正常、较长、深度推理）
+
+### 35. AI 微队列深层探查
+
+```
+GET /v1/admin/ai/queue/inspect?limit=20
+```
+
+返回队列暂停消费状态、当前排队深度、活跃消费者 Workers 状态与 pending 消息、在途待处理任务列表（等待时长、重试次数）以及死信任务记录。
+
+### 36. 暂停 AI 微队列消费
+
+```
+POST /v1/admin/ai/queue/pause
+```
+
+手动暂停消费者进程拉取新任务（适合上游 LLM 额度超标或突发故障时运维干预），任务仍可入队但暂缓消费。
+
+### 37. 恢复 AI 微队列消费
+
+```
+POST /v1/admin/ai/queue/resume
+```
+
+解除暂停标记，消费者协程立即恢复拉取积压任务。
+
+### 38. 一键安全排空积压队列
+
+```
+POST /v1/admin/ai/queue/flush
+```
+
+立即移除当前队列中积压待处理的任务，释放中继连接并从 Redis Stream 中 ACK 与删除。返回清理条数 `{"cleared": N}`。
+
+### 39. 清空死信任务列表
+
+```
+POST /v1/admin/ai/queue/dead/clear
+```
+
+清空所有被判定为死信的任务记录。
+
+### 40. 获取 SpinYarn 映射状态与本地映射库清单
+
+```
+GET /v1/admin/spinyarn/status
+```
+
+返回 SpinYarn PHP 扩展加载状态、版本、本地 `mappings/` 目录路径以及 Yarn 与 Vanilla 映射文件列表与大小统计。
+
+### 41. SpinYarn 在线反混淆测试探针
+
+```
+POST /v1/admin/spinyarn/test
+```
+
+测试混淆类名与方法的实时反混淆解析能力。
+
+**请求体（JSON）：**
+```json
+{
+    "content": "java.lang.NullPointerException\n\tat net.minecraft.class_310.method_1508",
+    "version": "1.20.1",
+    "mapping_type": "yarn"
+}
+```
+
+**响应示例：**
+```json
+{
+    "success": true,
+    "message": "SpinYarn deobfuscation test completed",
+    "data": {
+        "success": true,
+        "available": true,
+        "changed": true,
+        "version": "1.20.1",
+        "mappingType": "yarn",
+        "durationMs": 4,
+        "original": "...",
+        "deobfuscated": "..."
+    }
+}
+```
+
+### 42. 分页获取操作审计日志
+
+```
+GET /v1/admin/audit/logs?page=1&pageSize=20&action=log.delete&keyword=s123456
+```
+
+支持按动作代号（`action`）、关键词（`keyword`）与时间戳范围（`since`/`until`）筛选检索管理员高危运维操作记录（包含删除、封禁、解封、规则修改、队列控制等）。
+
+### 43. 清空操作审计日志
+
+```
+DELETE /v1/admin/audit/logs
+```
+
+清空 Redis 环形缓冲区及本地审计日志文件。返回清空条数 `{"cleared": N}`。
+
+### 44. 获取统一事件队列状态与监控指标
+
+```
+GET /v1/admin/event-queue/stats
+```
+
+查看统一日志异步事件队列（EventQueue）的流状态、当前注册的所有监听器列表、排队积压深度（Lag + Pending）、累计吞吐指标与死信条目数。
+
+**响应示例：**
+
+```json
+{
+    "success": true,
+    "message": "Event queue stats retrieved successfully",
+    "enabled": true,
+    "stream": "events:log:stream",
+    "group": "log-event-workers",
+    "maxAttempts": 3,
+    "backlog": 0,
+    "pending": 0,
+    "streamLength": 12,
+    "deadLetters": 0,
+    "counters": {
+        "dispatched": 1420,
+        "processed_success": 1419,
+        "processed_failed": 1
+    },
+    "registeredEvents": {
+        "log.uploaded": [
+            { "name": "security_audit", "priority": 100 },
+            { "name": "deobfuscate", "priority": 50 }
+        ],
+        "log.security_audit": [
+            { "name": "security_audit", "priority": 100 }
+        ],
+        "log.deobfuscate": [
+            { "name": "deobfuscate", "priority": 100 }
+        ]
+    }
+}
+```
+
+### 45. 分页获取死信任务列表
+
+```
+GET /v1/admin/event-queue/dead?limit=50
+```
+
+查看重试上限耗尽或遇到不可恢复异常的死信任务列表，包含原始事件、负载、重试次数及失败异常原因。
+
+**响应示例：**
+
+```json
+{
+    "success": true,
+    "message": "Dead letters retrieved successfully",
+    "total": 1,
+    "items": [
+        {
+            "streamId": "1726912345678-0",
+            "id": "evt_66edfe123456",
+            "event": "log.uploaded",
+            "payload": {
+                "logId": "sAbCdEf",
+                "clientIp": "198.51.100.2"
+            },
+            "attempts": 3,
+            "error": "Connection timed out after 3 retries",
+            "failedAt": 1726912345.678
+        }
+    ]
+}
+```
+
+### 46. 重放死信任务
+
+```
+POST /v1/admin/event-queue/dead/retry
+```
+
+将特定死信任务重置尝试次数后重新推入主事件流 `events:log:stream` 进行消费，并从死信流中清除。
+
+**请求参数（JSON）：**
+
+```json
+{
+    "streamId": "1726912345678-0"
+}
+```
+
+**响应示例：**
+
+```json
+{
+    "success": true,
+    "message": "Dead letter retried successfully",
+    "streamId": "1726912345678-0",
+    "retried": true
+}
+```
+
+### 47. 清空死信队列
+
+```
+DELETE /v1/admin/event-queue/dead
+```
+
+物理清空死信流 `events:log:dead`。返回 `{"cleared": true}`。
+
+---
+
 
 ## 通用响应格式
 

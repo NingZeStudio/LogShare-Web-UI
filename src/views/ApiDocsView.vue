@@ -37,7 +37,7 @@ const endpoints = [
     path: '/v1/log',
     title: t('paste_log'),
     description:
-      '提交新的日志数据进行分析，生成分享链接和分析结果。支持纯文本或 JSON 格式。系统默认全链路采用 Brotli（br）压缩：请求体默认推荐 Content-Encoding: br 压缩上传（向下兼容 gzip 与 deflate，服务端设 20MB 解压防护上限）；服务端出站响应全链路默认优先采用 Brotli 压缩返回。',
+      '提交新的日志数据进行分析，生成分享链接和分析结果。支持纯文本或 JSON 格式。接口采用极速异步处理模型：提交后仅做轻量脱敏与 Codex 分析，毫秒级响应 200 成功结果与删除凭证；耗时的 SpinYarn 原生反混淆与全文件敏感规则审核已完全解耦并转入统一异步事件队列（EventQueue）后台流水线调度。系统默认全链路采用 Brotli（br）压缩：请求体默认推荐 Content-Encoding: br 压缩上传（向下兼容 gzip 与 deflate，服务端设 20MB 解压防护上限）；服务端出站响应全链路默认优先采用 Brotli 压缩返回。',
     contentType: 'text/plain 或 application/json',
     headers: [
       {
