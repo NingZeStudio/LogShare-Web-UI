@@ -6,9 +6,11 @@ export interface AiStatusEntry {
   id: number
   type: AiStatusEvent['type']
   name?: string
+  arguments?: unknown
   delta?: string
   summary?: string
   position?: number
+  truncated?: boolean
 }
 
 export interface AiStatusBlock {
@@ -16,8 +18,114 @@ export interface AiStatusBlock {
   type: 'queued' | 'thinking' | 'tool' | 'limit'
   title: string
   detail: string
+  argumentsText?: string
   completed: boolean
   expanded: boolean
+  truncated?: boolean
+}
+
+export interface AiStructuredResult {
+  rootCause: string
+  confidence: number
+  evidence: string[]
+  steps: string[]
+  rawJson?: string
+}
+
+function formatToolArguments(args: unknown): string {
+  if (!args) return ''
+  if (typeof args === 'string') return args
+  if (typeof args === 'object') {
+    try {
+      const entries = Object.entries(args as Record<string, unknown>)
+      if (entries.length === 0) return ''
+      return entries
+        .map(([k, v]) => `${k}=${typeof v === 'string' ? `"${v}"` : JSON.stringify(v)}`)
+        .join(', ')
+    } catch {
+      return JSON.stringify(args)
+    }
+  }
+  return String(args)
+}
+
+export function parseStructuredResult(content: string): {
+  structured: AiStructuredResult | null
+  cleanContent: string
+} {
+  if (!content) {
+    return { structured: null, cleanContent: '' }
+  }
+
+  // 1. 首选匹配正文末尾或中的 ```json ... ``` 代码块
+  const jsonBlockRegex = /```(?:json)?\s*(\{[\s\S]*?"rootCause"[\s\S]*?\})\s*```/i
+  const blockMatch = content.match(jsonBlockRegex)
+  if (blockMatch && blockMatch[1]) {
+    try {
+      const parsed = JSON.parse(blockMatch[1])
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        typeof parsed.rootCause === 'string' &&
+        parsed.rootCause.trim() !== ''
+      ) {
+        const clean = content.replace(blockMatch[0], '').trimEnd()
+        return {
+          structured: {
+            rootCause: parsed.rootCause.trim(),
+            confidence:
+              typeof parsed.confidence === 'number'
+                ? Math.max(0, Math.min(1, parsed.confidence))
+                : 0.8,
+            evidence: Array.isArray(parsed.evidence)
+              ? parsed.evidence.map(String).filter(Boolean)
+              : [],
+            steps: Array.isArray(parsed.steps) ? parsed.steps.map(String).filter(Boolean) : [],
+            rawJson: blockMatch[1].trim()
+          },
+          cleanContent: clean
+        }
+      }
+    } catch {
+      // 格式容错继续
+    }
+  }
+
+  // 2. 次选：正文末尾未带代码块围栏的纯 JSON 对象
+  const rawJsonRegex = /(\{[\s\S]*?"rootCause"[\s\S]*?\})\s*$/i
+  const rawMatch = content.match(rawJsonRegex)
+  if (rawMatch && rawMatch[1]) {
+    try {
+      const parsed = JSON.parse(rawMatch[1])
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        typeof parsed.rootCause === 'string' &&
+        parsed.rootCause.trim() !== ''
+      ) {
+        const clean = content.slice(0, rawMatch.index).trimEnd()
+        return {
+          structured: {
+            rootCause: parsed.rootCause.trim(),
+            confidence:
+              typeof parsed.confidence === 'number'
+                ? Math.max(0, Math.min(1, parsed.confidence))
+                : 0.8,
+            evidence: Array.isArray(parsed.evidence)
+              ? parsed.evidence.map(String).filter(Boolean)
+              : [],
+            steps: Array.isArray(parsed.steps) ? parsed.steps.map(String).filter(Boolean) : [],
+            rawJson: rawMatch[1].trim()
+          },
+          cleanContent: clean
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return { structured: null, cleanContent: content }
 }
 
 export function useAiAnalysis(logId: string) {
@@ -70,6 +178,7 @@ export function useAiAnalysis(logId: string) {
           type: 'tool',
           title: getToolTitle(entry.name),
           detail: entry.name || '',
+          argumentsText: formatToolArguments(entry.arguments),
           completed: false,
           expanded: expandedStatusIds.value.has(entry.id)
         })
@@ -79,6 +188,7 @@ export function useAiAnalysis(logId: string) {
           previous.completed = true
           previous.title = getToolResultTitle(entry.name, entry.summary)
           previous.detail = entry.summary || previous.detail
+          previous.truncated = entry.truncated
         }
       } else if (entry.type === 'limit') {
         blocks.push({
@@ -97,7 +207,7 @@ export function useAiAnalysis(logId: string) {
       last.title = '已完成思考'
     }
     // 排队块在分析真正开始（出现后续步骤或正文）后标记完成
-    const queued = blocks.find((b) => b.type === 'queued')
+    const queued = blocks.find(b => b.type === 'queued')
     if (queued && !queued.completed && (blocks.length > 1 || aiText.value)) {
       queued.completed = true
       queued.title = t('ai_status_queued_done')
@@ -288,6 +398,22 @@ export function useAiAnalysis(logId: string) {
     }
   }
 
+  const showRawJson = ref(false)
+  const toggleRawJson = () => {
+    showRawJson.value = !showRawJson.value
+  }
+
+  const structuredAnalysis = computed(() => {
+    const raw = aiIsStreaming.value ? aiStreamingContent.value : aiText.value
+    return parseStructuredResult(raw)
+  })
+
+  const structuredResult = computed(() => structuredAnalysis.value.structured)
+  const hasStructuredResult = computed(() =>
+    Boolean(structuredResult.value && structuredResult.value.rootCause)
+  )
+  const displayMarkdown = computed(() => structuredAnalysis.value.cleanContent)
+
   const pushStatus = (entry: Omit<AiStatusEntry, 'id'>) => {
     aiStatusEntries.value.push({ id: ++statusId, ...entry })
   }
@@ -301,10 +427,15 @@ export function useAiAnalysis(logId: string) {
         if (status.delta) pushStatus({ type: 'thinking', delta: status.delta })
         break
       case 'tool':
-        pushStatus({ type: 'tool', name: status.name })
+        pushStatus({ type: 'tool', name: status.name, arguments: status.arguments })
         break
       case 'tool_result':
-        pushStatus({ type: 'tool_result', name: status.name, summary: status.summary })
+        pushStatus({
+          type: 'tool_result',
+          name: status.name,
+          summary: status.summary,
+          truncated: status.truncated
+        })
         break
       case 'limit':
         pushStatus({ type: 'limit' })
@@ -322,6 +453,7 @@ export function useAiAnalysis(logId: string) {
     aiText.value = ''
     aiStatusEntries.value = []
     expandedStatusIds.value = new Set()
+    showRawJson.value = false
 
     try {
       await apiClient.streamAiAnalysis(logId, {
@@ -399,6 +531,11 @@ export function useAiAnalysis(logId: string) {
     aiStatusBlocks,
     toggleStatusBlock,
     aiActivity,
+    structuredResult,
+    hasStructuredResult,
+    displayMarkdown,
+    showRawJson,
+    toggleRawJson,
     loadAiAnalysis,
     openAiPanel,
     closeAiPanel

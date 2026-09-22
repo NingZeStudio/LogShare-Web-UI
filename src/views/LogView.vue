@@ -25,7 +25,10 @@ import {
   PhTrash as Trash2,
   PhArrowsClockwise as RefreshCw,
   PhCircleNotch as Loader2,
-  PhX as X
+  PhX as X,
+  PhTarget as Target,
+  PhListChecks as ListChecks,
+  PhLinkSimple as LinkSimple
 } from '@phosphor-icons/vue'
 
 declare global {
@@ -683,9 +686,28 @@ const onFileChange = async () => {
               </button>
               <div
                 v-show="block.expanded"
-                class="mt-1 ml-4 rounded-md bg-background/60 px-3 py-2 text-xs text-muted-foreground whitespace-pre-wrap break-words"
+                class="mt-1.5 ml-4 rounded-md bg-background/70 border border-border/40 p-2.5 text-xs text-muted-foreground space-y-1.5 break-words"
               >
-                {{ block.detail || '暂无详细信息' }}
+                <div
+                  v-if="block.argumentsText"
+                  class="text-[11px] text-zinc-600 dark:text-zinc-400 font-mono flex items-start gap-1"
+                >
+                  <span class="font-semibold text-zinc-700 dark:text-zinc-300 font-sans shrink-0"
+                    >{{ t('ai_tool_arguments') }}:</span
+                  >
+                  <span class="bg-muted px-1.5 py-0.5 rounded border border-border/50 break-all">{{
+                    block.argumentsText
+                  }}</span>
+                </div>
+                <div class="whitespace-pre-wrap font-mono leading-relaxed">
+                  {{ block.detail || '暂无详细信息' }}
+                </div>
+                <div
+                  v-if="block.truncated"
+                  class="text-[10px] text-amber-600/80 dark:text-amber-400/80 italic"
+                >
+                  * 结果内容较长，已自动截取关键摘要
+                </div>
               </div>
             </div>
           </div>
@@ -718,21 +740,124 @@ const onFileChange = async () => {
             </AppButton>
           </div>
 
-          <div v-else-if="ai.hasAiContent.value">
+          <div v-else-if="ai.hasAiContent.value" class="space-y-4">
+            <!-- 核心结构化诊断卡片（对齐 LogAgent 结构化输出） -->
             <div
-              class="ai-markdown-body prose prose-sm dark:prose-invert max-w-none break-words"
-              v-html="
-                renderMarkdown(
-                  ai.aiIsStreaming.value ? ai.aiStreamingContent.value : ai.aiText.value,
-                  ai.aiIsStreaming.value
-                )
-              "
-            ></div>
-            <span
-              v-if="ai.aiIsStreaming.value"
-              class="ai-streaming-cursor"
-              aria-hidden="true"
-            ></span>
+              v-if="ai.hasStructuredResult.value && ai.structuredResult.value"
+              class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 p-4 space-y-3.5 shadow-sm"
+            >
+              <!-- 核心根因与置信度 -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                  <span
+                    class="text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5"
+                  >
+                    <Target weight="duotone" class="h-3.5 w-3.5 text-zinc-700 dark:text-zinc-300" />
+                    {{ t('ai_root_cause') }}
+                  </span>
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="flex items-center gap-1.5 text-xs font-mono text-zinc-600 dark:text-zinc-400"
+                    >
+                      <span>{{ t('ai_confidence') }}</span>
+                      <span class="font-semibold text-zinc-900 dark:text-zinc-100">
+                        {{ Math.round((ai.structuredResult.value.confidence || 0) * 100) }}%
+                      </span>
+                    </div>
+                    <div
+                      class="w-16 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden"
+                    >
+                      <div
+                        class="h-full bg-zinc-700 dark:bg-zinc-300 rounded-full transition-all duration-500"
+                        :style="{
+                          width: `${Math.round((ai.structuredResult.value.confidence || 0) * 100)}%`
+                        }"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100 leading-snug">
+                  {{ ai.structuredResult.value.rootCause }}
+                </div>
+              </div>
+
+              <!-- 推荐排障步骤 -->
+              <div
+                v-if="ai.structuredResult.value.steps?.length"
+                class="space-y-1.5 pt-2.5 border-t border-zinc-200/60 dark:border-zinc-800/60"
+              >
+                <div
+                  class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5"
+                >
+                  <ListChecks weight="duotone" class="h-3.5 w-3.5" />
+                  {{ t('ai_steps') }}
+                </div>
+                <ol
+                  class="space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300 list-decimal list-inside pl-0.5"
+                >
+                  <li
+                    v-for="(step, sIdx) in ai.structuredResult.value.steps"
+                    :key="sIdx"
+                    class="leading-relaxed"
+                  >
+                    <span>{{ step }}</span>
+                  </li>
+                </ol>
+              </div>
+
+              <!-- 支撑证据链 -->
+              <div
+                v-if="ai.structuredResult.value.evidence?.length"
+                class="space-y-1.5 pt-2.5 border-t border-zinc-200/60 dark:border-zinc-800/60"
+              >
+                <div
+                  class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5"
+                >
+                  <LinkSimple weight="duotone" class="h-3.5 w-3.5" />
+                  {{ t('ai_evidence') }}
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span
+                    v-for="(ev, eIdx) in ai.structuredResult.value.evidence"
+                    :key="eIdx"
+                    class="inline-block px-2 py-0.5 text-[11px] font-mono bg-zinc-200/70 dark:bg-zinc-800/70 text-zinc-700 dark:text-zinc-300 rounded border border-zinc-300/40 dark:border-zinc-700/40 break-all"
+                  >
+                    {{ ev }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Markdown 诊断详细分析正文 -->
+            <div class="relative">
+              <div
+                class="ai-markdown-body prose prose-sm dark:prose-invert max-w-none break-words"
+                v-html="renderMarkdown(ai.displayMarkdown.value, ai.aiIsStreaming.value)"
+              ></div>
+              <span
+                v-if="ai.aiIsStreaming.value"
+                class="ai-streaming-cursor"
+                aria-hidden="true"
+              ></span>
+            </div>
+
+            <!-- 原始元数据 (JSON) 可折叠面板 -->
+            <div v-if="ai.structuredResult.value?.rawJson" class="pt-2 border-t border-border/40">
+              <button
+                class="text-[11px] text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center gap-1 transition-colors"
+                @click="ai.toggleRawJson()"
+              >
+                <Code weight="duotone" class="h-3 w-3" />
+                <span>{{
+                  ai.showRawJson.value ? t('ai_hide_raw_json') : t('ai_view_raw_json')
+                }}</span>
+              </button>
+              <pre
+                v-show="ai.showRawJson.value"
+                class="mt-2 p-3 text-[11px] font-mono bg-zinc-100 dark:bg-zinc-950/70 rounded-lg border border-border/60 overflow-x-auto text-zinc-800 dark:text-zinc-200 leading-normal"
+                >{{ ai.structuredResult.value.rawJson }}</pre
+              >
+            </div>
           </div>
 
           <div v-else-if="!ai.aiLoading.value" class="py-12 text-center">
