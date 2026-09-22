@@ -586,9 +586,13 @@ print_r($data);`,
     path: '/v1/ai/{id}',
     title: 'AI 分析已存储日志',
     description:
-      '读取已存储的日志，使用 AI 进行智能分析。SSE 流式输出协议：无 event 头的纯 data: 为正文增量（OpenAI 兼容格式），event: status 状态帧（含 queued 队列首帧、thinking 思维链、tool 工具调用、tool_result 工具结果摘要、limit 轮次上限熔断），event: error 异常流终止，event: done 流正常结束。AI 关闭时统一返回 HTTP 404。分析结论按日志 ID 缓存 30 分钟，重复请求直接返回缓存结论。LogAgent 模式开放知识库检索（rag_search / list_topics）、网络搜索（web_search_exa）以及行级文件检索（list_log_files / read_log_file / grep_log_file）。长日志（≥12KB）自动运行算法定位首个错误行并截取 12KB 上下文窗口（预留 2.5KB 前置因果与完整后置堆栈，整行对齐）；未定位到显式错误时不截取前缀干扰日志，注入日志全局概况并引导模型结合常用关键词通过 grep_log_file 适可而止排查；日志 <12KB 时完整直传。服务端启用分析队列时，流首帧为 queued 状态（含排队位置），队列满时在 SSE 开始前返回 HTTP 429 + Retry-After。推荐先调用 /v1/insights/{id} 展示结构化摘要（不消耗 AI 资源），用户主动触发时再调用本接口。',
+      '读取已存储的日志，使用 LogAgent 进行深度排障分析。支持三种分析模式（通过 query 参数 mode 指定）：deep（默认，全量工具链与 50 轮上限）、launcher（启动器优先模式，GitHub/RAG 优先，20 轮上限）、quick（极速直答模式，单轮非工具直答）。支持通过 promptVersion 指定提示词版本。SSE 流式输出协议：无 event 头的纯 data: 为正文增量（OpenAI 兼容格式），event: status 状态帧（含 queued 队列首帧、thinking 思维链、tool 工具调用、tool_result 工具结果摘要、limit 轮次上限熔断），event: error 异常流终止，event: done 流正常结束。AI 关闭时统一返回 HTTP 404。分析结论按日志 ID 缓存 30 分钟。诊断正文末尾附带严格结构化 JSON 结论块（含核心根因、置信度、排障步骤与证据链），前台自动渲染为概览卡片；每次会话均被记录至四维质量评估引擎（AnalysisScorer）与链路追踪系统。',
     isSSE: true,
-    params: [{ name: 'id', type: 'string', required: true, desc: '日志 ID' }],
+    params: [
+      { name: 'id', type: 'string', required: true, desc: '日志 ID' },
+      { name: 'mode', type: 'string', required: false, desc: '分析模式：deep（默认，全工具深度排障）、launcher（启动器崩溃优先）、quick（极速单轮直答）' },
+      { name: 'promptVersion', type: 'string', required: false, desc: '系统提示词版本，默认使用管理端当前激活的版本（如 v1）' }
+    ],
     response: {
       success: {
         code: 200,
@@ -611,9 +615,12 @@ data: {"type":"tool","name":"rag_search","arguments":{"query":"MixinApplyError"}
 event: status
 data: {"type":"tool_result","name":"rag_search","summary":"共命中 1 条：[1] mixin-apply-failed.md","truncated":false}
 
-// 工具循环达到安全轮次上限（默认 50 轮）
+// 工具循环达到安全轮次上限
 event: status
 data: {"type":"limit","rounds":50}
+
+// 正文末尾输出结构化诊断代码块供前端自动解析
+data: {"choices":[{"delta":{"content":"\\n\`\`\`json\\n{\\n  \\"rootCause\\": \\"模组 X 在 Mixin 注入阶段失败...\\",\\n  \\"confidence\\": 0.95,\\n  \\"troubleshooting\\": [\\"更新模组至最新构建\\", \\"移除不兼容的渲染增强模组\\"],\\n  \\"evidence\\": [\\"grep_log_file 命中第 142 行异常堆栈\\"]\\n}\\n\`\`\`"}}]}
 
 // 流结束（正常完成）
 event: done
@@ -716,7 +723,19 @@ curl -N https://api.logshare.cn/v1/ai/abc1234`
         name: 'id',
         type: 'string',
         required: false,
-        desc: '已存在的日志 ID，绑定后 Agent 可读取其附加文件'
+        desc: '已存在的日志 ID，绑定后 Agent 可读取其附加文件与进行上下文定位'
+      },
+      {
+        name: 'mode',
+        type: 'string',
+        required: false,
+        desc: '分析模式：deep（深度排障，默认）、launcher（启动器崩溃优先）、quick（极速单轮直答）'
+      },
+      {
+        name: 'promptVersion',
+        type: 'string',
+        required: false,
+        desc: '提示词版本（如 v1）'
       }
     ],
     response: {
