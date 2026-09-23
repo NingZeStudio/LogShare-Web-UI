@@ -102,20 +102,40 @@ const formatBytes = (bytes?: number): string => {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
+// 服务端派生的生态元数据（version / loader），由上传时日志识别结果补写，作为分析接口缺位时的兜底来源。
+// visible 仅由客户端约定遵守，服务端不过滤，因此这里显式排除 visible=false 的条目
+const derivedMeta = (key: string): string => {
+  const hit = (viewer.logMeta.value?.metadata ?? []).find(
+    item => item.key === key && item.visible !== false
+  )
+  const value = hit?.value
+  return typeof value === 'string' || typeof value === 'number' ? String(value) : ''
+}
+
 // 由接口实际返回的字段拼接摘要句，未返回的部分不出现在句子里
 const logSummary = computed(() => {
   const info = viewer.log.value
-  if (!info) return ''
 
   // 首段使用接口的类型标识（xxxx/xxx 形式），如 vanilla/server
-  let head = ''
-  if (info.id) head = `这是一份 ${info.id} 日志`
-  else if (info.type) head = `这是一份 ${info.type}`
-  else if (info.name) head = `这是一份 ${info.name} 日志`
-  if (!head) return ''
+  const head = info?.id
+    ? `这是一份 ${info.id} 日志`
+    : info?.type
+      ? `这是一份 ${info.type}`
+      : info?.name
+        ? `这是一份 ${info.name} 日志`
+        : ''
+
+  if (!head) {
+    const loader = derivedMeta('loader')
+    const metaVersion = derivedMeta('version')
+    if (!loader && !metaVersion) return ''
+    const title = loader ? `这是一份 ${loader} 日志` : '这是一份 Minecraft 日志'
+    return metaVersion ? `${title}，版本是 ${metaVersion}` : title
+  }
 
   const parts: string[] = [head]
-  if (info.version) parts.push(`版本是 ${info.version}`)
+  const version = info.version || derivedMeta('version')
+  if (version) parts.push(`版本是 ${version}`)
   for (const item of info.analysis?.information ?? []) {
     if (item.label && item.value) parts.push(`${item.label}是 ${item.value}`)
   }

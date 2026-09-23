@@ -76,7 +76,7 @@ const endpoints = [
         name: 'metadata[]',
         type: 'array',
         required: false,
-        desc: '元数据数组，每项 {key, value, label?, visible?}；value 为字符串时直接存储，其他类型会 JSON 序列化；单项最长 value 1024 / label 128 / key 64 字符'
+        desc: '元数据数组，每项 {key, value, label?, visible?}；value 为字符串时直接存储，其他类型会 JSON 序列化；单项最长 value 1024 / label 128 / key 64 字符。服务端会在落库前用日志识别结果自动补写 version（label 为 Minecraft 版本）与 loader（label 为模组加载器，取值 fabric / neoforge / forge / vanilla 等）两项元数据，客户端已提交同名键时以客户端值为准'
       },
       {
         name: 'source',
